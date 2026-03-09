@@ -44,12 +44,12 @@ export const Purchase = () => {
           <span className="inline-block py-1.5 px-3 bg-green-400 text-slate-900 text-xs font-bold uppercase tracking-widest rounded-full mb-4">
             Special Offer
           </span>
-          <h2 className="text-5xl md:text-8xl font-black uppercase tracking-tighter leading-[0.9]">
+          <h2 className="text-5xl md:text-8xl font-black uppercase tracking-tighter leading-[0.9] text-white">
             Unlimited<br/>
             Access<br/>
             Pass
           </h2>
-          <p className="text-xl md:text-2xl text-slate-400 font-medium max-w-lg leading-snug">
+          <p className="text-xl md:text-2xl text-white/85 font-medium max-w-lg leading-snug">
             Get instant access to the complete masterclass. Stream anytime, anywhere, on any device.
           </p>
           
