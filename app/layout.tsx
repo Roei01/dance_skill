@@ -3,6 +3,8 @@ import { Rubik, Heebo } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
 
+export const dynamic = "force-dynamic";
+
 const rubik = Rubik({
   subsets: ["latin"],
   variable: "--font-sans",

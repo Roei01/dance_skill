@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 export default function CancelPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[linear-gradient(135deg,#fff8f5_0%,#ffffff_45%,#f8fbff_100%)] px-6 py-16">
