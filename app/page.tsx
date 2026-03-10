@@ -1,16 +1,18 @@
-'use client';
-import { Hero } from '@/sections/Hero';
-import { About } from '@/sections/About';
-import { Styles } from '@/sections/Styles';
-import { Demo } from '@/sections/Demo';
-import { Purchase } from '@/sections/Purchase';
-import { Footer } from '@/sections/Footer';
+"use client";
+
+export const dynamic = "force-dynamic";
+
+import { Hero } from "@/sections/Hero";
+import { About } from "@/sections/About";
+import { Styles } from "@/sections/Styles";
+import { Demo } from "@/sections/Demo";
+import { Purchase } from "@/sections/Purchase";
+import { Footer } from "@/sections/Footer";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-black text-white">
+    <main className="min-h-screen bg-transparent text-slate-900">
       <Hero />
-      <About />
       <Styles />
       <Demo />
       <Purchase />

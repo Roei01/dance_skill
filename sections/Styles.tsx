@@ -1,49 +1,122 @@
-'use client';
-import { motion } from 'framer-motion';
+"use client";
+import { motion } from "framer-motion";
 
 const Styles = () => {
+  const categories = [
+    {
+      name: "Modern Dance",
+      image:
+        "https://images.unsplash.com/photo-1518834107812-67b0b7c58434?q=80&w=1000",
+      description: "Expression, flow, technique, and emotional movement.",
+      featured: true,
+    },
+    {
+      name: "Freestyle",
+      image:
+        "https://images.unsplash.com/photo-1547153760-18fc86324498?q=80&w=1000",
+      description: "Freedom, rhythm, and personal style on every beat.",
+      muted: true,
+      comingSoon: true,
+    },
+    {
+      name: "Contemporary",
+      image:
+        "https://images.unsplash.com/photo-1518834107812-67b0b7c58434?q=80&w=1000",
+      description: "Creative choreography with softness, power, and control.",
+      muted: true,
+      comingSoon: true,
+    },
+  ];
+
   return (
-    <section id="styles" className="py-24 bg-white overflow-hidden relative">
-      <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+    <section
+      id="styles"
+      className="py-24 bg-slate-50 relative overflow-hidden text-slate-900"
+    >
+      <div className="max-w-7xl mx-auto px-6">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="lg:col-span-4 text-center mb-12"
+          className="mb-12 text-center"
         >
-          <span className="text-orange-500 font-bold uppercase tracking-widest text-sm mb-2 block">Curriculum</span>
-          <h2 className="text-4xl md:text-5xl font-black text-slate-900">What You'll Master</h2>
+          <h2 className="text-4xl md:text-5xl font-black mb-4 leading-none text-slate-900">
+            Learn A Variety
+            <br /> of Dance Styles
+          </h2>
+          <p className="text-xl text-slate-600 max-w-2xl mx-auto font-medium">
+            Explore multiple genres with a strong focus on modern dance,
+            expression, technique, and stage presence.
+          </p>
         </motion.div>
 
-        {[
-          { name: 'Salsa', desc: 'Rhythm & Flow', color: 'from-orange-400 to-red-400', img: 'https://images.unsplash.com/photo-1516708754805-728b248a8677?q=80&w=1000' },
-          { name: 'Bachata', desc: 'Sensuality & Connection', color: 'from-rose-400 to-pink-400', img: 'https://images.unsplash.com/photo-1545696968-1a5245650b91?q=80&w=1000' },
-          { name: 'Technique', desc: 'Body Isolation', color: 'from-amber-400 to-orange-400', img: 'https://images.unsplash.com/photo-1535525153412-5a42439a210d?q=80&w=1000' },
-          { name: 'Styling', desc: 'Musicality & Expression', color: 'from-teal-400 to-cyan-400', img: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?q=80&w=1000' },
-        ].map((style, i) => (
-          <motion.div
-            key={style.name}
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.1 }}
-            className="group relative h-96 rounded-3xl overflow-hidden cursor-pointer shadow-xl hover:shadow-2xl transition-shadow duration-500"
-          >
-            <div className={`absolute inset-0 bg-gradient-to-b ${style.color} opacity-0 group-hover:opacity-90 transition-opacity duration-500 z-10`} />
-            <div 
-              className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
-              style={{ backgroundImage: `url(${style.img})` }}
-            />
-            <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-500 z-0" />
-            
-            <div className="absolute bottom-0 left-0 p-8 z-20 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-              <h3 className="text-3xl font-bold text-white mb-1 drop-shadow-md">{style.name}</h3>
-              <p className="text-white font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 transform translate-y-4 group-hover:translate-y-0">
-                {style.desc}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {categories.map((style, i) => (
+            <motion.div
+              key={style.name}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.05 }}
+              className="group flex flex-col items-center"
+            >
+              <div
+                className={`relative w-full aspect-[4/3] rounded-2xl overflow-hidden transition-all duration-300 transform group-hover:-translate-y-1 bg-white ${
+                  style.featured
+                    ? "ring-2 ring-blue-500 shadow-xl md:col-span-2"
+                    : "shadow-sm hover:shadow-xl"
+                }`}
+              >
+                <div
+                  className={`absolute inset-0 bg-cover bg-center transition-transform duration-500 ${
+                    style.muted
+                      ? "scale-100 grayscale opacity-55"
+                      : "group-hover:scale-105"
+                  }`}
+                  style={{ backgroundImage: `url(${style.image})` }}
+                />
+                <div
+                  className={`absolute inset-0 transition-colors duration-300 ${
+                    style.featured
+                      ? "bg-gradient-to-t from-blue-950/70 via-blue-900/10 to-transparent"
+                      : style.muted
+                        ? "bg-slate-900/25"
+                        : "bg-black/0 group-hover:bg-black/10"
+                  }`}
+                />
+                {style.comingSoon && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="rounded-full border border-white/70 bg-white/85 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-slate-700 shadow-lg backdrop-blur">
+                      Coming Soon
+                    </div>
+                  </div>
+                )}
+                {style.featured && (
+                  <div className="absolute top-4 left-4 rounded-full bg-blue-600 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-lg">
+                    Featured
+                  </div>
+                )}
+              </div>
+
+              <h3
+                className={`mt-4 text-sm md:text-base font-bold transition-colors tracking-wide text-center ${
+                  style.featured
+                    ? "text-blue-700"
+                    : style.muted
+                      ? "text-slate-500"
+                      : "text-slate-900 group-hover:text-blue-600"
+                }`}
+              >
+                {style.name}
+              </h3>
+              <p
+                className={`mt-1 max-w-xs text-center text-sm ${style.muted ? "text-slate-400" : "text-slate-500"}`}
+              >
+                {style.description}
               </p>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          ))}
+        </div>
       </div>
     </section>
   );

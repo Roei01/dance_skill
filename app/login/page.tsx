@@ -1,8 +1,13 @@
 'use client';
-import { useState } from 'react';
-import axios from 'axios';
-import { useRouter } from 'next/navigation';
+
+export const dynamic = 'force-dynamic';
+
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
+import { api, getApiErrorCode } from '@/lib/api-client';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -10,6 +15,15 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { refreshAuth } = useAuth();
+
+  useEffect(() => {
+    const message = searchParams.get('message');
+    if (message) {
+      setError(message);
+    }
+  }, [searchParams]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,52 +31,61 @@ export default function Login() {
     setError('');
 
     try {
-      await axios.post('/api/auth/login', { username, password });
+      await api.post('/auth/login', { username, password });
+      await refreshAuth();
       router.push('/watch');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Invalid credentials');
+    } catch (error: unknown) {
+      const code = getApiErrorCode(error);
+
+      if (code === 'INVALID_CREDENTIALS') {
+        setError('Incorrect username or password.');
+      } else if (code === 'IP_MISMATCH') {
+        setError('This account can only be accessed from the original device.');
+      } else if (code === 'TOKEN_EXPIRED') {
+        setError('Session expired. Please login again.');
+      } else {
+        setError('Incorrect username or password.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 relative overflow-hidden">
-      {/* Background Effects */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-orange-100/40 rounded-full blur-[120px] -z-10" />
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-rose-100/40 rounded-full blur-[100px] -z-10" />
+    <div className="min-h-screen flex items-center justify-center bg-slate-900 relative overflow-hidden text-left">
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900" />
 
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
-        className="max-w-md w-full bg-white p-8 md:p-12 rounded-3xl shadow-xl border border-slate-100"
+        className="max-w-md w-full bg-slate-800 p-12 rounded-2xl shadow-2xl border border-slate-700 relative z-10"
       >
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Welcome Back</h1>
-          <p className="text-slate-500 text-sm">Enter your credentials to access the course.</p>
+        <div className="text-center mb-10">
+          <h1 className="text-4xl font-black tracking-tight text-white mb-2">Log In</h1>
+          <p className="text-slate-400 text-sm font-medium">Welcome back, dancer.</p>
         </div>
         
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
-            <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider ml-1">Username</label>
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Username</label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/50 focus:outline-none transition-all placeholder-slate-400"
-              placeholder="Your username"
+              className="w-full px-5 py-4 bg-slate-700 border border-slate-600 text-white focus:border-blue-500 focus:outline-none transition-colors rounded-xl font-medium"
+              placeholder="YOUR USERNAME"
               required
             />
           </div>
           
           <div className="space-y-2">
-            <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider ml-1">Password</label>
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/50 focus:outline-none transition-all placeholder-slate-400"
+              className="w-full px-5 py-4 bg-slate-700 border border-slate-600 text-white focus:border-blue-500 focus:outline-none transition-colors rounded-xl font-medium"
               placeholder="••••••••"
               required
             />
@@ -72,21 +95,26 @@ export default function Login() {
             <motion.div 
               initial={{ opacity: 0, y: -10 }} 
               animate={{ opacity: 1, y: 0 }}
-              className="p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-xs text-center"
+              className="p-3 bg-red-900/20 border border-red-500/20 text-red-400 text-xs font-bold tracking-wide text-center rounded-lg"
             >
               {error}
             </motion.div>
           )}
 
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+          <button
             disabled={loading}
             type="submit"
-            className="w-full py-3 bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 text-white font-bold rounded-xl shadow-lg shadow-orange-500/20 transition-all"
+            className="flex w-full items-center justify-center gap-3 rounded-xl bg-blue-600 py-4 text-lg font-bold text-white shadow-lg transition-all hover:-translate-y-1 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
           >
-            {loading ? 'Verifying...' : 'Access Course'}
-          </motion.button>
+            {loading ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span>Verifying...</span>
+              </>
+            ) : (
+              'Log In'
+            )}
+          </button>
         </form>
       </motion.div>
     </div>

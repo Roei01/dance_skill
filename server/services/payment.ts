@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { config } from '../config/env';
+import { logger } from '../lib/logger';
 
 // This is a simplified interface for GreenInvoice API
 interface PaymentResponse {
@@ -15,9 +16,9 @@ export const createPayment = async (
 ): Promise<PaymentResponse> => {
   // Mock implementation for development if no key provided OR if key is clearly a placeholder
   if (!config.greenInvoice.key || config.greenInvoice.key.length < 20 || config.greenInvoice.key === "SAdasdasdasds") {
-    console.warn('⚠️ No valid GreenInvoice API Key provided. Using mock payment.');
+    logger.warn('⚠️ No valid GreenInvoice API Key provided. Using mock payment.');
     return {
-      checkoutUrl: `${config.appUrl}/mock-payment?amount=${amount}&email=${email}`,
+      checkoutUrl: `${config.appUrl}/success?email=${encodeURIComponent(email)}`,
       paymentId: `mock_${Date.now()}`,
     };
   }
@@ -35,8 +36,8 @@ export const createPayment = async (
           email,
           name: customerName,
         },
-        callback_url: `${config.appUrl}/api/payment/webhook`,
-        success_url: `${config.appUrl}/success`,
+        callback_url: `${config.appUrl}/api/purchase/webhook`,
+        success_url: `${config.appUrl}/success?email=${encodeURIComponent(email)}`,
         cancel_url: `${config.appUrl}/cancel`,
       },
       {
@@ -52,7 +53,7 @@ export const createPayment = async (
       paymentId: response.data.id,
     };
   } catch (error) {
-    console.error('❌ Payment creation failed:', error);
+    logger.error('❌ Payment creation failed:', error);
     throw new Error('Payment service failed');
   }
 };

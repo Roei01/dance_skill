@@ -5,6 +5,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { config } from './config/env';
+import { logger } from './lib/logger';
 
 import apiRoutes from './routes';
 
@@ -26,18 +27,18 @@ const port = process.env.PORT || 3000;
     
     try {
       await mongoose.connect(config.dbUri, { serverSelectionTimeoutMS: 5000 });
-      console.log('✅ Connected to MongoDB');
+      logger.info('✅ Connected to MongoDB');
     } catch (err) {
-      console.warn('⚠️ Failed to connect to primary MongoDB. Falling back to in-memory database for development...');
+      logger.warn('⚠️ Failed to connect to primary MongoDB. Falling back to in-memory database for development...');
       try {
         const { MongoMemoryServer } = await import('mongodb-memory-server');
         const mongod = await MongoMemoryServer.create();
         const uri = mongod.getUri();
         await mongoose.connect(uri);
-        console.log('✅ Connected to In-Memory MongoDB');
-        console.log(`ℹ️  URI: ${uri}`);
+        logger.info('✅ Connected to In-Memory MongoDB');
+        logger.info(`ℹ️  URI: ${uri}`);
       } catch (memoryErr) {
-        console.error('❌ Failed to start in-memory database:', memoryErr);
+        logger.error('❌ Failed to start in-memory database:', memoryErr);
         throw err; // Throw original error if fallback fails
       }
     }
@@ -54,7 +55,7 @@ const port = process.env.PORT || 3000;
         crossOriginEmbedderPolicy: false,
       })
     );
-    server.use(express.json());
+    server.use(express.json({ limit: '1mb' }));
     server.use(cookieParser());
 
     // API Routes
@@ -67,10 +68,10 @@ const port = process.env.PORT || 3000;
     });
 
     server.listen(port, () => {
-      console.log(`> Ready on http://localhost:${port}`);
+      logger.info(`> Ready on http://localhost:${port}`);
     });
   } catch (e) {
-    console.error(e);
+    logger.error(e);
     process.exit(1);
   }
 })();

@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { config } from '../config/env';
+import { logger } from '../lib/logger';
 
 const transporter = nodemailer.createTransport({
   host: config.email.host,
@@ -31,13 +32,13 @@ export const sendAccessEmail = async (email: string, username: string, accessLin
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log(`✅ Access email sent to ${email}`);
+    logger.info(`✅ Access email sent to ${email}`);
     // Log credentials in dev for convenience
     if (config.isProduction === false) {
-      console.log(`🔑 DEV CREDENTIALS: Username: ${username}, Password: ${password || '(not changed)'}`);
+      logger.info(`🔑 DEV CREDENTIALS: Username: ${username}, Password: ${password || '(not changed)'}`);
     }
   } catch (error) {
-    console.error('❌ Error sending email:', error);
+    logger.error('❌ Error sending email:', error);
     throw new Error('Email service failed');
   }
 };

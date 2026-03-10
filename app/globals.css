@@ -44,6 +44,10 @@
   html {
     scroll-behavior: smooth;
   }
+
+  * {
+    box-sizing: border-box;
+  }
   
   body {
     @apply bg-slate-50 text-slate-900 antialiased font-sans leading-relaxed;
@@ -56,5 +60,12 @@
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-display font-bold tracking-tight text-slate-900;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    @apply outline-none;
   }
 }

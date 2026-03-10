@@ -1,31 +1,55 @@
 import { Request, Response, NextFunction } from 'express';
-import { verifyToken, checkIpAccess } from '../services/auth';
+import {
+  verifyToken,
+  checkIpAccess,
+  getClientIp,
+  type AuthTokenPayload,
+} from '../services/auth';
 
-interface AuthRequest extends Request {
-  user?: any;
+export interface AuthenticatedRequest extends Request {
+  user?: AuthTokenPayload;
 }
 
-export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const authenticate = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
   const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
 
   if (!token) {
-    return res.status(401).json({ message: 'Authentication required' });
+    return res.status(401).json({
+      code: 'AUTH_REQUIRED',
+      message: 'Authentication required',
+    });
   }
 
   try {
     const decoded = verifyToken(token);
     req.user = decoded;
 
-    // Check IP restriction
-    const currentIp = req.ip || req.socket.remoteAddress || '127.0.0.1';
+    const currentIp = getClientIp(req.headers["x-forwarded-for"], req.ip || req.socket.remoteAddress);
     const isAllowed = await checkIpAccess(decoded.userId, currentIp as string);
 
     if (!isAllowed) {
-      return res.status(403).json({ message: 'Access denied: Invalid IP address. Login from original device required.' });
+      return res.status(403).json({
+        code: 'IP_MISMATCH',
+        message: 'This account can only be accessed from the original device.',
+      });
     }
 
     next();
-  } catch (error) {
-    return res.status(401).json({ message: 'Invalid or expired token' });
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        code: 'TOKEN_EXPIRED',
+        message: 'Your session expired. Please login again.',
+      });
+    }
+
+    return res.status(401).json({
+      code: 'AUTH_REQUIRED',
+      message: 'Invalid or expired token',
+    });
   }
 };

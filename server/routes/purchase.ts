@@ -1,45 +1,53 @@
 import express from 'express';
+import { z } from 'zod';
 import { Purchase } from '../../models/Purchase';
 import { User } from '../../models/User';
 import { createPayment } from '../services/payment';
-import { sendAccessEmail } from '../services/email';
-import { generateTempPassword, hashPassword, generateToken } from '../services/auth';
+import { generateTempPassword, hashPassword } from '../services/auth';
+import { provisionPurchaseAccess } from '../services/purchase';
+import { purchaseRateLimiter } from '../middleware/rateLimit';
+import { logger } from '../lib/logger';
+import {
+  DEFAULT_VIDEO_ID,
+  DEFAULT_VIDEO_PRICE_ILS,
+  DEFAULT_VIDEO_TITLE,
+} from '@/lib/catalog';
 
 const router = express.Router();
+const purchaseSchema = z.object({
+  email: z.string().email(),
+});
 
-// Mock video price
-const VIDEO_PRICE = 49.00;
-const VIDEO_ID = 'video_001';
-
-router.post('/create', async (req, res) => {
+router.post('/create', purchaseRateLimiter, async (req, res) => {
   try {
-    const { email } = req.body;
-    
-    // Check if user already exists
-    let user = await User.findOne({ email });
-    if (user) {
-      // User already bought?
-      const existingPurchase = await Purchase.findOne({ userId: user._id, videoId: VIDEO_ID, status: 'completed' });
-      if (existingPurchase) {
-        return res.status(400).json({ message: 'You already own this video. Check your email for access.' });
-      }
-    } else {
-      // Create pending user or wait until payment success
-      // Typically create user AFTER payment success, but need user ID for purchase record
-      // We can create a temporary user or just store email in purchase and create user later
-      // For MVP, create user now but inactive until payment? Or just purchase record with email
+    const validation = purchaseSchema.safeParse(req.body);
+
+    if (!validation.success) {
+      return res.status(400).json({
+        code: 'VALIDATION_ERROR',
+        message: 'Please enter a valid email address.',
+      });
     }
 
-    // Payment
-    const payment = await createPayment(email, VIDEO_PRICE, 'Dance Tutorial', 'Valued Dancer');
-    
-    // Store purchase intent (pending)
-    // If user doesn't exist, we can create purchase with just email reference or temporary user
-    // Let's create a purchase record with email embedded for now if user doesn't exist
-    // But Mongoose schema requires User ID. So let's create a User placeholder.
-    
+    const { email } = validation.data;
+    let user = await User.findOne({ email });
+
+    if (user) {
+      const existingPurchase = await Purchase.findOne({
+        userId: user._id,
+        videoId: DEFAULT_VIDEO_ID,
+        status: 'completed',
+      });
+
+      if (existingPurchase) {
+        return res.status(409).json({
+          code: 'ALREADY_OWNED',
+          message: 'You already own this tutorial. Check your email for access.',
+        });
+      }
+    }
+
     if (!user) {
-      // Create user placeholder (inactive)
       const tempPass = await hashPassword(generateTempPassword());
       user = await User.create({
         email,
@@ -48,50 +56,52 @@ router.post('/create', async (req, res) => {
       });
     }
 
+    const payment = await createPayment(
+      email,
+      DEFAULT_VIDEO_PRICE_ILS,
+      DEFAULT_VIDEO_TITLE,
+      'Valued Dancer'
+    );
+
+    await Purchase.deleteMany({
+      userId: user._id,
+      videoId: DEFAULT_VIDEO_ID,
+      status: 'pending',
+    });
+
     await Purchase.create({
       userId: user._id,
-      videoId: VIDEO_ID, // Use mock ID or actual ID
+      videoId: DEFAULT_VIDEO_ID,
       paymentId: payment.paymentId,
       status: 'pending',
     });
 
+    if (payment.paymentId.startsWith('mock_')) {
+      await provisionPurchaseAccess(payment.paymentId);
+    }
+
     res.json({ 
       checkoutUrl: payment.checkoutUrl,
-      paymentId: payment.paymentId // Return for dev/testing
+      paymentId: payment.paymentId,
+      email,
     });
   } catch (error) {
-    console.error('Purchase error:', error);
-    res.status(500).json({ message: 'Failed to initiate purchase' });
+    logger.error('Purchase error:', error);
+    res.status(500).json({
+      code: 'INTERNAL_ERROR',
+      message: 'Unable to start payment. Please try again.',
+    });
   }
 });
 
-// Webhook for GreenInvoice success
 router.post('/webhook', async (req, res) => {
-  // Verify signature if possible
-  const { paymentId, status } = req.body; // Adapt to actual webhook payload
+  const { paymentId, status } = req.body;
 
   if (status === 'success' || status === 'completed') {
-    const purchase = await Purchase.findOne({ paymentId });
-    if (purchase && purchase.status !== 'completed') {
-      purchase.status = 'completed';
-      await purchase.save();
-
-      // Grant access
-      const user = await User.findById(purchase.userId);
-      if (user) {
-        // Generate actual credentials if needed or send reset link
-        const tempPassword = generateTempPassword();
-        const hashedPassword = await hashPassword(tempPassword);
-        
-        user.passwordHash = hashedPassword;
-        await user.save();
-
-        // Send email
-        const loginLink = `${process.env.APP_BASE_URL}/login`;
-        await sendAccessEmail(user.email, user.username, loginLink, tempPassword);
-        
-        console.log(`✅ Access granted to ${user.email}`);
-      }
+    try {
+      await provisionPurchaseAccess(paymentId);
+    } catch (error) {
+      logger.error('Webhook provisioning error:', error);
     }
   }
 
