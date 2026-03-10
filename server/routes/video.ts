@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { Purchase } from '../../models/Purchase';
 import { authenticate, type AuthenticatedRequest } from '../middleware/authenticate';
-import { DEFAULT_VIDEO_ID } from '@/lib/catalog';
+import { DEFAULT_VIDEO_ID } from '../../lib/catalog';
 
 const router = express.Router();
 

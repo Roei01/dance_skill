@@ -1,6 +1,6 @@
 import { Purchase } from "../../models/Purchase";
 import { User } from "../../models/User";
-import { DEFAULT_VIDEO_ID } from "@/lib/catalog";
+import { DEFAULT_VIDEO_ID } from "../../lib/catalog";
 import { sendAccessEmail } from "./email";
 import { generateTempPassword, hashPassword } from "./auth";
 

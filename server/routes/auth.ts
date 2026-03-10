@@ -8,7 +8,7 @@ import {
   getClientIp,
 } from '../services/auth';
 import { authenticate, type AuthenticatedRequest } from '../middleware/authenticate';
-import { DEFAULT_VIDEO_ID } from '@/lib/catalog';
+import { DEFAULT_VIDEO_ID } from '../../lib/catalog';
 import { authRateLimiter } from '../middleware/rateLimit';
 
 const router = express.Router();

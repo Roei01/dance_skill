@@ -11,7 +11,7 @@ import {
   DEFAULT_VIDEO_ID,
   DEFAULT_VIDEO_PRICE_ILS,
   DEFAULT_VIDEO_TITLE,
-} from '@/lib/catalog';
+} from '../../lib/catalog';
 
 const router = express.Router();
 const purchaseSchema = z.object({

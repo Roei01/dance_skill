@@ -29,17 +29,17 @@ const port = process.env.PORT || 3000;
       await mongoose.connect(config.dbUri, { serverSelectionTimeoutMS: 5000 });
       logger.info('✅ Connected to MongoDB');
     } catch (err) {
-      logger.warn('⚠️ Failed to connect to primary MongoDB. Falling back to in-memory database for development...');
-      try {
+      if (!config.isProduction) {
+        logger.warn('⚠️ MongoDB unavailable. Using in-memory database (DEV only)');
         const { MongoMemoryServer } = await import('mongodb-memory-server');
         const mongod = await MongoMemoryServer.create();
         const uri = mongod.getUri();
         await mongoose.connect(uri);
         logger.info('✅ Connected to In-Memory MongoDB');
-        logger.info(`ℹ️  URI: ${uri}`);
-      } catch (memoryErr) {
-        logger.error('❌ Failed to start in-memory database:', memoryErr);
-        throw err; // Throw original error if fallback fails
+        logger.info(`ℹ️ URI: ${uri}`);
+      } else {
+        logger.error('❌ MongoDB connection failed in production');
+        throw err;
       }
     }
 
