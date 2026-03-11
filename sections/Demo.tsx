@@ -50,10 +50,6 @@ const Demo = () => {
               >
                 הדפדפן שלך לא תומך בניגון הווידאו.
               </video>
-
-              <div className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-700 shadow-md backdrop-blur">
-                וידאו טעימה
-              </div>
             </div>
           </div>
 
