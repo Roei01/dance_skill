@@ -46,7 +46,7 @@ const streamVideoFile = (
 };
 
 router.get("/preview", (req, res) => {
-  const previewPath = path.resolve(__dirname, "../assets/");
+  const previewPath = path.resolve(__dirname, "../../app/assert/video3.mov");
 
   if (!fs.existsSync(previewPath)) {
     return res.status(404).json({
@@ -58,7 +58,7 @@ router.get("/preview", (req, res) => {
   return streamVideoFile(
     res,
     previewPath,
-    "video/quicktime",
+    "video/mp4",
     req.headers.range,
   );
 });

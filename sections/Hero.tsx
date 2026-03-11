@@ -69,25 +69,10 @@ export const Hero = () => {
                   }
                   className="rounded-xl bg-[#8fd6ff] px-7 py-4 text-sm font-bold uppercase tracking-[0.12em] text-slate-950 shadow-[0_14px_30px_rgba(143,214,255,0.35)] transition hover:bg-[#74cbff]"
                 >
-                  לצפייה בסגנונות
+                  לצפייה בשיעורים
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-5 border-t border-black/10 bg-white px-6 py-6 sm:px-10 lg:flex-row lg:items-center lg:justify-between lg:px-16">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">
-              חוויית אימון
-            </p>
-            <h2 className="mt-2 text-2xl font-black text-slate-900 sm:text-3xl">
-              כוריאוגרפיה, סדנאות וקורסים
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm text-slate-600 sm:text-base">
-              עמוד פתיחה נקי ומדויק שנותן תחושה מקצועית ומוביל ישירות לשיעור,
-              לטעימה ולרכישה.
-            </p>
           </div>
         </div>
       </motion.div>

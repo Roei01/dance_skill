@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Clock3 } from "lucide-react";
 import modernDanceImage from "../server/assets/IMG_5427.png";
 
 type StyleCard = {
@@ -18,25 +18,28 @@ type StyleCard = {
 
 const categories: StyleCard[] = [
   {
-    name: "מחול מודרני",
+    name: "השיעור הפעיל",
     image: modernDanceImage.src,
     featured: true,
     href: "/modern-dance",
-    cta: "לפרטי השיעור",
+    description: "מחול מודרני עם שילוב של נוכחות, זרימה, טכניקה והבעה.",
+    cta: "לצפייה בפרטי השיעור",
   },
   {
-    name: "פריסטייל",
+    name: "תכנים נוספים",
     image:
       "https://images.unsplash.com/photo-1547153760-18fc86324498?q=80&w=1000",
     muted: true,
     comingSoon: true,
+    description: "בהמשך יעלו עוד שיעורים, תרגולים ותכנים משלימים מתוך אותו עולם תנועה.",
   },
   {
-    name: "קונטמפוררי",
+    name: "עוד בהמשך",
     image:
       "https://images.unsplash.com/photo-1518834107812-67b0b7c58434?q=80&w=1000",
     muted: true,
     comingSoon: true,
+    description: "העמוד ימשיך להתמלא בהמשך בתכנים חדשים באותה שפה אמנותית ומודרנית.",
   },
 ] as const;
 
@@ -54,16 +57,16 @@ export const Styles = () => {
           className="mb-12 text-center"
         >
           <h2 className="mb-4 text-4xl font-black leading-none text-slate-900 md:text-5xl">
-            סגנונות ריקוד
-            <br /> במקום אחד
+            מחול מודרני
+            <br /> עם שפה אישית
           </h2>
           <p className="mx-auto max-w-2xl text-xl font-medium text-slate-600">
-            תוכלי להתחיל ממחול מודרני ולהתקדם בהמשך לעוד סגנונות, עם דגש
-            על ביטוי, טכניקה ונוכחות.
+            כרגע מחכה לך שיעור מרכזי אחד, ובהמשך יעלו עוד תכנים מתוך אותו
+            עולם של מחול מודרני שמשלב השפעות, ביטוי, טכניקה ונוכחות.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
+        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           {categories.map((style, i) => (
             <motion.div
               key={style.name}
@@ -71,61 +74,39 @@ export const Styles = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.05 }}
-              className="group flex flex-col items-center"
+              className={style.featured ? "lg:row-span-2" : ""}
             >
               {style.href ? (
                 <Link
                   href={style.href}
-                  className={`relative block w-full overflow-hidden rounded-[1.8rem] bg-white ${
-                    style.featured
-                      ? "ring-1 ring-slate-200 shadow-[0_20px_60px_rgba(15,23,42,0.12)]"
-                      : "shadow-sm transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl"
-                  }`}
+                  className="group block overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.10)] transition hover:-translate-y-1 hover:shadow-[0_25px_70px_rgba(15,23,42,0.14)]"
                 >
-                  <div className="relative aspect-[4/3] overflow-hidden">
-                    <div
-                      className={`absolute inset-0 ${
-                        style.muted ? "opacity-55 grayscale" : "opacity-100"
-                      }`}
-                    >
-                      <Image
-                        src={style.image}
-                        alt={style.name}
-                        fill
-                        className={`object-cover transition duration-500 ${
-                          style.muted ? "scale-100" : "group-hover:scale-105"
-                        }`}
-                        sizes="(max-width: 768px) 50vw, 25vw"
-                      />
+                  <div className="relative aspect-[4/5] sm:aspect-[16/10] lg:aspect-[4/5]">
+                    <Image
+                      src={style.image}
+                      alt={style.name}
+                      fill
+                      className="object-cover transition duration-500 group-hover:scale-105"
+                      sizes="(max-width: 1024px) 100vw, 60vw"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/30 to-transparent" />
+                    <div className="absolute right-4 top-4 rounded-full bg-[#f2cf88] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-950 shadow-lg">
+                      עכשיו באתר
                     </div>
 
-                    <div
-                      className={`absolute inset-0 transition duration-300 ${
-                        style.muted
-                          ? "bg-slate-950/30"
-                          : "bg-gradient-to-t from-slate-950/60 via-slate-900/15 to-transparent group-hover:from-slate-950/72 group-hover:via-slate-900/28"
-                      }`}
-                    />
-
-                    {!style.muted && (
-                      <div className="absolute inset-0 bg-white/0 backdrop-blur-0 transition duration-300 group-hover:bg-white/5 group-hover:backdrop-blur-[2px]" />
-                    )}
-
-                    {style.featured && (
-                      <div className="absolute left-4 top-4 rounded-full bg-[#f2cf88] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-950 shadow-lg">
-                        מומלץ
-                      </div>
-                    )}
-
-                    <div className="absolute inset-0 flex items-center justify-center p-5">
-                      <div className="text-center">
-                        <h3 className="text-xl font-black tracking-tight text-white md:text-2xl">
-                          {style.name}
-                        </h3>
-                        <p className="mx-auto mt-2 max-w-xs text-sm font-medium leading-6 text-white/85">
-                          {style.description}
+                    <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
+                      <div className="rounded-[1.5rem] border border-white/10 bg-black/25 p-5 text-right backdrop-blur-md">
+                        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#f2cf88]">
+                          שיעור מלא זמין
                         </p>
-                        <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/12 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white backdrop-blur-md transition group-hover:bg-white/18">
+                        <h3 className="mt-2 text-2xl font-black tracking-tight text-white sm:text-3xl">
+                          מחול מודרני
+                        </h3>
+                        <p className="mt-3 max-w-md text-sm font-medium leading-6 text-white/90 sm:text-base">
+                          שיעור מצולם ומדויק עם שילוב של טכניקה, הבעה, זרימה
+                          ונוכחות, בשפה תנועתית אישית וברורה.
+                        </p>
+                        <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/12 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white backdrop-blur-md transition group-hover:bg-white/20">
                           <span>{style.cta}</span>
                           <ArrowUpRight className="h-4 w-4" />
                         </div>
@@ -134,41 +115,34 @@ export const Styles = () => {
                   </div>
                 </Link>
               ) : (
-                <div className="relative block w-full overflow-hidden rounded-[1.8rem] bg-white shadow-sm">
-                  <div className="relative aspect-[4/3] overflow-hidden">
-                    <div
-                      className={`absolute inset-0 ${
-                        style.muted ? "opacity-55 grayscale" : "opacity-100"
-                      }`}
-                    >
-                      <Image
-                        src={style.image}
-                        alt={style.name}
-                        fill
-                        className={`object-cover transition duration-500 ${
-                          style.muted ? "scale-100" : "group-hover:scale-105"
-                        }`}
-                        sizes="(max-width: 768px) 50vw, 25vw"
-                      />
+                <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
+                  <div className="relative aspect-[16/10]">
+                    <Image
+                      src={style.image}
+                      alt={style.name}
+                      fill
+                      className="object-cover grayscale opacity-60"
+                      sizes="(max-width: 1024px) 100vw, 40vw"
+                    />
+                    <div className="absolute inset-0 bg-slate-950/45" />
+
+                    <div className="absolute inset-x-0 top-4 flex justify-center">
+                      <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/85 px-4 py-2 text-xs font-bold text-slate-700 shadow-lg backdrop-blur">
+                        <Clock3 className="h-4 w-4" />
+                        <span>יעלה בקרוב</span>
+                      </div>
                     </div>
-                    <div className="absolute inset-0 bg-slate-950/30" />
-                    <div className="absolute inset-0 flex items-center justify-center p-5">
-                      <div className="text-center">
+
+                    <div className="absolute inset-x-0 bottom-0 p-5">
+                      <div className="rounded-[1.5rem] border border-white/10 bg-black/15 p-5 text-right backdrop-blur-sm">
                         <h3 className="text-xl font-black tracking-tight text-white md:text-2xl">
                           {style.name}
                         </h3>
-                        <p className="mx-auto mt-2 max-w-xs text-sm font-medium leading-6 text-white/85">
+                        <p className="mt-3 text-sm font-medium leading-6 text-white/85">
                           {style.description}
                         </p>
                       </div>
                     </div>
-                    {style.comingSoon && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="rounded-full border border-white/70 bg-white/85 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-slate-700 shadow-lg backdrop-blur">
-                          בקרוב
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}

@@ -37,22 +37,20 @@ const Demo = () => {
           viewport={{ once: true }}
           className="relative"
         >
-          {/* Video Frame */}
           <div className="relative aspect-[16/9] overflow-hidden rounded-[2rem] border border-white/80 bg-white p-3 shadow-[0_30px_80px_rgba(15,23,42,0.14)] transition-transform duration-500 hover:rotate-0 md:-rotate-2">
             <div className="relative h-full w-full overflow-hidden rounded-[1.4rem] bg-slate-900">
-              <iframe
-                width="100%"
-                height="100%"
-                src="https://www.youtube.com/embed/p1MMaEHyIq8?rel=0&modestbranding=1"
-                title="וידאו טעימה לשיעור ריקוד"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                referrerPolicy="strict-origin-when-cross-origin"
-                allowFullScreen
-                className="w-full h-full object-cover"
-              ></iframe>
+              <video
+                className="h-full w-full object-cover"
+                src="/api/video/preview"
+                controls
+                playsInline
+                preload="auto"
+                controlsList="nodownload noplaybackrate"
+                onContextMenu={(e) => e.preventDefault()}
+              >
+                הדפדפן שלך לא תומך בניגון הווידאו.
+              </video>
 
-              {/* UI Overlay Elements */}
               <div className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-700 shadow-md backdrop-blur">
                 וידאו טעימה
               </div>
