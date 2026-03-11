@@ -9,11 +9,11 @@ import type { ReactNode } from "react";
 const mapErrorCodeToMessage = (code?: string) => {
   switch (code) {
     case "TOKEN_EXPIRED":
-      return "Your session expired. Please login again.";
+      return "פג תוקף ההתחברות. יש להתחבר מחדש.";
     case "IP_MISMATCH":
-      return "This account can only be accessed from the original device.";
+      return "אפשר להיכנס לחשבון הזה רק מהמכשיר המקורי.";
     default:
-      return "Please login to continue.";
+      return "יש להתחבר כדי להמשיך.";
   }
 };
 
@@ -30,7 +30,7 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   }, [errorCode, loading, router, user]);
 
   if (loading || !user) {
-    return <LoadingSpinner fullScreen label="Checking your access..." />;
+    return <LoadingSpinner fullScreen label="בודקים את הגישה שלך..." />;
   }
 
   return <>{children}</>;

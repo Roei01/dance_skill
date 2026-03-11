@@ -1,9 +1,9 @@
 export const DEFAULT_VIDEO_ID = "video_001";
-export const DEFAULT_VIDEO_TITLE = "Dance Tutorial";
+export const DEFAULT_VIDEO_TITLE = "שיעור ריקוד מלא";
 export const DEFAULT_VIDEO_PRICE_ILS = 180;
 
 export const DEFAULT_VIDEO_FEATURES = [
-  "1500+ Online Classes",
-  "10+ Beginner Programs",
-  "150+ Top Instructors",
+  "גישה מלאה לשיעור המצולם",
+  "הסברים ברורים וקצב למידה נוח",
+  "צפייה מכל מכשיר ובכל זמן",
 ] as const;

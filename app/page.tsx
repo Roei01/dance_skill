@@ -14,8 +14,6 @@ export default function Home() {
     <main className="min-h-screen bg-transparent text-slate-900">
       <Hero />
       <Styles />
-      <Demo />
-      <Purchase />
       <Footer />
     </main>
   );

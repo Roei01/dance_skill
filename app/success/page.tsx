@@ -18,29 +18,27 @@ export default function SuccessPage({ searchParams }: SuccessPageProps) {
           🎉
         </div>
         <h1 className="mt-6 text-4xl font-black text-slate-900">
-          Payment Successful
+          התשלום עבר בהצלחה
         </h1>
         <p className="mt-4 text-lg font-medium text-slate-600">
-          Thank you for purchasing the dance tutorial.
+          תודה שרכשת את שיעור הריקוד.
         </p>
         <p className="mt-3 text-base leading-7 text-slate-500">
-          You will receive an email with your login details and access link
-          within a few minutes.
+          בתוך כמה דקות יישלח אלייך מייל עם פרטי ההתחברות וקישור הגישה.
         </p>
 
         {email ? (
           <div className="mt-6 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm font-semibold text-emerald-700">
-            Your login credentials were sent to: {email}
+            פרטי ההתחברות נשלחו לכתובת: {email}
           </div>
         ) : null}
 
         <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-medium text-slate-600">
-          If email not received within 5 minutes: Check spam folder or contact
-          support.
+          אם לא קיבלת מייל בתוך 5 דקות, כדאי לבדוק גם בספאם או ליצור קשר.
         </div>
 
         <p className="mt-4 text-sm text-slate-500">
-          If you did not receive the email please contact support.
+          אם עדיין לא התקבל מייל, אפשר לפנות לתמיכה.
         </p>
 
         <div className="mt-8 flex flex-wrap justify-center gap-3">
@@ -48,13 +46,13 @@ export default function SuccessPage({ searchParams }: SuccessPageProps) {
             href="/login"
             className="rounded-2xl bg-slate-900 px-6 py-3 font-semibold text-white transition hover:bg-blue-700"
           >
-            Go to Login
+            לעמוד ההתחברות
           </Link>
           <Link
             href="/"
             className="rounded-2xl border border-slate-200 bg-white px-6 py-3 font-semibold text-slate-700 transition hover:border-slate-300"
           >
-            Back to Home
+            חזרה לעמוד הבית
           </Link>
         </div>
       </div>

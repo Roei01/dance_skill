@@ -26,11 +26,11 @@ function WatchContent() {
         const code = getApiErrorCode(error);
 
         if (code === 'PURCHASE_REQUIRED') {
-          setError('Access denied. This tutorial requires purchase.');
+          setError('הגישה נדחתה. כדי לצפות בשיעור צריך להשלים רכישה.');
         } else if (code === 'TOKEN_EXPIRED') {
-          setError('Your session expired. Please login again.');
+          setError('פג תוקף ההתחברות. יש להתחבר מחדש.');
         } else {
-          setError('Access denied. This tutorial requires purchase.');
+          setError('הגישה נדחתה. כדי לצפות בשיעור צריך להשלים רכישה.');
         }
       } finally {
         setAuthChecking(false);
@@ -41,7 +41,7 @@ function WatchContent() {
   }, [refreshAuth]);
 
   const handleVideoError = () => {
-    setError('Unable to load video. Please refresh the page.');
+    setError('לא ניתן לטעון את הווידאו. נסי לרענן את העמוד.');
   };
 
   useEffect(() => {
@@ -60,12 +60,12 @@ function WatchContent() {
   }, []);
 
   const classBreakdown = useMemo(
-    () => ['Intro & Warm Up', 'Drills & Foundation', 'Choreography Part 1', 'Choreography Part 2', 'Full Out'],
+    () => ['פתיחה וחימום', 'תרגילי יסוד', 'כוריאוגרפיה חלק א׳', 'כוריאוגרפיה חלק ב׳', 'ביצוע מלא'],
     []
   );
 
   if (authChecking) {
-    return <LoadingSpinner fullScreen label="Checking your tutorial access..." />;
+    return <LoadingSpinner fullScreen label="בודקים את הגישה שלך לשיעור..." />;
   };
 
   return (
@@ -80,18 +80,18 @@ function WatchContent() {
             >
               <div className="flex items-center gap-4 mb-4">
                 <span className="bg-blue-600 text-white px-3 py-1 text-xs font-bold rounded-lg shadow-sm">
-                  Beginner
+                  מתחילות
                 </span>
                 <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">
-                  Hip Hop • 45 Mins
+                  מחול מודרני • 45 דקות
                 </span>
               </div>
-              <h1 className="text-4xl md:text-5xl font-black mb-2 text-white uppercase tracking-tight">Master Dance<br/>Tutorial</h1>
-              <p className="text-slate-400 font-medium text-lg">with John Doe</p>
+              <h1 className="text-4xl md:text-5xl font-black mb-2 text-white uppercase tracking-tight">השיעור המלא<br/>שלך</h1>
+              <p className="text-slate-400 font-medium text-lg">עם רותם ברוך</p>
             </motion.div>
             
             {error ? (
-              <AuthErrorCard title="Access denied" message={error} />
+              <AuthErrorCard title="אין גישה" message={error} />
             ) : (
               <motion.div 
                 initial={{ scale: 0.98, opacity: 0 }}
@@ -112,17 +112,17 @@ function WatchContent() {
                   onLoadedData={() => setVideoReady(true)}
                   src="/api/video/stream/video_001"
                 >
-                  Your browser does not support the video tag.
+                  הדפדפן שלך לא תומך בניגון וידאו.
                 </video>
                 
-                <div className="absolute top-4 left-4 px-3 py-1 bg-black/50 text-white/70 text-[10px] font-bold uppercase tracking-widest pointer-events-none select-none rounded-full backdrop-blur-sm">
-                  Protected Content - Dance Skill
+                <div className="absolute top-4 right-4 px-3 py-1 bg-black/50 text-white/70 text-[10px] font-bold uppercase tracking-widest pointer-events-none select-none rounded-full backdrop-blur-sm">
+                  תוכן מוגן - Dance Skill
                 </div>
               </motion.div>
             )}
 
             <div className="space-y-6">
-              <h3 className="text-2xl font-bold text-white uppercase tracking-tight">Class Breakdown</h3>
+              <h3 className="text-2xl font-bold text-white uppercase tracking-tight">מבנה השיעור</h3>
               <div className="space-y-2">
                 {classBreakdown.map((section, i) => (
                   <div key={i} className="flex items-center justify-between p-4 bg-slate-800 hover:bg-slate-700 transition-colors rounded-xl cursor-pointer group border border-slate-700/50">
@@ -139,33 +139,33 @@ function WatchContent() {
           
           <div className="space-y-8">
             <div className="bg-slate-800 p-8 rounded-2xl border border-slate-700/50 shadow-lg">
-              <h3 className="text-xl font-bold mb-6 text-white uppercase tracking-tight">Instructor</h3>
+              <h3 className="text-xl font-bold mb-6 text-white uppercase tracking-tight">המדריך</h3>
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-16 h-16 bg-slate-700 rounded-full overflow-hidden border-2 border-slate-600">
                   {/* Instructor Image Placeholder */}
                   <div className="w-full h-full bg-gradient-to-br from-slate-600 to-slate-500" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-lg leading-none mb-1 text-white">John Doe</h4>
-                  <p className="text-xs font-bold text-blue-400 uppercase tracking-wider">World Champion</p>
+                  <h4 className="font-bold text-lg leading-none mb-1 text-white">רותם ברוך</h4>
+                  <p className="text-xs font-bold text-blue-400 uppercase tracking-wider">יוצר ומדריך</p>
                 </div>
               </div>
               <p className="text-sm text-slate-400 leading-relaxed font-medium mb-6">
-                John has toured with major artists and brings over 15 years of teaching experience. His style focuses on musicality and clean execution.
+                רותם מביא לשיעור גישה מדויקת, מוזיקלית ונקייה, עם דגש על נוכחות, הבעה וזרימה טבעית בתנועה.
               </p>
               <button className="w-full py-3 border border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest rounded-xl">
-                View Profile
+                לפרופיל
               </button>
             </div>
             
             <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-8 rounded-2xl text-center shadow-lg relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 blur-[50px] pointer-events-none" />
-              <h3 className="text-2xl font-black mb-2 text-white uppercase tracking-tight">Go Premium</h3>
+              <h3 className="text-2xl font-black mb-2 text-white uppercase tracking-tight">רוצה עוד?</h3>
               <p className="text-sm font-medium text-blue-100 mb-6 leading-relaxed opacity-90">
-                Unlock 1500+ classes and advanced features like loop mode and speed control.
+                המשיכי לעוד שיעורים, תרגולים וחוויית למידה מלאה שמתאימה להתקדמות שלך.
               </p>
               <button className="w-full py-4 bg-white text-blue-600 font-bold text-sm hover:bg-blue-50 transition-colors rounded-xl shadow-md uppercase tracking-wider">
-                Upgrade Now
+                לרכישה
               </button>
             </div>
           </div>
@@ -186,8 +186,8 @@ export default function Watch() {
         <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6">
           <div className="w-full max-w-xl">
             <AuthErrorCard
-              title="Access denied"
-              message="Access denied. This tutorial requires purchase."
+              title="אין גישה"
+              message="כדי לצפות בשיעור הזה צריך להשלים רכישה."
             />
           </div>
         </div>

@@ -20,23 +20,23 @@ export default function GlobalError({
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6">
       <div className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-[0_20px_50px_rgba(15,23,42,0.08)]">
         <h1 className="text-3xl font-black text-slate-900">
-          Something went wrong
+          משהו השתבש
         </h1>
         <p className="mt-4 text-base font-medium text-slate-600">
-          Please try again. If the problem continues, contact support.
+          נא לנסות שוב. אם הבעיה חוזרת, אפשר לפנות לתמיכה.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <button
             onClick={reset}
             className="rounded-2xl bg-slate-900 px-6 py-3 font-semibold text-white transition hover:bg-slate-800"
           >
-            Try Again
+            לנסות שוב
           </button>
           <Link
             href="/"
             className="rounded-2xl border border-slate-200 bg-white px-6 py-3 font-semibold text-slate-700 transition hover:border-slate-300"
           >
-            Back to Home
+            חזרה לעמוד הבית
           </Link>
         </div>
       </div>

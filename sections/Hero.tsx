@@ -49,38 +49,27 @@ export const Hero = () => {
 
           <div className="relative z-10 flex min-h-[78vh] items-end px-6 py-8 sm:px-10 sm:py-10 lg:px-16 lg:py-14">
             <div className="max-w-xl text-white">
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/75 sm:text-sm">
-                Online Dance Training
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#f7d98f] sm:text-sm">
+                שיעור אונליין
               </p>
-              <h1 className="mt-4 text-4xl font-black uppercase leading-[0.95] tracking-[-0.05em] sm:text-6xl lg:text-7xl">
-                Take Your Training
-                <span className="block">To The Next Level.</span>
+              <h1 className="mt-4 text-4xl font-black uppercase leading-[0.95] tracking-[-0.05em] text-white drop-shadow-[0_8px_24px_rgba(0,0,0,0.35)] sm:text-6xl lg:text-7xl">
+                תני לתנועה שלך
+                <span className="block text-[#ffe08f]">נוכחות אמיתית.</span>
               </h1>
-              <p className="mt-4 max-w-lg text-sm font-medium leading-6 text-white/80 sm:text-base">
-                Minimal, focused, and clear. Learn modern dance with musicality,
-                flow, and a class experience that feels powerful from the first move.
+              <p className="mt-4 max-w-md text-base font-semibold leading-7 text-white/90 sm:text-lg">
+                שיעור מחול מודרני ברור, מדויק ומלא השראה.
               </p>
 
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-8">
                 <button
                   onClick={() =>
                     document
-                      .getElementById("purchase")
+                      .getElementById("styles")
                       ?.scrollIntoView({ behavior: "smooth" })
                   }
-                  className="rounded-md bg-[#f3c969] px-6 py-4 text-sm font-bold uppercase tracking-[0.12em] text-slate-950 transition hover:bg-[#e8bd57]"
+                  className="rounded-xl bg-[#8fd6ff] px-7 py-4 text-sm font-bold uppercase tracking-[0.12em] text-slate-950 shadow-[0_14px_30px_rgba(143,214,255,0.35)] transition hover:bg-[#74cbff]"
                 >
-                  Start Dancing Now
-                </button>
-                <button
-                  onClick={() =>
-                    document
-                      .getElementById("demo")
-                      ?.scrollIntoView({ behavior: "smooth" })
-                  }
-                  className="rounded-md border border-white/30 bg-white/10 px-6 py-4 text-sm font-semibold uppercase tracking-[0.12em] text-white backdrop-blur transition hover:bg-white/20"
-                >
-                  Watch Preview
+                  לצפייה בסגנונות
                 </button>
               </div>
             </div>
@@ -90,30 +79,15 @@ export const Hero = () => {
         <div className="flex flex-col gap-5 border-t border-black/10 bg-white px-6 py-6 sm:px-10 lg:flex-row lg:items-center lg:justify-between lg:px-16">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">
-              Dance Training
+              חוויית אימון
             </p>
             <h2 className="mt-2 text-2xl font-black text-slate-900 sm:text-3xl">
-              Choreography, Seminars, Courses
+              כוריאוגרפיה, סדנאות וקורסים
             </h2>
             <p className="mt-2 max-w-2xl text-sm text-slate-600 sm:text-base">
-              Everything is designed to keep the hero cleaner and more premium,
-              with one clear action that leads users to start dancing now.
+              עמוד פתיחה נקי ומדויק שנותן תחושה מקצועית ומוביל ישירות לשיעור,
+              לטעימה ולרכישה.
             </p>
-          </div>
-
-          <div className="flex flex-wrap gap-3">
-            {socialLinks.map(({ href, label, icon: Icon }) => (
-              <a
-                key={label}
-                href={href}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
-              >
-                <Icon className="h-4 w-4" />
-                <span>{label}</span>
-              </a>
-            ))}
           </div>
         </div>
       </motion.div>

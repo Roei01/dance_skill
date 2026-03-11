@@ -38,13 +38,13 @@ export default function Login() {
       const code = getApiErrorCode(error);
 
       if (code === 'INVALID_CREDENTIALS') {
-        setError('Incorrect username or password.');
+        setError('שם המשתמש או הסיסמה שגויים.');
       } else if (code === 'IP_MISMATCH') {
-        setError('This account can only be accessed from the original device.');
+        setError('אפשר להיכנס לחשבון הזה רק מהמכשיר המקורי.');
       } else if (code === 'TOKEN_EXPIRED') {
-        setError('Session expired. Please login again.');
+        setError('פג תוקף ההתחברות. יש להתחבר מחדש.');
       } else {
-        setError('Incorrect username or password.');
+        setError('שם המשתמש או הסיסמה שגויים.');
       }
     } finally {
       setLoading(false);
@@ -52,7 +52,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-900 relative overflow-hidden text-left">
+    <div className="min-h-screen flex items-center justify-center bg-slate-900 relative overflow-hidden text-right">
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900" />
 
       <motion.div 
@@ -62,25 +62,25 @@ export default function Login() {
         className="max-w-md w-full bg-slate-800 p-12 rounded-2xl shadow-2xl border border-slate-700 relative z-10"
       >
         <div className="text-center mb-10">
-          <h1 className="text-4xl font-black tracking-tight text-white mb-2">Log In</h1>
-          <p className="text-slate-400 text-sm font-medium">Welcome back, dancer.</p>
+          <h1 className="text-4xl font-black tracking-tight text-white mb-2">התחברות</h1>
+          <p className="text-slate-400 text-sm font-medium">ברוכה הבאה חזרה.</p>
         </div>
         
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Username</label>
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mr-1">שם משתמש</label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full px-5 py-4 bg-slate-700 border border-slate-600 text-white focus:border-blue-500 focus:outline-none transition-colors rounded-xl font-medium"
-              placeholder="YOUR USERNAME"
+              placeholder="שם המשתמש שלך"
               required
             />
           </div>
           
           <div className="space-y-2">
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Password</label>
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mr-1">סיסמה</label>
             <input
               type="password"
               value={password}
@@ -109,10 +109,10 @@ export default function Login() {
             {loading ? (
               <>
                 <Loader2 className="h-5 w-5 animate-spin" />
-                <span>Verifying...</span>
+                <span>מאמתים...</span>
               </>
             ) : (
-              'Log In'
+              'להתחברות'
             )}
           </button>
         </form>

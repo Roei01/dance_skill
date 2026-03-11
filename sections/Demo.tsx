@@ -16,20 +16,18 @@ const Demo = () => {
           initial={{ opacity: 0, x: -50 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
-          className="relative z-10 text-left"
+          className="relative z-10 text-right"
         >
           <h2 className="mb-8 text-5xl font-black leading-[0.9] text-slate-900 md:text-7xl">
-            Not Your
+            טעימה מהשיעור
             <br />
-            Average
+            לפני
             <br />
-            Online
-            <br />
-            Tutorial
+            הרכישה
           </h2>
           <p className="max-w-lg text-xl font-medium leading-snug text-slate-600 md:text-2xl">
-            Our custom tools make your online learning experience just like a
-            class at a physical studio – but better.
+            כאן אפשר לראות את הסגנון, הקצב ואופן ההסבר. אם זה מרגיש נכון,
+            ממשיכים לרכישה ומקבלים את השיעור המלא.
           </p>
         </motion.div>
 
@@ -46,7 +44,7 @@ const Demo = () => {
                 width="100%"
                 height="100%"
                 src="https://www.youtube.com/embed/p1MMaEHyIq8?rel=0&modestbranding=1"
-                title="Dance Demo Video"
+                title="וידאו טעימה לשיעור ריקוד"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 referrerPolicy="strict-origin-when-cross-origin"
@@ -56,7 +54,7 @@ const Demo = () => {
 
               {/* UI Overlay Elements */}
               <div className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-700 shadow-md backdrop-blur">
-                Dance Preview
+                וידאו טעימה
               </div>
             </div>
           </div>

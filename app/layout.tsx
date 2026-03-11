@@ -6,18 +6,18 @@ import Providers from "./providers";
 export const dynamic = "force-dynamic";
 
 const rubik = Rubik({
-  subsets: ["latin"],
+  subsets: ["latin", "hebrew"],
   variable: "--font-sans",
 });
 
 const heebo = Heebo({
-  subsets: ["latin"],
+  subsets: ["latin", "hebrew"],
   variable: "--font-display",
 });
 
 export const metadata: Metadata = {
-  title: "Dance Skill | Learn to Dance Online",
-  description: "High-quality online dance classes. Start dancing today.",
+  title: "Dance Skill | לימודי ריקוד אונליין",
+  description: "שיעורי ריקוד אונליין ברמה גבוהה עם חוויית למידה מקצועית וברורה.",
 };
 
 export default function RootLayout({
@@ -27,8 +27,8 @@ export default function RootLayout({
 }) {
   return (
     <html
-      lang="en"
-      dir="ltr"
+      lang="he"
+      dir="rtl"
       className={`${rubik.variable} ${heebo.variable} scroll-smooth`}
     >
       <body className="font-sans bg-white text-slate-900">

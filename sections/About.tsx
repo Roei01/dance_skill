@@ -39,43 +39,43 @@ export const About = () => {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mb-16 max-w-4xl text-left"
+          className="mb-16 max-w-4xl text-right"
         >
           <h2 className="text-5xl md:text-7xl font-black mb-6 leading-none">
-            Step-by-Step
-            <br /> Learning For
-            <br /> All Levels
+            למידה מסודרת
+            <br /> וברורה
+            <br /> לכל רמה
           </h2>
           <p className="text-xl md:text-2xl text-slate-500 font-medium leading-tight max-w-2xl">
-            Whether you're just starting out or you've got some training under
-            your belt – we got you covered.
+            בין אם זו ההתחלה שלך ובין אם כבר יש לך בסיס, השיעורים בנויים
+            כדי לתת לך מסלול מדויק, נעים ומתקדם.
           </p>
         </motion.div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           <FeatureCard
-            level="Brand New"
+            level="חדשה לגמרי"
             color="bg-yellow-100" // Soft Yellow
-            title="Got two left feet?"
-            description="Start with our 10-day intro program to build coordination and rhythm from scratch."
+            title="מתחילה מאפס?"
+            description="תתחילי עם יסודות ברורים שיבנו קואורדינציה, קצב וביטחון כבר מהשלב הראשון."
           />
           <FeatureCard
-            level="Beginner"
+            level="מתחילות"
             color="bg-green-100" // Soft Green
-            title="Got the basics down?"
-            description="Level up with new moves, grooves, and simple routines."
+            title="יש לך כבר בסיס?"
+            description="תעלי רמה עם תנועות חדשות, גרוב, חיבורים נקיים ומשפטי תנועה פשוטים."
           />
           <FeatureCard
-            level="Intermediate"
+            level="ביניים"
             color="bg-emerald-100" // Soft Emerald
-            title="Feel pretty confident?"
-            description="Learn more challenging skills and longer pieces of choreography."
+            title="מרגישה בטוחה יותר?"
+            description="תעמיקי בטכניקה, בביטוי ובכוריאוגרפיות ארוכות ומורכבות יותר."
           />
           <FeatureCard
-            level="Advanced"
+            level="מתקדמות"
             color="bg-blue-100" // Soft Blue
-            title="Already killin' it?"
-            description="Train with top choreographers in the game and master complex musicality."
+            title="מחפשת דיוק ברמה גבוהה?"
+            description="עבודה עמוקה על מוזיקליות, נוכחות ותנועה מורכבת שמרגישה מקצועית ובוגרת."
           />
         </div>
       </div>
