@@ -55,16 +55,11 @@ router.get("/preview", (req, res) => {
     });
   }
 
-  return streamVideoFile(
-    res,
-    previewPath,
-    "video/mp4",
-    req.headers.range,
-  );
+  return streamVideoFile(res, previewPath, "video/mp4", req.headers.range);
 });
 
 router.get("/hero", (req, res) => {
-  const heroVideoPath = path.resolve(__dirname, "../assets/gif.mov");
+  const heroVideoPath = path.resolve(__dirname, "../assets/gif.mp4");
 
   if (!fs.existsSync(heroVideoPath)) {
     return res.status(404).json({
@@ -73,12 +68,7 @@ router.get("/hero", (req, res) => {
     });
   }
 
-  return streamVideoFile(
-    res,
-    heroVideoPath,
-    "video/mp4",
-    req.headers.range,
-  );
+  return streamVideoFile(res, heroVideoPath, "video/mp4", req.headers.range);
 });
 
 router.get(

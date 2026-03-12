@@ -1,7 +1,33 @@
 "use client";
+import { useRef } from "react";
 import { motion } from "framer-motion";
 
 const Demo = () => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const handleOpenFullscreen = async () => {
+    const video = videoRef.current;
+
+    if (!video) {
+      return;
+    }
+
+    try {
+      if (video.requestFullscreen) {
+        await video.requestFullscreen();
+        return;
+      }
+
+      (
+        video as HTMLVideoElement & {
+          webkitEnterFullscreen?: () => void;
+        }
+      ).webkitEnterFullscreen?.();
+    } catch {
+      // Ignore fullscreen failures and keep the inline player available.
+    }
+  };
+
   return (
     <section
       id="demo"
@@ -37,10 +63,18 @@ const Demo = () => {
           viewport={{ once: true }}
           className="relative"
         >
-          <div className="relative aspect-[16/9] overflow-hidden rounded-[2rem] border border-white/80 bg-white p-3 shadow-[0_30px_80px_rgba(15,23,42,0.14)] transition-transform duration-500 hover:rotate-0 md:-rotate-2">
+          <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] border border-white/80 bg-white p-3 shadow-[0_30px_80px_rgba(15,23,42,0.14)] transition-transform duration-500 hover:rotate-0 sm:aspect-[16/10] lg:aspect-[16/9] md:-rotate-2">
             <div className="relative h-full w-full overflow-hidden rounded-[1.4rem] bg-slate-900">
+              <button
+                type="button"
+                onClick={handleOpenFullscreen}
+                className="absolute left-4 top-4 z-10 rounded-full bg-black/55 px-3 py-1.5 text-[11px] font-bold text-white backdrop-blur transition hover:bg-black/70"
+              >
+                מסך מלא
+              </button>
               <video
-                className="h-full w-full object-cover"
+                ref={videoRef}
+                className="h-full w-full bg-black object-contain sm:object-cover"
                 src="/api/video/preview"
                 controls
                 playsInline
