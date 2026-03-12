@@ -1,7 +1,5 @@
-import Image from "next/image";
 import { motion } from "framer-motion";
 import { Facebook, Instagram, Music2, Youtube } from "lucide-react";
-import heroImage from "@/server/assets/IMG_5427.png";
 
 const socialLinks = [
   {
@@ -36,13 +34,14 @@ export const Hero = () => {
         className="mx-auto max-w-7xl overflow-hidden rounded-[2rem] border border-black/10 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.10)]"
       >
         <div className="relative min-h-[78vh]">
-          <Image
-            src={heroImage}
-            alt="Rotem Baruch dancing in studio"
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover"
+          <video
+            className="absolute inset-0 h-full w-full object-cover"
+            src="/api/video/hero"
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/35 to-black/10" />
           <div className="absolute inset-0 bg-black/15" />

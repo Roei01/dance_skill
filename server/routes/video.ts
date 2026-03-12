@@ -63,6 +63,24 @@ router.get("/preview", (req, res) => {
   );
 });
 
+router.get("/hero", (req, res) => {
+  const heroVideoPath = path.resolve(__dirname, "../assets/gif.mov");
+
+  if (!fs.existsSync(heroVideoPath)) {
+    return res.status(404).json({
+      code: "VIDEO_UNAVAILABLE",
+      message: "Unable to load hero video.",
+    });
+  }
+
+  return streamVideoFile(
+    res,
+    heroVideoPath,
+    "video/mp4",
+    req.headers.range,
+  );
+});
+
 router.get(
   "/stream/:videoId",
   authenticate,
