@@ -33,7 +33,8 @@ export const Hero = () => {
         transition={{ duration: 0.7 }}
         className="mx-auto max-w-7xl overflow-hidden rounded-[2rem] border border-black/10 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.10)]"
       >
-        <div className="relative min-h-[78vh]">
+        <div className="relative min-h-[82vh] sm:min-h-[70vh] lg:min-h-[82vh]">
+          {" "}
           <video
             className="absolute inset-0 h-full w-full object-cover"
             src="/api/video/hero"
@@ -45,20 +46,27 @@ export const Hero = () => {
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/35 to-black/10" />
           <div className="absolute inset-0 bg-black/15" />
-
-          <div className="relative z-10 flex min-h-[78vh] items-end px-6 py-8 sm:px-10 sm:py-10 lg:px-16 lg:py-14">
-            <div className="max-w-xl text-white">
+          <div className="relative z-10 flex min-h-[87vh] items-end px-4 py-8 sm:px-6 lg:px-10">
+            {" "}
+            <div className="max-w-xl text-right text-white">
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#f7d98f] sm:text-sm">
                 שיעור אונליין
               </p>
-              <h1 className="mt-4 text-4xl font-black uppercase leading-[0.95] tracking-[-0.05em] text-white drop-shadow-[0_8px_24px_rgba(0,0,0,0.35)] sm:text-6xl lg:text-7xl">
-                תני לתנועה שלך
-                <span className="block text-[#ffe08f]">נוכחות אמיתית.</span>
-              </h1>
+
+              <div dir="ltr" className="mt-4 text-left">
+                <h1 className="font-black uppercase leading-[0.95] tracking-[-0.05em] text-white">
+                  <span className="block text-2xl sm:text-3xl lg:text-4xl">
+                    Dance is for everyone.
+                  </span>
+                  <span className="block text-[#ffe08f] text-4xl sm:text-6xl lg:text-7xl">
+                    Everywhere.
+                  </span>
+                </h1>
+              </div>
+
               <p className="mt-4 max-w-md text-base font-semibold leading-7 text-white/90 sm:text-lg">
                 שיעור מחול מודרני ברור, מדויק ומלא השראה.
               </p>
-
               <div className="mt-8">
                 <button
                   onClick={() =>
