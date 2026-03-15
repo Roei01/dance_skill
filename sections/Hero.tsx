@@ -49,8 +49,11 @@ export const Hero = () => {
           <div className="relative z-10 flex min-h-[87vh] items-end px-4 py-8 sm:px-6 lg:px-10">
             {" "}
             <div className="max-w-xl text-right text-white">
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#f7d98f] sm:text-sm">
-                שיעור אונליין
+              <p
+                dir="ltr"
+                className="text-left text-xs font-semibold uppercase tracking-[0.28em] text-[#f7d98f] sm:text-sm"
+              >
+                online tutorial
               </p>
 
               <div dir="ltr" className="mt-4 text-left">
@@ -65,7 +68,9 @@ export const Hero = () => {
               </div>
 
               <p className="mt-4 max-w-md text-base font-semibold leading-7 text-white/90 sm:text-lg">
-                שיעור מחול מודרני ברור, מדויק ומלא השראה.
+                פיוז׳ן עם רותם ברוך
+                <br />
+                בואו לרקוד איתי בכל מקום, בכל זמן.
               </p>
               <div className="mt-8">
                 <button
@@ -74,7 +79,7 @@ export const Hero = () => {
                       .getElementById("styles")
                       ?.scrollIntoView({ behavior: "smooth" })
                   }
-                  className="rounded-xl bg-[#8fd6ff] px-7 py-4 text-sm font-bold uppercase tracking-[0.12em] text-slate-950 shadow-[0_14px_30px_rgba(143,214,255,0.35)] transition hover:bg-[#74cbff]"
+                  className="rounded-xl bg-[#ffe08f] px-7 py-4 text-sm font-bold uppercase tracking-[0.12em] text-slate-950 shadow-[0_14px_30px_rgba(143,214,255,0.35)] transition hover:bg-[#74cbff]"
                 >
                   לצפייה בשיעורים
                 </button>
