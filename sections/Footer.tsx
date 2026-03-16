@@ -11,7 +11,7 @@ export const Footer = () => {
               Rotem Baruch
             </span>
             <span className="text-[12px] font-bold tracking-[0.18em] text-white-300">
-              Dance Tutorials
+              dance tutorials
             </span>
           </div>
 

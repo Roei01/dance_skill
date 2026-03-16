@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { ArrowUpRight, Clock3 } from "lucide-react";
 import modernDanceImage from "../server/assets/IMG_2051.jpeg";
+import additionalLessonsImage from "../server/assets/addition.jpeg";
 
 type StyleCard = {
   name: string;
@@ -27,21 +28,11 @@ const categories: StyleCard[] = [
   },
   {
     name: "שיעורים מלאים נוספים",
-    image:
-      "https://images.unsplash.com/photo-1547153760-18fc86324498?q=80&w=1000",
+    image: additionalLessonsImage.src,
     muted: true,
     comingSoon: true,
     description:
       "שיעורים באורך של 15-30 דקות של כוראוגרפיות מלאות מוכרות וגם חדשות!",
-  },
-  {
-    name: "עוד בהמשך",
-    image:
-      "https://images.unsplash.com/photo-1518834107812-67b0b7c58434?q=80&w=1000",
-    muted: true,
-    comingSoon: true,
-    description:
-      "העמוד ימשיך להתמלא בהמשך בתכנים חדשים באותה שפה אמנותית ומודרנית.",
   },
 ] as const;
 
