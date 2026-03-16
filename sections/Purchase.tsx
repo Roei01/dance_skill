@@ -74,7 +74,7 @@ export const Purchase = () => {
           className="relative z-10 space-y-4 md:space-y-6 text-right"
         >
           <h2 className="text-3xl font-black uppercase tracking-tight leading-[0.95] text-slate-900 sm:text-4xl md:text-7xl md:tracking-tighter md:leading-[0.9]">
-            גישה מלאה לשיעור המלא
+            גישה לשיעור המלא
           </h2>
           <p className="max-w-lg text-base font-medium leading-7 text-slate-600 sm:text-lg md:text-2xl md:leading-snug">
             לאחר התשלום מקבלים גישה מיידית לשיעור המלא, עם צפייה נוחה הסברים
