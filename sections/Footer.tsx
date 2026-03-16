@@ -16,12 +16,9 @@ export const Footer = () => {
           </div>
 
           <div className="max-w-sm">
-            <h4 className="text-blue-500 font-bold text-sm mb-2">
-              הישארו מעודכנים
+            <h4 className="text-blue-500 font-bold text-s mb-4">
+              להרשמה לקבלת עדכונים על תכנים חדשים .{" "}
             </h4>
-            <p className="text-slate-400 text-sm mb-4">
-              חדשות, תכנים ועדכונים חדשים מעולם הריקוד.
-            </p>
             <div className="flex gap-2">
               <input
                 type="email"
