@@ -12,16 +12,6 @@ const socialLinks = [
     label: "Instagram",
     icon: Instagram,
   },
-  {
-    href: "https://www.youtube.com/@rotembaruch5608",
-    label: "YouTube",
-    icon: Youtube,
-  },
-  {
-    href: "https://www.facebook.com/share/1C3eYuVg5M/?mibextid=wwXIfr",
-    label: "Facebook",
-    icon: Facebook,
-  },
 ];
 
 export const Hero = () => {

@@ -28,7 +28,7 @@ export const PurchaseFaq = () => {
   const [openQuestion, setOpenQuestion] = useState<string | null>(null);
 
   return (
-    <div className="relative z-10 mx-auto mt-10 max-w-5xl px-6 md:mt-16">
+    <div id="faq" className="relative z-10 mx-auto mt-10 max-w-5xl px-6 md:mt-16">
       <div className="rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)] md:p-8">
         <h3 className="text-2xl font-black text-slate-900">שאלות נפוצות</h3>
         <div className="mt-4 grid gap-3 md:mt-6 md:gap-4 md:grid-cols-3">
