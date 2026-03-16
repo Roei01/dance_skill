@@ -47,17 +47,16 @@ export const Hero = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/35 to-black/10" />
           <div className="absolute inset-0 bg-black/15" />
           <div className="relative z-10 flex min-h-[87vh] items-end px-4 py-8 sm:px-6 lg:px-10">
-            {" "}
-            <div className="max-w-xl text-right text-white">
-              <p
+            <div className="w-full space-y-6 text-white sm:space-y-0">
+              <div
                 dir="ltr"
-                className="text-left text-xs font-semibold uppercase tracking-[0.28em] text-[#f7d98f] sm:text-sm"
+                className="max-w-[18rem] text-left sm:absolute sm:bottom-32 sm:left-6 sm:max-w-[26rem] lg:bottom-36 lg:left-10 lg:max-w-[34rem]"
               >
-                online tutorial
-              </p>
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#f7d98f] sm:text-sm">
+                  online tutorial
+                </p>
 
-              <div dir="ltr" className="mt-4 text-left">
-                <h1 className="font-black uppercase leading-[0.95] tracking-[-0.05em] text-white">
+                <h1 className="mt-4 font-black uppercase leading-[0.95] tracking-[-0.05em] text-white">
                   <span className="block text-2xl sm:text-3xl lg:text-4xl">
                     Dance is for everyone.
                   </span>
@@ -67,22 +66,24 @@ export const Hero = () => {
                 </h1>
               </div>
 
-              <p className="mt-4 max-w-md text-base font-semibold leading-7 text-white/90 sm:text-lg">
-                פיוז׳ן עם רותם ברוך
-                <br />
-                בואו לרקוד איתי בכל מקום, בכל זמן.
-              </p>
-              <div className="mt-8">
-                <button
-                  onClick={() =>
-                    document
-                      .getElementById("styles")
-                      ?.scrollIntoView({ behavior: "smooth" })
-                  }
-                  className="rounded-xl bg-[#ffe08f] px-7 py-4 text-sm font-bold uppercase tracking-[0.12em] text-slate-950 shadow-[0_14px_30px_rgba(143,214,255,0.35)] transition hover:bg-[#74cbff]"
-                >
-                  לצפייה בשיעורים
-                </button>
+              <div className="ml-auto max-w-md text-right">
+                <p className="text-base font-semibold leading-7 text-white/90 sm:mt-4 sm:text-lg">
+                  פיוז׳ן עם רותם ברוך
+                  <br />
+                  בואו לרקוד איתי בכל מקום, בכל זמן.
+                </p>
+                <div className="mt-8">
+                  <button
+                    onClick={() =>
+                      document
+                        .getElementById("styles")
+                        ?.scrollIntoView({ behavior: "smooth" })
+                    }
+                    className="rounded-xl bg-[#ffe08f] px-7 py-4 text-sm font-bold uppercase tracking-[0.12em] text-slate-950 shadow-[0_14px_30px_rgba(143,214,255,0.35)] transition hover:bg-[#74cbff]"
+                  >
+                    לצפייה בשיעורים
+                  </button>
+                </div>
               </div>
             </div>
           </div>
