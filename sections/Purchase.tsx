@@ -9,25 +9,10 @@ import {
 } from "lucide-react";
 import { api, getApiErrorCode, isNetworkError } from "@/lib/api-client";
 import { PaymentErrorCard } from "@/components/errors/PaymentErrorCard";
+import { PurchaseFaq } from "@/components/purchase/PurchaseFaq";
 import { DEFAULT_VIDEO_FEATURES, DEFAULT_VIDEO_PRICE_ILS } from "@/lib/catalog";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const faqItems = [
-  {
-    question: "איך מקבלים גישה לשיעור?",
-    answer:
-      "אחרי התשלום יישלח אלייך מייל עם פרטי ההתחברות וקישור מאובטח לצפייה.",
-  },
-  {
-    question: "אפשר לצפות גם מהטלפון?",
-    answer:
-      "כן. הנגן מותאם למובייל, טאבלט ומחשב ועובד בצורה מלאה בכל המכשירים.",
-  },
-  {
-    question: "מה קורה אחרי הרכישה?",
-    answer: "התשלום מאושר, פרטי הגישה מוכנים אוטומטית ונשלחים אלייך במייל.",
-  },
-] as const;
 
 export const Purchase = () => {
   const [email, setEmail] = useState("");
@@ -121,12 +106,6 @@ export const Purchase = () => {
               </p>
             </div>
             <div className="rounded-2xl border border-white/80 bg-white/80 p-3 shadow-sm md:p-4">
-              <BadgeDollarSign className="h-4 w-4 text-blue-600 md:h-5 md:w-5" />
-              <p className="mt-2 text-xs font-semibold leading-5 text-slate-800 md:mt-3 md:text-sm">
-                אחריות שביעות רצון ל־7 ימים
-              </p>
-            </div>
-            <div className="rounded-2xl border border-white/80 bg-white/80 p-3 shadow-sm md:p-4">
               <Smartphone className="h-4 w-4 text-rose-500 md:h-5 md:w-5" />
               <p className="mt-2 text-xs font-semibold leading-5 text-slate-800 md:mt-3 md:text-sm">
                 צפייה במובייל, טאבלט או מחשב
@@ -152,7 +131,7 @@ export const Purchase = () => {
                 ₪{DEFAULT_VIDEO_PRICE_ILS}
               </span>
               <span className="text-lg font-bold text-slate-400 line-through decoration-2 decoration-rose-400 md:text-2xl">
-                100
+                80
               </span>
             </div>
           </div>
@@ -216,26 +195,7 @@ export const Purchase = () => {
         </motion.div>
       </div>
 
-      <div className="relative z-10 mx-auto mt-10 max-w-5xl px-6 md:mt-16">
-        <div className="rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)] md:p-8">
-          <h3 className="text-2xl font-black text-slate-900">שאלות נפוצות</h3>
-          <div className="mt-4 grid gap-3 md:mt-6 md:gap-4 md:grid-cols-3">
-            {faqItems.map((item) => (
-              <div
-                key={item.question}
-                className="rounded-2xl border border-slate-100 bg-slate-50 p-4 md:p-5"
-              >
-                <p className="text-base font-bold text-slate-800">
-                  {item.question}
-                </p>
-                <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
-                  {item.answer}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <PurchaseFaq />
     </section>
   );
 };

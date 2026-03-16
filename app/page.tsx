@@ -8,12 +8,14 @@ import { Styles } from "@/sections/Styles";
 import { Demo } from "@/sections/Demo";
 import { Purchase } from "@/sections/Purchase";
 import { Footer } from "@/sections/Footer";
+import { PurchaseFaq } from "@/components/purchase/PurchaseFaq";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-transparent text-slate-900">
+    <main className="min-h-screen bg-transparent text-slate-900 space-y-10">
       <Hero />
       <Styles />
+      <PurchaseFaq />
       <Footer />
     </main>
   );

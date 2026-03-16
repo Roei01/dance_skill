@@ -33,7 +33,7 @@ export const Hero = () => {
         transition={{ duration: 0.7 }}
         className="mx-auto max-w-7xl overflow-hidden rounded-[2rem] border border-black/10 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.10)]"
       >
-        <div className="relative min-h-[82vh] sm:min-h-[70vh] lg:min-h-[82vh]">
+        <div className="relative h-[670px] sm:h-[600px] lg:h-[800px]">
           {" "}
           <video
             className="absolute inset-0 h-full w-full object-cover"

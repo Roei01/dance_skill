@@ -40,7 +40,7 @@ export const Styles = () => {
   return (
     <section
       id="styles"
-      className="relative overflow-hidden bg-slate-50 py-24 text-slate-900"
+      className="relative overflow-hidden bg-slate-50 pt-2 pb-5 text-slate-900"
     >
       <div className="mx-auto max-w-7xl px-6">
         <motion.div
