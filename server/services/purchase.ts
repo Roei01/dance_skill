@@ -3,6 +3,7 @@ import { User } from "../../models/User";
 import { DEFAULT_VIDEO_ID } from "../../lib/catalog";
 import { sendAccessEmail } from "./email";
 import { generateTempPassword, hashPassword } from "./auth";
+import { config } from "../config/env";
 
 export const provisionPurchaseAccess = async (paymentId: string) => {
   const purchase = await Purchase.findOne({ paymentId });
@@ -26,7 +27,7 @@ export const provisionPurchaseAccess = async (paymentId: string) => {
   user.passwordHash = await hashPassword(tempPassword);
   await user.save();
 
-  const loginLink = `${process.env.APP_BASE_URL}/login`;
+  const loginLink = `${config.appUrl}/login`;
   await sendAccessEmail(user.email, user.username, loginLink, tempPassword);
 
   return {

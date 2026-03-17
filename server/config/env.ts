@@ -7,8 +7,12 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const envSchema = z.object({
   DATABASE_URL: z.string().url(),
-  GREENINVOICE_API_KEY: z.string().optional(), // Optional for now as user might not have one immediately
-  GREENINVOICE_API_URL: z.string().url().default('https://sandbox.greeninvoice.co.il/api/v1'),
+  GREENINVOICE_API_KEY: z.string().optional(),
+  GREENINVOICE_API_SECRET: z.string().optional(),
+  GREENINVOICE_API_URL: z
+    .string()
+    .url()
+    .default('https://api.greeninvoice.co.il/api/v1'),
   EMAIL_HOST: z.string().min(1),
   EMAIL_PORT: z.string().transform((val) => parseInt(val, 10)),
   EMAIL_USER: z.string().optional(),
@@ -33,6 +37,7 @@ export const config = {
   videoSecret: env.data.VIDEO_SECRET_TOKEN,
   greenInvoice: {
     key: env.data.GREENINVOICE_API_KEY,
+    secret: env.data.GREENINVOICE_API_SECRET,
     url: env.data.GREENINVOICE_API_URL,
   },
   email: {
