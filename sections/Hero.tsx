@@ -23,7 +23,7 @@ export const Hero = () => {
         transition={{ duration: 0.7 }}
         className="mx-auto max-w-7xl overflow-hidden rounded-[2rem] border border-black/10 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.10)] xl:max-w-6xl 2xl:max-w-[72rem]"
       >
-        <div className="relative aspect-[5/6] min-[638px]:aspect-[4/3] md:aspect-[16/10] xl:aspect-[3/2] 2xl:aspect-[8/5]">
+        <div className="relative h-[600px] min-[478px]:h-auto min-[478px]:aspect-[5/6] min-[638px]:aspect-[4/3] md:aspect-[16/10] xl:aspect-[3/2] 2xl:aspect-[8/5]">
           {" "}
           <video
             className="absolute inset-0 h-full w-full object-cover object-center"
