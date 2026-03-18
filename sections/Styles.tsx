@@ -39,7 +39,8 @@ const categories: StyleCard[] = [
     description:
       "שיעורים באורך של 15-30 דקות של כוראוגרפיות מלאות מוכרות וגם חדשות!",
     mediaClassName: "aspect-[11/10] min-[294px]:aspect-[12/10]",
-    imageClassName: "object-cover object-bottom grayscale opacity-80",
+    imageClassName:
+      "object-cover object-[center_82%] scale-[1.12] grayscale opacity-80",
   },
 ] as const;
 
