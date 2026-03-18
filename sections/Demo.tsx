@@ -52,21 +52,21 @@ const Demo = () => {
   return (
     <section
       id="demo"
-      className="relative overflow-hidden bg-gradient-to-br from-[#f8fbff] via-white to-[#fff4ef] py-16 text-slate-900"
+      className="relative overflow-hidden bg-gradient-to-br from-[#f8fbff] via-white to-[#fff4ef] py-12 text-slate-900 md:py-16"
     >
       <div className="absolute inset-0">
         <div className="absolute left-0 top-10 h-72 w-72 rounded-full bg-blue-100/60 blur-3xl" />
         <div className="absolute bottom-0 right-10 h-80 w-80 rounded-full bg-orange-100/60 blur-3xl" />
       </div>
-      <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-2 items-center">
+      <div className="mx-auto grid max-w-5xl items-center gap-8 px-6 md:gap-10">
         <motion.div
           initial={{ opacity: 0, x: -50 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
-          className="relative z-10 text-right"
+          className="relative z-10 text-center"
         >
-          <h2 className="mb-4 text-4xl font-black leading-[0.9] text-slate-900 md:text-7xl">
-            סרטון מלא של הריקוד <br />
+          <h2 className="mx-auto max-w-xl text-[clamp(2rem,5vw,4.25rem)] font-black leading-[1.02] tracking-[-0.04em] text-slate-900">
+            <span className="block">סרטון מלא של הריקוד</span>
           </h2>
         </motion.div>
 
@@ -74,14 +74,14 @@ const Demo = () => {
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="relative mx-auto w-full max-w-sm lg:max-w-none"
+          className="relative mx-auto w-full max-w-md"
         >
-          <div className="relative aspect-[9/16] overflow-hidden rounded-[2rem] border border-white/80 bg-white p-3 shadow-[0_30px_80px_rgba(15,23,42,0.14)] transition-transform duration-500 hover:rotate-0 sm:aspect-[16/10] lg:aspect-[16/9] md:-rotate-2">
+          <div className="relative aspect-[10/16] overflow-hidden rounded-[2rem] border border-white/80 bg-white p-2.5 shadow-[0_30px_80px_rgba(15,23,42,0.14)] transition-transform duration-500 hover:rotate-0">
             <div className="relative h-full w-full overflow-hidden rounded-[1.4rem] bg-slate-900">
               <button
                 type="button"
                 onClick={handleOpenFullscreen}
-                className="absolute left-4 top-4 z-10 rounded-full bg-black/55 px-3 py-1.5 text-[11px] font-bold text-white backdrop-blur transition hover:bg-black/70"
+                className="absolute left-3 top-3 z-10 rounded-full bg-black/55 px-3 py-1.5 text-[11px] font-bold text-white backdrop-blur transition hover:bg-black/70"
               >
                 מסך מלא
               </button>
@@ -107,8 +107,8 @@ const Demo = () => {
                   className="absolute inset-0 z-10 flex items-center justify-center bg-gradient-to-t from-black/55 via-black/15 to-black/35 transition hover:bg-black/35"
                   aria-label="ניגון הסרטון"
                 >
-                  <div className="flex items-center gap-3 rounded-full border border-white/20 bg-black/45 px-5 py-3 text-white shadow-2xl backdrop-blur-md">
-                    <PlayCircle className="h-7 w-7" />
+                  <div className="flex items-center gap-3 rounded-full border border-white/20 bg-black/45 px-4 py-3 text-white shadow-2xl backdrop-blur-md">
+                    <PlayCircle className="h-6 w-6" />
                     <span className="text-sm font-bold">
                       {isStarting ? "טוען..." : "לצפייה בסרטון"}
                     </span>

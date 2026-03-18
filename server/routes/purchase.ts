@@ -2,7 +2,10 @@ import express from 'express';
 import { z } from 'zod';
 import { Purchase } from '../../models/Purchase';
 import { User } from '../../models/User';
-import { createPayment } from '../services/payment';
+import {
+  createGreenInvoicePayment,
+  GreenInvoiceError,
+} from '../services/greenInvoice';
 import { generateTempPassword, hashPassword } from '../services/auth';
 import { provisionPurchaseAccess } from '../services/purchase';
 import { purchaseRateLimiter } from '../middleware/rateLimit';
@@ -30,11 +33,11 @@ router.post('/create', purchaseRateLimiter, async (req, res) => {
     }
 
     const { email } = validation.data;
-    let user = await User.findOne({ email });
+    const existingUser = await User.findOne({ email });
 
-    if (user) {
+    if (existingUser) {
       const existingPurchase = await Purchase.findOne({
-        userId: user._id,
+        userId: existingUser._id,
         videoId: DEFAULT_VIDEO_ID,
         status: 'completed',
       });
@@ -47,21 +50,28 @@ router.post('/create', purchaseRateLimiter, async (req, res) => {
       }
     }
 
+    const payment = await createGreenInvoicePayment(
+      email,
+      DEFAULT_VIDEO_PRICE_ILS,
+      DEFAULT_VIDEO_TITLE
+    );
+
+    let user = existingUser;
+
     if (!user) {
       const tempPass = await hashPassword(generateTempPassword());
+      const baseUsername =
+        email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '') || 'user';
+      const username = `${baseUsername}_${Date.now().toString(36)}${Math.random()
+        .toString(36)
+        .slice(2, 6)}`;
+
       user = await User.create({
         email,
-        username: email.split('@')[0] + Math.floor(Math.random() * 1000),
+        username,
         passwordHash: tempPass,
       });
     }
-
-    const payment = await createPayment(
-      email,
-      DEFAULT_VIDEO_PRICE_ILS,
-      DEFAULT_VIDEO_TITLE,
-      'Valued Dancer'
-    );
 
     await Purchase.deleteMany({
       userId: user._id,
@@ -76,16 +86,23 @@ router.post('/create', purchaseRateLimiter, async (req, res) => {
       status: 'pending',
     });
 
-    if (payment.paymentId.startsWith('mock_')) {
-      await provisionPurchaseAccess(payment.paymentId);
-    }
-
-    res.json({ 
+    res.json({
       checkoutUrl: payment.checkoutUrl,
-      paymentId: payment.paymentId,
-      email,
     });
   } catch (error) {
+    if (error instanceof GreenInvoiceError) {
+      logger.error('Purchase error:', {
+        code: error.code,
+        statusCode: error.statusCode,
+        message: error.message,
+      });
+
+      return res.status(error.statusCode).json({
+        code: error.code,
+        message: error.message,
+      });
+    }
+
     logger.error('Purchase error:', error);
     res.status(500).json({
       code: 'INTERNAL_ERROR',
@@ -95,9 +112,18 @@ router.post('/create', purchaseRateLimiter, async (req, res) => {
 });
 
 router.post('/webhook', async (req, res) => {
-  const { paymentId, status } = req.body;
+  const paymentId =
+    req.body?.paymentId ||
+    req.body?.id ||
+    req.body?.productId ||
+    req.body?.transactions?.[0]?.id;
 
-  if (status === 'success' || status === 'completed') {
+  const status =
+    req.body?.status ||
+    req.body?.paymentStatus ||
+    (req.body?.transactions?.length ? 'completed' : undefined);
+
+  if (paymentId && (status === 'success' || status === 'completed')) {
     try {
       await provisionPurchaseAccess(paymentId);
     } catch (error) {

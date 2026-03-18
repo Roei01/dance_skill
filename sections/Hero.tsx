@@ -21,12 +21,12 @@ export const Hero = () => {
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7 }}
-        className="mx-auto max-w-7xl overflow-hidden rounded-[2rem] border border-black/10 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.10)]"
+        className="mx-auto max-w-7xl overflow-hidden rounded-[2rem] border border-black/10 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.10)] xl:max-w-6xl 2xl:max-w-[72rem]"
       >
-        <div className="relative h-[600px] sm:h-[560px] lg:h-[720px]">
+        <div className="relative aspect-[5/6] min-[638px]:aspect-[4/3] md:aspect-[16/10] xl:aspect-[3/2] 2xl:aspect-[8/5]">
           {" "}
           <video
-            className="absolute inset-0 h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full object-cover object-center"
             src="/api/video/hero"
             autoPlay
             loop
@@ -40,7 +40,7 @@ export const Hero = () => {
             <div className="w-full space-y-6 text-white sm:space-y-0">
               <div
                 dir="ltr"
-                className="max-w-[18rem] text-left sm:absolute sm:bottom-32 sm:left-6 sm:max-w-[26rem] lg:bottom-36 lg:left-10 lg:max-w-[34rem]"
+                className="mr-auto max-w-[18rem] self-start text-left sm:absolute sm:bottom-32 sm:left-6 sm:mr-0 sm:max-w-[26rem] lg:bottom-36 lg:left-10 lg:max-w-[34rem]"
               >
                 <p className="text-xs font-semibold tracking-[0.28em] text-[#f7d98f] sm:text-sm">
                   Online tutorials

@@ -34,10 +34,11 @@ export default function ModernDancePage() {
                   מודרני פיוז׳ן
                 </p>
 
-                <h1 className="max-w-3xl text-4xl font-black leading-[0.92] tracking-[-0.05em] text-slate-900 md:text-5xl">
-                  שיעור לשיר אהבת השם של בן צור.
-                  <br />
-                  רמת בינוני מתקדמים{" "}
+                <h1 className="max-w-3xl text-[clamp(2rem,6vw,4.5rem)] font-black leading-[1.02] tracking-[-0.04em] text-slate-900">
+                  <span className="block">שיעור לשיר אהבת השם של בן צור.</span>
+                  <span className="mt-2 block text-[0.82em] leading-[1.08] text-slate-700">
+                    רמת בינוני מתקדמים
+                  </span>
                 </h1>
                 <p className="max-w-xl text-lg font-medium leading-6 text-slate-600">
                   כדי לצפות בקומבו לחצו ״לצפייה״

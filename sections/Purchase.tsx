@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -10,12 +11,21 @@ import {
 import { api, getApiErrorCode, isNetworkError } from "@/lib/api-client";
 import { PaymentErrorCard } from "@/components/errors/PaymentErrorCard";
 import { PurchaseFaq } from "@/components/purchase/PurchaseFaq";
-import { DEFAULT_VIDEO_FEATURES, DEFAULT_VIDEO_PRICE_ILS } from "@/lib/catalog";
+import { DEFAULT_VIDEO_PRICE_ILS } from "@/lib/catalog";
+import {
+  BUSINESS_ADDRESS,
+  BUSINESS_CONTACT_EMAIL,
+  BUSINESS_CONTACT_PHONE,
+  MINIMUM_PURCHASE_AGE,
+} from "@/lib/business-info";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const Purchase = () => {
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
@@ -30,11 +40,28 @@ export const Purchase = () => {
       return;
     }
 
+    if (fullName.trim().length < 2) {
+      setError("נא להזין שם מלא.");
+      return;
+    }
+
+    if (phone.trim().length < 9) {
+      setError("נא להזין מספר טלפון תקין.");
+      return;
+    }
+
+    if (!acceptedTerms) {
+      setError("יש לאשר את התנאים והתקנון לפני המעבר לתשלום.");
+      return;
+    }
+
     setLoading(true);
     setStatusMessage("מכינים עבורך תשלום מאובטח...");
 
     try {
       const response = await api.post("/purchase/create", {
+        fullName: fullName.trim(),
+        phone: phone.trim(),
         email: email.trim(),
       });
 
@@ -94,6 +121,35 @@ export const Purchase = () => {
                 צפייה במובייל, טאבלט או מחשב
               </p>
             </div>
+            <div className="rounded-2xl border border-white/80 bg-white/80 p-3 shadow-sm md:p-4">
+              <BadgeDollarSign className="h-4 w-4 text-amber-500 md:h-5 md:w-5" />
+              <p className="mt-2 text-xs font-semibold leading-5 text-slate-800 md:mt-3 md:text-sm">
+                אישור תקנון לפני המעבר לתשלום
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-[1.75rem] border border-white/80 bg-white/85 p-4 shadow-sm md:p-5">
+            <h3 className="text-sm font-black text-slate-900 md:text-base">
+              פרטי העסק והרכישה
+            </h3>
+            <div className="mt-3 space-y-2 text-sm font-medium leading-6 text-slate-600">
+              <p>טלפון ליצירת קשר: {BUSINESS_CONTACT_PHONE}</p>
+              <p>אימייל: {BUSINESS_CONTACT_EMAIL}</p>
+              <p>כתובת העסק: {BUSINESS_ADDRESS}</p>
+              <p>רכישה באתר מגיל {MINIMUM_PURCHASE_AGE} ומעלה.</p>
+              <p>
+                אספקת המוצר היא דיגיטלית, ונשלחת לאחר התשלום לכתובת האימייל
+                שהוזנה בטופס.
+              </p>
+              <p>
+                ניתן לעיין בתנאים המלאים בעמוד{" "}
+                <Link href="/terms" className="font-bold text-slate-900 underline">
+                  התקנון והמדיניות
+                </Link>
+                .
+              </p>
+            </div>
           </div>
         </motion.div>
 
@@ -117,6 +173,46 @@ export const Purchase = () => {
           </div>
 
           <form onSubmit={handlePurchase} className="space-y-4">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-right text-sm font-semibold text-slate-600">
+              לפני המעבר לתשלום יש למלא פרטי לקוח ולאשר את התנאים והתקנון.
+            </div>
+
+            <div className="space-y-1 text-right">
+              <label
+                htmlFor="fullName"
+                className="mr-1 block text-xs font-bold uppercase tracking-wider text-slate-500"
+              >
+                שם מלא
+              </label>
+              <input
+                id="fullName"
+                type="text"
+                placeholder="שם פרטי ושם משפחה"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400 focus:outline-none md:px-5 md:py-4"
+              />
+            </div>
+
+            <div className="space-y-1 text-right">
+              <label
+                htmlFor="phone"
+                className="mr-1 block text-xs font-bold uppercase tracking-wider text-slate-500"
+              >
+                טלפון ליצירת קשר
+              </label>
+              <input
+                id="phone"
+                type="tel"
+                placeholder="050-000-0000"
+                required
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400 focus:outline-none md:px-5 md:py-4"
+              />
+            </div>
+
             <div className="space-y-1 text-right">
               <label
                 htmlFor="email"
@@ -134,6 +230,26 @@ export const Purchase = () => {
                 className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400 focus:outline-none md:px-5 md:py-4"
               />
             </div>
+
+            <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-right">
+              <input
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-400"
+              />
+              <span className="text-sm font-medium leading-6 text-slate-600">
+                אני מאשר/ת את{" "}
+                <Link href="/terms" className="font-bold text-slate-900 underline">
+                  התנאים והתקנון
+                </Link>{" "}
+                ואת{" "}
+                <Link href="/terms#privacy" className="font-bold text-slate-900 underline">
+                  מדיניות הפרטיות
+                </Link>
+                .
+              </span>
+            </label>
 
             {error ? (
               <motion.div
@@ -155,7 +271,7 @@ export const Purchase = () => {
             ) : null}
 
             <button
-              disabled={loading}
+              disabled={loading || !acceptedTerms}
               className="relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-slate-900 py-4 text-base font-black text-white shadow-lg transition-all hover:-translate-y-1 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 md:py-5 md:text-lg"
             >
               <span className="relative z-10">
