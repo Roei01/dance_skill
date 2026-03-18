@@ -16,8 +16,8 @@ const heebo = Heebo({
 });
 
 export const metadata: Metadata = {
-  title: "Dance Skill | לימודי ריקוד אונליין",
-  description: "שיעורי ריקוד אונליין ברמה גבוהה עם חוויית למידה מקצועית וברורה.",
+  title: "ROTEM BARUCH dance tutorials",
+  description: "מודרני פיוז׳ן אונליין עם רותם ברוך בואו לרקוד איתי בכל מקום בכל זמן :)",
 };
 
 export default function RootLayout({
