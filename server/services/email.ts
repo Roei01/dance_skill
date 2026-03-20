@@ -12,21 +12,39 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+const brandName = 'ROTEM BARUCH dance tutorials';
+
 export const sendAccessEmail = async (email: string, username: string, accessLink: string, password?: string) => {
+  const accessHost = (() => {
+    try {
+      return new URL(accessLink).host;
+    } catch {
+      return accessLink;
+    }
+  })();
+  const fromAddress = config.email.user
+    ? `"${brandName}" <${config.email.user}>`
+    : `"${brandName}" <no-reply@rotembaruch.dance>`;
+
   const mailOptions = {
-    from: '"Dance Skill Team" <no-reply@danceskill.com>',
+    from: fromAddress,
     to: email,
-    subject: 'Your Dance Tutorial Access',
+    subject: 'הגישה שלך לשיעור',
     html: `
-      <h1>Welcome to Dance Skill!</h1>
-      <p>Thank you for your purchase. Here are your login details:</p>
-      <ul>
-        <li><strong>Username:</strong> ${username}</li>
-        ${password ? `<li><strong>Temporary Password:</strong> ${password}</li>` : ''}
-      </ul>
-      <p>Access your video here:</p>
-      <a href="${accessLink}" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Watch Video</a>
-      <p>Please note: This link is for your personal use only. Sharing your login details may result in account suspension.</p>
+      <div dir="rtl" style="font-family: system-ui, sans-serif; line-height: 1.6;">
+        <h1 style="margin-bottom: 0.5em;">${brandName}</h1>
+        <p>תודה על הרכישה. להלן פרטי ההתחברות שלך:</p>
+        <ul style="padding-right: 1.25em;">
+          <li><strong>שם משתמש:</strong> ${username}</li>
+          ${password ? `<li><strong>סיסמה זמנית:</strong> ${password}</li>` : ''}
+        </ul>
+        <p>דף ההתחברות ייפתח דרך האתר שלך בכתובת: <strong>${accessHost}</strong></p>
+        <p>קישור להתחברות לצפייה בשיעור:</p>
+        <p><a href="${accessLink}" style="padding: 10px 20px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 5px; display: inline-block;">מעבר לדף ההתחברות</a></p>
+        <p style="font-size: 0.9em; color: #555;">אם הכפתור לא נפתח, אפשר להעתיק את הקישור הזה:</p>
+        <p style="word-break: break-all; font-size: 0.9em; color: #2563eb;">${accessLink}</p>
+        <p style="font-size: 0.9em; color: #555;">הקישור והסיסמה לשימושך האישי בלבד.</p>
+      </div>
     `,
   };
 

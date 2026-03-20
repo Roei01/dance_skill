@@ -5,6 +5,12 @@ import { sendAccessEmail } from "./email";
 import { generateTempPassword, hashPassword } from "./auth";
 import { config } from "../config/env";
 
+const normalizeBaseUrl = (url: string) => url.replace(/\/$/, "");
+
+const buildLoginLink = (baseUrl: string) => {
+  return new URL("/login", `${normalizeBaseUrl(baseUrl)}/`).toString();
+};
+
 export const provisionPurchaseAccess = async (paymentId: string) => {
   const purchase = await Purchase.findOne({ paymentId });
 
@@ -27,7 +33,8 @@ export const provisionPurchaseAccess = async (paymentId: string) => {
   user.passwordHash = await hashPassword(tempPassword);
   await user.save();
 
-  const loginLink = `${config.appUrl}/login`;
+  const base = purchase.appBaseUrl || config.appUrl;
+  const loginLink = buildLoginLink(base);
   await sendAccessEmail(user.email, user.username, loginLink, tempPassword);
 
   return {

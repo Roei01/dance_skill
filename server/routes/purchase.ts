@@ -10,6 +10,7 @@ import { generateTempPassword, hashPassword } from '../services/auth';
 import { provisionPurchaseAccess } from '../services/purchase';
 import { purchaseRateLimiter } from '../middleware/rateLimit';
 import { logger } from '../lib/logger';
+import { config } from '../config/env';
 import {
   DEFAULT_VIDEO_ID,
   DEFAULT_VIDEO_PRICE_ILS,
@@ -17,6 +18,39 @@ import {
 } from '../../lib/catalog';
 
 const router = express.Router();
+
+const normalizeBaseUrl = (url: string) => url.replace(/\/$/, '');
+
+/** Origin the client used (for payment redirects); falls back to config when host is missing or localhost. */
+const deriveAppBaseUrlFromRequest = (req: express.Request): string => {
+  const rawProto =
+    (typeof req.headers['x-forwarded-proto'] === 'string' &&
+      req.headers['x-forwarded-proto'].split(',')[0]?.trim()) ||
+    req.protocol ||
+    'http';
+  const proto = rawProto === 'https' || rawProto === 'http' ? rawProto : 'https';
+
+  const hostHeader =
+    (typeof req.headers['x-forwarded-host'] === 'string' &&
+      req.headers['x-forwarded-host'].split(',')[0]?.trim()) ||
+    (typeof req.headers.host === 'string' ? req.headers.host : '');
+
+  if (!hostHeader) {
+    return normalizeBaseUrl(config.appUrl);
+  }
+
+  try {
+    const origin = `${proto}://${hostHeader}`;
+    const parsed = new URL(origin);
+    const hostname = parsed.hostname.toLowerCase();
+    if (['localhost', '127.0.0.1', '::1'].includes(hostname)) {
+      return normalizeBaseUrl(config.appUrl);
+    }
+    return normalizeBaseUrl(origin);
+  } catch {
+    return normalizeBaseUrl(config.appUrl);
+  }
+};
 const purchaseSchema = z.object({
   email: z.string().email(),
 });
@@ -33,6 +67,7 @@ router.post('/create', purchaseRateLimiter, async (req, res) => {
     }
 
     const { email } = validation.data;
+    const appBaseUrl = deriveAppBaseUrlFromRequest(req);
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
@@ -53,7 +88,8 @@ router.post('/create', purchaseRateLimiter, async (req, res) => {
     const payment = await createGreenInvoicePayment(
       email,
       DEFAULT_VIDEO_PRICE_ILS,
-      DEFAULT_VIDEO_TITLE
+      DEFAULT_VIDEO_TITLE,
+      { appBaseUrl },
     );
 
     let user = existingUser;
@@ -84,6 +120,7 @@ router.post('/create', purchaseRateLimiter, async (req, res) => {
       videoId: DEFAULT_VIDEO_ID,
       paymentId: payment.paymentId,
       status: 'pending',
+      appBaseUrl,
     });
 
     res.json({

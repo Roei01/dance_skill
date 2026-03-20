@@ -47,14 +47,37 @@ const PRODUCTION_GREENINVOICE_URL = "https://api.greeninvoice.co.il/api/v1";
 
 const normalizeBaseUrl = (url: string) => url.replace(/\/$/, "");
 
-const isPublicAppUrl = () => {
+const isPublicHostname = (hostname: string) => {
+  const h = hostname.toLowerCase();
+  return !["localhost", "127.0.0.1", "::1"].includes(h);
+};
+
+const isPublicAbsoluteUrl = (urlString: string) => {
   try {
-    const url = new URL(config.appUrl);
-    const hostname = url.hostname.toLowerCase();
-    return !["localhost", "127.0.0.1", "::1"].includes(hostname);
+    const url = new URL(urlString);
+    return isPublicHostname(url.hostname);
   } catch {
     return false;
   }
+};
+
+const isPublicAppUrl = () => {
+  try {
+    const url = new URL(config.appUrl);
+    return isPublicHostname(url.hostname);
+  } catch {
+    return false;
+  }
+};
+
+const resolveCallbackBaseUrl = (appBaseUrl?: string) => {
+  if (appBaseUrl && isPublicAbsoluteUrl(appBaseUrl)) {
+    return normalizeBaseUrl(appBaseUrl);
+  }
+  if (isPublicAppUrl()) {
+    return normalizeBaseUrl(config.appUrl);
+  }
+  return null;
 };
 
 const getConfiguredBaseUrls = () => {
@@ -182,15 +205,17 @@ export const createGreenInvoicePayment = async (
   email: string,
   amount: number,
   description: string,
+  options?: { appBaseUrl?: string },
 ) => {
   try {
     const { token, baseUrl } = await getGreenInvoiceAccessToken();
 
-    const callbackUrls = isPublicAppUrl()
+    const callbackBase = resolveCallbackBaseUrl(options?.appBaseUrl);
+    const callbackUrls = callbackBase
       ? {
-          successUrl: `${config.appUrl}/success?email=${encodeURIComponent(email)}`,
-          cancelUrl: `${config.appUrl}/cancel`,
-          callbackUrl: `${config.appUrl}/api/purchase/webhook`,
+          successUrl: `${callbackBase}/success?email=${encodeURIComponent(email)}`,
+          cancelUrl: `${callbackBase}/cancel`,
+          callbackUrl: `${callbackBase}/api/purchase/webhook`,
         }
       : {};
 

@@ -1,175 +1,142 @@
-'use client';
+"use client";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-import { useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
-import { api, getApiErrorCode } from '@/lib/api-client';
-import { useAuth } from '@/context/AuthContext';
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { AuthErrorCard } from '@/components/errors/AuthErrorCard';
-import { DEFAULT_VIDEO_ID } from '@/lib/catalog';
+import { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import { api, getApiErrorCode } from "@/lib/api-client";
+import { useAuth } from "@/context/AuthContext";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { AuthErrorCard } from "@/components/errors/AuthErrorCard";
+import { BUSINESS_NAME } from "@/lib/business-info";
+import { DEFAULT_VIDEO_ID } from "@/lib/catalog";
+
+const CLOUDINARY_PLAYER_SRC =
+  "https://player.cloudinary.com/embed/?cloud_name=ddcdws24e&public_id=9F67D997-37AB-423E-9BB1-D12FB8D53455_2_hh0lu8";
 
 function WatchContent() {
-  const { access, refreshAuth } = useAuth();
+  const { access } = useAuth();
   const [authChecking, setAuthChecking] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [videoReady, setVideoReady] = useState(false);
 
   useEffect(() => {
     const checkAccess = async () => {
       try {
-        await refreshAuth();
         await api.get(`/video/access/${DEFAULT_VIDEO_ID}`);
       } catch (error: unknown) {
         const code = getApiErrorCode(error);
 
-        if (code === 'PURCHASE_REQUIRED') {
-          setError('הגישה נדחתה. כדי לצפות בשיעור צריך להשלים רכישה.');
-        } else if (code === 'TOKEN_EXPIRED') {
-          setError('פג תוקף ההתחברות. יש להתחבר מחדש.');
+        if (code === "PURCHASE_REQUIRED") {
+          setError("הגישה נדחתה. כדי לצפות בשיעור צריך להשלים רכישה.");
+        } else if (code === "TOKEN_EXPIRED") {
+          setError("פג תוקף ההתחברות. יש להתחבר מחדש.");
         } else {
-          setError('הגישה נדחתה. כדי לצפות בשיעור צריך להשלים רכישה.');
+          setError("הגישה נדחתה. כדי לצפות בשיעור צריך להשלים רכישה.");
         }
       } finally {
         setAuthChecking(false);
       }
     };
 
-    void checkAccess();
-  }, [refreshAuth]);
+    if (!access.defaultVideo) {
+      setAuthChecking(false);
+      return;
+    }
 
-  const handleVideoError = () => {
-    setError('לא ניתן לטעון את הווידאו. נסי לרענן את העמוד.');
-  };
+    void checkAccess();
+  }, [access.defaultVideo]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const key = event.key.toLowerCase();
-      if ((event.ctrlKey || event.metaKey) && (key === 's' || key === 'p')) {
+      if ((event.ctrlKey || event.metaKey) && (key === "s" || key === "p")) {
         event.preventDefault();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 
   const classBreakdown = useMemo(
-    () => ['פתיחה וחימום', 'תרגילי יסוד', 'כוריאוגרפיה חלק א׳', 'כוריאוגרפיה חלק ב׳', 'ביצוע מלא'],
-    []
+    () => [
+      { time: "18:10", label: "קצב איטי" },
+      { time: "19:10", label: "קצב רגיל" },
+      { time: "19:55", label: "מלא עם מוזיקה" },
+    ],
+    [],
   );
 
   if (authChecking) {
     return <LoadingSpinner fullScreen label="בודקים את הגישה שלך לשיעור..." />;
-  };
+  }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white overflow-hidden font-sans">
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        <div className="grid lg:grid-cols-3 gap-12">
-          <div className="lg:col-span-2 space-y-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-            >
-              <div className="flex items-center gap-4 mb-4">
-                <span className="bg-blue-600 text-white px-3 py-1 text-xs font-bold rounded-lg shadow-sm">
-                  מתחילות
-                </span>
-                <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">
-                  מחול מודרני • 45 דקות
-                </span>
-              </div>
-              <h1 className="text-4xl md:text-5xl font-black mb-2 text-white uppercase tracking-tight">השיעור המלא<br/>שלך</h1>
-              <p className="text-slate-400 font-medium text-lg">עם רותם ברוך</p>
-            </motion.div>
-            
-            {error ? (
+    <div className="min-h-screen overflow-hidden bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_45%,#fff5ef_100%)] text-slate-900">
+      <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 md:py-16">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+          className="rounded-[2rem] bg-white px-5 py-8 text-center shadow-[0_30px_80px_rgba(15,23,42,0.12)] sm:px-8"
+        >
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+            {BUSINESS_NAME}
+          </p>
+          <p className="mt-2 text-base font-medium leading-7 text-slate-600 md:text-lg">
+            בואו לרקוד איתי בכל מקום בכל זמן :)
+          </p>
+
+          {error ? (
+            <div className="mt-8">
               <AuthErrorCard title="אין גישה" message={error} />
-            ) : (
-              <motion.div 
+            </div>
+          ) : (
+            <>
+              <motion.div
                 initial={{ scale: 0.98, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-                className="relative aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border border-slate-700/50 group"
+                transition={{ duration: 0.8, delay: 0.1 }}
+                className="mt-6 overflow-hidden rounded-[1.75rem] border-[5px] border-slate-500 bg-white p-2 shadow-inner"
               >
-                {!videoReady ? (
-                  <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-slate-800 via-slate-700 to-slate-800" />
-                ) : null}
-                <video
-                  className="w-full h-full object-contain"
-                  controls
-                  controlsList="nodownload"
-                  disablePictureInPicture
-                  onContextMenu={(e) => e.preventDefault()}
-                  onError={handleVideoError}
-                  onLoadedData={() => setVideoReady(true)}
-                  src="/api/video/stream/video_001"
-                >
-                  הדפדפן שלך לא תומך בניגון וידאו.
-                </video>
-                
-                <div className="absolute top-4 right-4 px-3 py-1 bg-black/50 text-white/70 text-[10px] font-bold uppercase tracking-widest pointer-events-none select-none rounded-full backdrop-blur-sm">
-                  תוכן מוגן - Dance Skill
+                <div className="relative aspect-video overflow-hidden rounded-[1.35rem] bg-slate-950">
+                  {!videoReady ? (
+                    <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-slate-800 via-slate-700 to-slate-800" />
+                  ) : null}
+                  <iframe
+                    className="absolute inset-0 h-full w-full border-0"
+                    src={CLOUDINARY_PLAYER_SRC}
+                    title="שיעור אהבת השם"
+                    allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+                    allowFullScreen
+                    onLoad={() => setVideoReady(true)}
+                  />
                 </div>
               </motion.div>
-            )}
 
-            <div className="space-y-6">
-              <h3 className="text-2xl font-bold text-white uppercase tracking-tight">מבנה השיעור</h3>
-              <div className="space-y-2">
-                {classBreakdown.map((section, i) => (
-                  <div key={i} className="flex items-center justify-between p-4 bg-slate-800 hover:bg-slate-700 transition-colors rounded-xl cursor-pointer group border border-slate-700/50">
-                    <div className="flex items-center gap-4">
-                      <span className="w-8 h-8 flex items-center justify-center bg-slate-900 rounded-full text-xs font-bold text-slate-500 group-hover:text-white group-hover:bg-blue-600 transition-colors">{i + 1}</span>
-                      <span className="font-bold text-slate-300 group-hover:text-white transition-colors text-sm uppercase tracking-wide">{section}</span>
+              <div className="mt-6 flex justify-end">
+                <div className="space-y-2 text-right text-lg text-slate-700">
+                  {classBreakdown.map((section) => (
+                    <div
+                      key={`${section.time}-${section.label}`}
+                      className="flex items-center justify-end gap-2"
+                    >
+                      <span>{section.label}</span>
+                      <span className="font-medium text-slate-500">
+                        {section.time}
+                      </span>
                     </div>
-                    <span className="text-xs font-bold text-slate-500 group-hover:text-slate-400">10:00</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          
-          <div className="space-y-8">
-            <div className="bg-slate-800 p-8 rounded-2xl border border-slate-700/50 shadow-lg">
-              <h3 className="text-xl font-bold mb-6 text-white uppercase tracking-tight">המדריך</h3>
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-16 h-16 bg-slate-700 rounded-full overflow-hidden border-2 border-slate-600">
-                  {/* Instructor Image Placeholder */}
-                  <div className="w-full h-full bg-gradient-to-br from-slate-600 to-slate-500" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-lg leading-none mb-1 text-white">רותם ברוך</h4>
-                  <p className="text-xs font-bold text-blue-400 uppercase tracking-wider">יוצר ומדריך</p>
+                  ))}
                 </div>
               </div>
-              <p className="text-sm text-slate-400 leading-relaxed font-medium mb-6">
-                רותם מביא לשיעור גישה מדויקת, מוזיקלית ונקייה, עם דגש על נוכחות, הבעה וזרימה טבעית בתנועה.
-              </p>
-              <button className="w-full py-3 border border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest rounded-xl">
-                לפרופיל
-              </button>
-            </div>
-            
-            <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-8 rounded-2xl text-center shadow-lg relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 blur-[50px] pointer-events-none" />
-              <h3 className="text-2xl font-black mb-2 text-white uppercase tracking-tight">רוצה עוד?</h3>
-              <p className="text-sm font-medium text-blue-100 mb-6 leading-relaxed opacity-90">
-                המשיכי לעוד שיעורים, תרגולים וחוויית למידה מלאה שמתאימה להתקדמות שלך.
-              </p>
-              <button className="w-full py-4 bg-white text-blue-600 font-bold text-sm hover:bg-blue-50 transition-colors rounded-xl shadow-md uppercase tracking-wider">
-                לרכישה
-              </button>
-            </div>
-          </div>
-        </div>
+            </>
+          )}
+        </motion.div>
       </div>
     </div>
   );

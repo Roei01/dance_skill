@@ -19,7 +19,9 @@ const envSchema = z.object({
   EMAIL_PASS: z.string().optional(),
   JWT_SECRET: z.string().min(8),
   VIDEO_SECRET_TOKEN: z.string().min(8),
-  APP_BASE_URL: z.string().url().default('http://localhost:3000'),
+  APP_BASE_URL: z.string().url().optional(),
+  RENDER_EXTERNAL_URL: z.string().url().optional(),
+  VERCEL_URL: z.string().optional(),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.string().optional().default('3000').transform((val) => parseInt(val, 10)),
 });
@@ -30,6 +32,24 @@ if (!env.success) {
   console.error('❌ Invalid environment variables:', JSON.stringify(env.error.format(), null, 2));
   process.exit(1);
 }
+
+const normalizeBaseUrl = (url: string) => url.replace(/\/$/, '');
+
+const resolveAppUrl = () => {
+  if (env.data.APP_BASE_URL) {
+    return normalizeBaseUrl(env.data.APP_BASE_URL);
+  }
+
+  if (env.data.RENDER_EXTERNAL_URL) {
+    return normalizeBaseUrl(env.data.RENDER_EXTERNAL_URL);
+  }
+
+  if (env.data.VERCEL_URL) {
+    return normalizeBaseUrl(`https://${env.data.VERCEL_URL}`);
+  }
+
+  return 'http://localhost:3000';
+};
 
 export const config = {
   dbUri: env.data.DATABASE_URL,
@@ -46,7 +66,7 @@ export const config = {
     user: env.data.EMAIL_USER,
     pass: env.data.EMAIL_PASS,
   },
-  appUrl: env.data.APP_BASE_URL,
+  appUrl: resolveAppUrl(),
   isProduction: env.data.NODE_ENV === 'production',
   port: env.data.PORT,
 };

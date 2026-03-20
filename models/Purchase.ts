@@ -5,6 +5,8 @@ export interface IPurchase extends Document {
   videoId: string;
   paymentId: string;
   status: 'pending' | 'completed' | 'failed';
+  /** Public site origin used for payment redirects and login links (from request or config). */
+  appBaseUrl?: string;
   createdAt: Date;
 }
 
@@ -13,6 +15,7 @@ const PurchaseSchema = new Schema<IPurchase>({
   videoId: { type: String, required: true, index: true },
   paymentId: { type: String, required: true },
   status: { type: String, enum: ['pending', 'completed', 'failed'], default: 'pending' },
+  appBaseUrl: { type: String, required: false },
   createdAt: { type: Date, default: Date.now },
 });
 

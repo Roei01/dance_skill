@@ -2,12 +2,14 @@
 
 export const dynamic = "force-dynamic";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { api, getApiErrorCode } from "@/lib/api-client";
 import { useAuth } from "@/context/AuthContext";
+import { BUSINESS_CONTACT_EMAIL, BUSINESS_NAME } from "@/lib/business-info";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -61,6 +63,9 @@ export default function Login() {
         className="max-w-md w-full bg-slate-800 p-12 rounded-2xl shadow-2xl border border-slate-700 relative z-10"
       >
         <div className="text-center mb-10">
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-slate-500">
+            {BUSINESS_NAME}
+          </p>
           <h1 className="text-4xl font-black tracking-tight text-white mb-2">
             התחברות
           </h1>
@@ -68,6 +73,17 @@ export default function Login() {
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
+          <div className="rounded-2xl border border-slate-700 bg-slate-900/70 px-4 py-4 text-center">
+            <p className="text-sm font-semibold leading-6 text-slate-200">
+              לאחר השלמת התשלום יישלחו אלייך למייל שם המשתמש והסיסמה הזמנית
+              לעמוד ההתחברות של האתר.
+            </p>
+            <p className="mt-2 text-xs leading-5 text-slate-400">
+              אם כבר קיבלת את הפרטים במייל, אפשר להתחבר כאן עם אותם פרטים
+              ולצפות בשיעור.
+            </p>
+          </div>
+
           <div className="space-y-2">
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mr-1">
               שם משתמש
@@ -121,6 +137,25 @@ export default function Login() {
             )}
           </button>
         </form>
+
+        <div className="mt-8 text-center text-sm text-slate-400">
+          לא קיבלת מייל?{" "}
+          <a
+            href={`mailto:${BUSINESS_CONTACT_EMAIL}`}
+            className="font-semibold text-white underline underline-offset-4"
+          >
+            {BUSINESS_CONTACT_EMAIL}
+          </a>
+        </div>
+
+        <div className="mt-4 text-center">
+          <Link
+            href="/"
+            className="text-xs font-semibold text-slate-500 transition hover:text-slate-300"
+          >
+            חזרה לעמוד הבית
+          </Link>
+        </div>
       </motion.div>
     </div>
   );
