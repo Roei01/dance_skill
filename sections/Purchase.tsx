@@ -149,15 +149,15 @@ export const Purchase = () => {
             </div>
           </div>
 
-          <form onSubmit={handlePurchase} className="space-y-4">
+          <form onSubmit={handlePurchase} className="space-y-3">
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-right text-sm font-semibold text-slate-600">
               לפני המעבר לתשלום יש למלא פרטי לקוח ולאשר את התנאים והתקנון.
             </div>
 
-            <div className="space-y-1 text-right">
+            <div className="space-y-0.5 text-right">
               <label
                 htmlFor="fullName"
-                className="mr-1 block text-xs font-bold uppercase tracking-wider text-slate-500"
+                className="mr-1 block text-[11px] font-bold uppercase tracking-wider text-slate-500"
               >
                 שם מלא
               </label>
@@ -168,14 +168,14 @@ export const Purchase = () => {
                 required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400 focus:outline-none md:px-5 md:py-4"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400 focus:outline-none md:px-5 md:py-3.5"
               />
             </div>
 
-            <div className="space-y-1 text-right">
+            <div className="space-y-0.5 text-right">
               <label
                 htmlFor="phone"
-                className="mr-1 block text-xs font-bold uppercase tracking-wider text-slate-500"
+                className="mr-1 block text-[11px] font-bold uppercase tracking-wider text-slate-500"
               >
                 טלפון ליצירת קשר
               </label>
@@ -186,14 +186,14 @@ export const Purchase = () => {
                 required
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400 focus:outline-none md:px-5 md:py-4"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400 focus:outline-none md:px-5 md:py-3.5"
               />
             </div>
 
-            <div className="space-y-1 text-right">
+            <div className="space-y-0.5 text-right">
               <label
                 htmlFor="email"
-                className="mr-1 block text-xs font-bold uppercase tracking-wider text-slate-500"
+                className="mr-1 block text-[11px] font-bold uppercase tracking-wider text-slate-500"
               >
                 כתובת אימייל
               </label>
@@ -204,7 +204,7 @@ export const Purchase = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400 focus:outline-none md:px-5 md:py-4"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400 focus:outline-none md:px-5 md:py-3.5"
               />
             </div>
 
