@@ -8,7 +8,12 @@ import {
   Smartphone,
   BadgeDollarSign,
 } from "lucide-react";
-import { api, getApiErrorCode, isNetworkError } from "@/lib/api-client";
+import {
+  api,
+  getApiErrorCode,
+  getApiErrorMessage,
+  isNetworkError,
+} from "@/lib/api-client";
 import { PaymentErrorCard } from "@/components/errors/PaymentErrorCard";
 import { PurchaseFaq } from "@/components/purchase/PurchaseFaq";
 import { DEFAULT_VIDEO_PRICE_ILS } from "@/lib/catalog";
@@ -73,10 +78,19 @@ export const Purchase = () => {
 
       if (code === "ALREADY_OWNED") {
         setError("השיעור הזה כבר נרכש בעבר. אפשר לבדוק את המייל לקבלת הגישה.");
+      } else if (code === "PAYMENT_TERMINAL_INACTIVE") {
+        setError(
+          getApiErrorMessage(
+            error,
+            "אין מסוף סליקה פעיל בחשבון GreenInvoice שמחובר לאתר."
+          )
+        );
       } else if (isNetworkError(error)) {
         setError("לא הצלחנו להתחיל את התשלום. נסי שוב.");
       } else {
-        setError("לא הצלחנו להתחיל את התשלום. נסי שוב.");
+        setError(
+          getApiErrorMessage(error, "לא הצלחנו להתחיל את התשלום. נסי שוב.")
+        );
       }
     } finally {
       setLoading(false);
