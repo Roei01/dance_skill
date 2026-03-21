@@ -2,7 +2,9 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { config } from '../config/env';
-import { User } from '../../models/User';
+import { User, type IUser } from '../../models/User';
+
+export const MAX_ALLOWED_DEVICES = 3;
 
 export type AuthTokenPayload = {
   userId: string;
@@ -30,30 +32,70 @@ export const verifyToken = (token: string): AuthTokenPayload => {
   return jwt.verify(token, config.jwtSecret) as AuthTokenPayload;
 };
 
-// Check if IP is allowed (for future logins)
+const normalizeClientIp = (ip: string) => {
+  const trimmed = ip.trim();
+
+  if (trimmed.startsWith('::ffff:')) {
+    return trimmed.slice(7);
+  }
+
+  return trimmed;
+};
+
+const buildAllowedIpList = (user: Pick<IUser, 'allowedIps' | 'ipAddress'> | null) => {
+  const knownIps = [
+    ...(user?.allowedIps ?? []),
+    ...(user?.ipAddress ? [user.ipAddress] : []),
+  ]
+    .map(normalizeClientIp)
+    .filter(Boolean);
+
+  return Array.from(new Set(knownIps)).slice(0, MAX_ALLOWED_DEVICES);
+};
+
 export const checkIpAccess = async (userId: string, currentIp: string): Promise<boolean> => {
   const user = await User.findById(userId);
   if (!user) return false;
 
-  // If no IP stored, store current IP and allow
-  if (!user.ipAddress) {
-    user.ipAddress = currentIp;
-    await user.save();
+  const normalizedCurrentIp = normalizeClientIp(currentIp);
+  const allowedIps = buildAllowedIpList(user);
+
+  if (allowedIps.includes(normalizedCurrentIp)) {
+    if (
+      user.ipAddress !== undefined ||
+      allowedIps.length !== (user.allowedIps ?? []).length ||
+      allowedIps.some((ip, index) => user.allowedIps?.[index] !== ip)
+    ) {
+      user.ipAddress = undefined;
+      user.allowedIps = allowedIps;
+      await user.save();
+    }
+
     return true;
   }
 
-  // If IP matches stored IP, allow
-  return user.ipAddress === currentIp;
+  if (allowedIps.length >= MAX_ALLOWED_DEVICES) {
+    return false;
+  }
+
+  user.ipAddress = undefined;
+  user.allowedIps = [...allowedIps, normalizedCurrentIp];
+  await user.save();
+  return true;
 };
 
 export const getClientIp = (forwardedFor?: string | string[], fallback?: string) => {
   if (Array.isArray(forwardedFor) && forwardedFor.length > 0) {
-    return forwardedFor[0];
+    return normalizeClientIp(forwardedFor[0]);
   }
 
   if (typeof forwardedFor === "string" && forwardedFor.length > 0) {
-    return forwardedFor.split(",")[0].trim();
+    return normalizeClientIp(forwardedFor.split(",")[0].trim());
   }
 
-  return fallback || "127.0.0.1";
+  if (fallback && fallback.length > 0) {
+    return normalizeClientIp(fallback);
+  }
+
+  return "127.0.0.1";
 };

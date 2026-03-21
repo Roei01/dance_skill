@@ -41,7 +41,7 @@ export default function Login() {
       if (code === "INVALID_CREDENTIALS") {
         setError("שם המשתמש או הסיסמה שגויים.");
       } else if (code === "IP_MISMATCH") {
-        setError("אפשר להיכנס לחשבון הזה רק מהמכשיר המקורי.");
+        setError("אפשר להתחבר לחשבון הזה מעד 3 מכשירים. הגעת למכסה המקסימלית.");
       } else if (code === "TOKEN_EXPIRED") {
         setError("פג תוקף ההתחברות. יש להתחבר מחדש.");
       } else {
@@ -81,6 +81,9 @@ export default function Login() {
             <p className="mt-2 text-xs leading-5 text-slate-400">
               אם כבר קיבלת את הפרטים במייל, אפשר להתחבר כאן עם אותם פרטים
               ולצפות בשיעור.
+            </p>
+            <p className="mt-2 text-xs leading-5 text-slate-500">
+              הגישה לחשבון זמינה לעד 3 מכשירים.
             </p>
           </div>
 

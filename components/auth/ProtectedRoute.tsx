@@ -11,7 +11,7 @@ const mapErrorCodeToMessage = (code?: string) => {
     case "TOKEN_EXPIRED":
       return "פג תוקף ההתחברות. יש להתחבר מחדש.";
     case "IP_MISMATCH":
-      return "אפשר להיכנס לחשבון הזה רק מהמכשיר המקורי.";
+      return "אפשר להתחבר לחשבון הזה מעד 3 מכשירים. הגעת למכסה המקסימלית.";
     default:
       return "יש להתחבר כדי להמשיך.";
   }

@@ -43,7 +43,7 @@ export default function ModernDancePage() {
                   כדי לצפות בקומבו לחצו ״לצפייה״
                   <br />
                   כדי לרכוש את השיעור בעלות של{" "}
-                  <span className="font-bold text-slate-900">40₪</span> לחצו
+                  <span className="font-bold text-slate-900">45</span> לחצו
                   ״לרכישה״
                 </p>
               </div>

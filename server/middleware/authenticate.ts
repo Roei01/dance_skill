@@ -34,7 +34,7 @@ export const authenticate = async (
     if (!isAllowed) {
       return res.status(403).json({
         code: 'IP_MISMATCH',
-        message: 'This account can only be accessed from the original device.',
+        message: 'This account can be used on up to 3 devices only.',
       });
     }
 
