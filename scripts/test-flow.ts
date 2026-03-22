@@ -10,6 +10,8 @@ async function testFlow() {
     console.log(`👤 Buying for: ${email}`);
     
     const purchaseRes = await axios.post(`${API_URL}/purchase/create`, {
+      fullName: 'Test Buyer',
+      phone: '0500000000',
       email,
     });
     

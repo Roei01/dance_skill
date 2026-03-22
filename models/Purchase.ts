@@ -1,21 +1,26 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IPurchase extends Document {
-  userId: mongoose.Types.ObjectId;
+  userId?: mongoose.Types.ObjectId;
   videoId: string;
   paymentId: string;
+  customerFullName: string;
+  customerPhone: string;
+  customerEmail: string;
   status: 'pending' | 'completed' | 'failed';
-  /** Public site origin used for payment redirects and login links (from request or config). */
-  appBaseUrl?: string;
+  credentialsSentAt?: Date;
   createdAt: Date;
 }
 
 const PurchaseSchema = new Schema<IPurchase>({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   videoId: { type: String, required: true, index: true },
-  paymentId: { type: String, required: true },
+  paymentId: { type: String, required: true, unique: true, index: true },
+  customerFullName: { type: String, required: true, trim: true },
+  customerPhone: { type: String, required: true, trim: true },
+  customerEmail: { type: String, required: true, trim: true, lowercase: true, index: true },
   status: { type: String, enum: ['pending', 'completed', 'failed'], default: 'pending' },
-  appBaseUrl: { type: String, required: false },
+  credentialsSentAt: { type: Date },
   createdAt: { type: Date, default: Date.now },
 });
 

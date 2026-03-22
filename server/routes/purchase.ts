@@ -5,12 +5,11 @@ import { User } from "../../models/User";
 import {
   createGreenInvoicePayment,
   GreenInvoiceError,
-} from "../services/greenInvoice";
-import { generateTempPassword, hashPassword } from "../services/auth";
-import { provisionPurchaseAccess } from "../services/purchase";
-import { purchaseRateLimiter } from "../middleware/rateLimit";
-import { logger } from "../lib/logger";
-import { config } from "../config/env";
+} from '../services/greenInvoice';
+import { provisionPurchaseAccess } from '../services/purchase';
+import { purchaseRateLimiter } from '../middleware/rateLimit';
+import { logger } from '../lib/logger';
+import { config } from '../config/env';
 import {
   DEFAULT_VIDEO_ID,
   DEFAULT_VIDEO_PRICE_ILS,
@@ -53,6 +52,8 @@ const deriveAppBaseUrlFromRequest = (req: express.Request): string => {
   }
 };
 const purchaseSchema = z.object({
+  fullName: z.string().trim().min(2),
+  phone: z.string().trim().min(9),
   email: z.string().email(),
 });
 
@@ -67,8 +68,7 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
       });
     }
 
-    //
-    const { email } = validation.data;
+    const { email, fullName, phone } = validation.data;
     const appBaseUrl = deriveAppBaseUrlFromRequest(req);
     const existingUser = await User.findOne({ email });
 
@@ -95,39 +95,25 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
       { appBaseUrl },
     );
 
-    let user = existingUser;
-
-    if (!user) {
-      const tempPass = await hashPassword(generateTempPassword());
-      const baseUsername =
-        email.split("@")[0].replace(/[^a-zA-Z0-9]/g, "") || "user";
-      const username = `${baseUsername}_${Date.now().toString(36)}${Math.random()
-        .toString(36)
-        .slice(2, 6)}`;
-
-      user = await User.create({
-        email,
-        username,
-        passwordHash: tempPass,
-      });
-    }
-
     await Purchase.deleteMany({
-      userId: user._id,
+      customerEmail: email,
       videoId: DEFAULT_VIDEO_ID,
       status: "pending",
     });
 
     await Purchase.create({
-      userId: user._id,
       videoId: DEFAULT_VIDEO_ID,
       paymentId: payment.paymentId,
-      status: "pending",
+      customerFullName: fullName,
+      customerPhone: phone,
+      customerEmail: email,
+      status: 'pending',
       appBaseUrl,
     });
 
     res.json({
       checkoutUrl: payment.checkoutUrl,
+      paymentId: payment.paymentId,
     });
   } catch (error) {
     if (error instanceof GreenInvoiceError) {
@@ -165,10 +151,19 @@ router.post("/webhook", async (req, res) => {
 
   if (paymentId && (status === "success" || status === "completed")) {
     try {
-      await provisionPurchaseAccess(paymentId);
+      const provisioned = await provisionPurchaseAccess(paymentId);
+
+      if (!provisioned) {
+        logger.warn('Webhook completed but no pending purchase found for paymentId', {
+          paymentId,
+          body: req.body,
+        });
+      }
     } catch (error) {
       logger.error("Webhook provisioning error:", error);
     }
+  } else if (paymentId && status === 'failed') {
+    await Purchase.findOneAndUpdate({ paymentId }, { status: 'failed' });
   }
 
   res.sendStatus(200);

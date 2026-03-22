@@ -18,24 +18,58 @@ export const provisionPurchaseAccess = async (paymentId: string) => {
     return null;
   }
 
-  if (purchase.status !== "completed") {
-    purchase.status = "completed";
-    await purchase.save();
-  }
-
-  const user = await User.findById(purchase.userId);
+  let user = purchase.userId ? await User.findById(purchase.userId) : null;
+  let generatedPassword: string | undefined;
 
   if (!user) {
-    return null;
+    user = await User.findOne({ email: purchase.customerEmail });
   }
 
-  const tempPassword = generateTempPassword();
-  user.passwordHash = await hashPassword(tempPassword);
-  await user.save();
+  if (!user) {
+    generatedPassword = generateTempPassword();
+    const passwordHash = await hashPassword(generatedPassword);
+    const baseUsername =
+      purchase.customerEmail.split("@")[0].replace(/[^a-zA-Z0-9]/g, "") ||
+      "user";
+    const username = `${baseUsername}_${Date.now().toString(36)}${Math.random()
+      .toString(36)
+      .slice(2, 6)}`;
 
-  const base = purchase.appBaseUrl || config.appUrl;
-  const loginLink = buildLoginLink(base);
-  await sendAccessEmail(user.email, user.username, loginLink, tempPassword);
+    user = await User.create({
+      email: purchase.customerEmail,
+      username,
+      passwordHash,
+    });
+  }
+
+  purchase.userId = user._id;
+  purchase.status = "completed";
+
+  if (purchase.credentialsSentAt) {
+    await purchase.save();
+
+    return {
+      email: user.email,
+      username: user.username,
+      videoId: DEFAULT_VIDEO_ID,
+    };
+  }
+
+  if (!generatedPassword) {
+    generatedPassword = generateTempPassword();
+    user.passwordHash = await hashPassword(generatedPassword);
+    await user.save();
+  }
+
+  const loginLink = `${config.appUrl}/login`;
+  await sendAccessEmail(
+    user.email,
+    user.username,
+    loginLink,
+    generatedPassword
+  );
+  purchase.credentialsSentAt = new Date();
+  await purchase.save();
 
   return {
     email: user.email,
