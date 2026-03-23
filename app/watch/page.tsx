@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { api, getApiErrorCode } from "@/lib/api-client";
 import { useAuth } from "@/context/AuthContext";
@@ -23,6 +23,7 @@ function WatchContent() {
   const [authChecking, setAuthChecking] = useState(true);
   const [error, setError] = useState("");
   const [videoReady, setVideoReady] = useState(false);
+  const hasLoggedOutRef = useRef(false);
 
   useEffect(() => {
     const checkAccess = async () => {
@@ -63,6 +64,53 @@ function WatchContent() {
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  useEffect(() => {
+    const logoutOnExit = () => {
+      if (hasLoggedOutRef.current) {
+        return;
+      }
+
+      hasLoggedOutRef.current = true;
+
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(
+          "/api/auth/logout",
+          new Blob([], { type: "application/json" }),
+        );
+        return;
+      }
+
+      void fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+        keepalive: true,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    };
+
+    window.addEventListener("pagehide", logoutOnExit);
+    window.addEventListener("beforeunload", logoutOnExit);
+
+    return () => {
+      window.removeEventListener("pagehide", logoutOnExit);
+      window.removeEventListener("beforeunload", logoutOnExit);
+    };
+  }, []);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      void api.post("/auth/heartbeat").catch(() => {
+        // Let the existing auth/access checks handle expired sessions.
+      });
+    }, 30_000);
+
+    return () => {
+      window.clearInterval(intervalId);
     };
   }, []);
 

@@ -4,6 +4,7 @@ import { Purchase } from '../../models/Purchase';
 import {
   comparePassword,
   generateToken,
+  getActiveSessionRemainingSeconds,
   hasConflictingActiveSession,
   releaseActiveSession,
   startExclusiveSession,
@@ -64,9 +65,15 @@ router.post('/login', authRateLimiter, async (req, res) => {
   );
 
   if (hasActiveSession) {
+    const retryAfterSeconds = await getActiveSessionRemainingSeconds(String(user._id));
+
     return res.status(409).json({
       code: 'SESSION_ALREADY_ACTIVE',
-      message: 'This account is already connected on another device.',
+      message:
+        retryAfterSeconds > 0
+          ? `יש כבר משתמש מחובר לחשבון הזה. אם המכשיר הקודם נסגר, נסו שוב בעוד כ-${retryAfterSeconds} שניות.`
+          : 'יש כבר משתמש מחובר לחשבון הזה.',
+      retryAfterSeconds,
     });
   }
 
@@ -133,6 +140,10 @@ router.get('/me', authenticate, async (req: AuthenticatedRequest, res) => {
       videos: ownedVideoIds,
     },
   });
+});
+
+router.post('/heartbeat', authenticate, (_req, res) => {
+  return res.status(204).send();
 });
 
 router.post('/logout', async (req, res) => {

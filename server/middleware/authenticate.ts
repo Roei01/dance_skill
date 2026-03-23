@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import {
   verifyToken,
   isSessionActive,
+  touchActiveSession,
   type AuthTokenPayload,
 } from '../services/auth';
 
@@ -41,6 +42,7 @@ export const authenticate = async (
       });
     }
 
+    await touchActiveSession(decoded.userId, decoded.sessionId);
     req.user = decoded;
     next();
   } catch (error: unknown) {
