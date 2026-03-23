@@ -11,6 +11,11 @@ import { DEFAULT_VIDEO_ID } from "../../lib/catalog";
 const router = express.Router();
 const CLOUDINARY_PREVIEW_URL =
   "https://res.cloudinary.com/ddcdws24e/video/upload/f_auto,q_auto/9F67D997-37AB-423E-9BB1-D12FB8D53455_2_hh0lu8.mp4";
+const CLOUDINARY_HERO_VIDEO_URL =
+  "https://res.cloudinary.com/ddcdws24e/video/upload/f_auto,q_auto/%D7%A1%D7%A8%D7%98%D7%95%D7%9F_%D7%A4%D7%AA%D7%99%D7%97%D7%94_%D7%A9%D7%9C_%D7%94%D7%90%D7%AA%D7%A8_cyyn1d.mp4";
+const NO_STORE_CACHE_CONTROL = "no-store";
+const HERO_CACHE_CONTROL =
+  "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800";
 
 const getVideoContentType = (videoPath: string) => {
   const ext = path.extname(videoPath).toLowerCase();
@@ -27,6 +32,7 @@ const streamVideoFile = (
   videoPath: string,
   contentType: string,
   range?: string,
+  cacheControl = NO_STORE_CACHE_CONTROL,
 ) => {
   const stat = fs.statSync(videoPath);
   const fileSize = stat.size;
@@ -42,7 +48,7 @@ const streamVideoFile = (
       "Accept-Ranges": "bytes",
       "Content-Length": chunksize,
       "Content-Type": contentType,
-      "Cache-Control": "no-store",
+      "Cache-Control": cacheControl,
     };
     res.writeHead(206, head);
     file.pipe(res);
@@ -50,7 +56,7 @@ const streamVideoFile = (
     const head = {
       "Content-Length": fileSize,
       "Content-Type": contentType,
-      "Cache-Control": "no-store",
+      "Cache-Control": cacheControl,
     };
     res.writeHead(200, head);
     fs.createReadStream(videoPath).pipe(res);
@@ -66,10 +72,8 @@ router.get("/hero", (req, res) => {
   const heroVideoPath = path.resolve(__dirname, "../assets/gif.mp4");
 
   if (!fs.existsSync(heroVideoPath)) {
-    return res.status(404).json({
-      code: "VIDEO_UNAVAILABLE",
-      message: "Unable to load hero video.",
-    });
+    res.setHeader("Cache-Control", HERO_CACHE_CONTROL);
+    return res.redirect(CLOUDINARY_HERO_VIDEO_URL);
   }
 
   return streamVideoFile(
@@ -77,6 +81,7 @@ router.get("/hero", (req, res) => {
     heroVideoPath,
     getVideoContentType(heroVideoPath),
     req.headers.range,
+    HERO_CACHE_CONTROL,
   );
 });
 
@@ -113,6 +118,7 @@ router.get(
       videoPath,
       getVideoContentType(videoPath),
       req.headers.range,
+      NO_STORE_CACHE_CONTROL,
     );
   },
 );
