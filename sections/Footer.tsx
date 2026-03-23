@@ -30,7 +30,7 @@ export const Footer = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | null>(
-    null
+    null,
   );
 
   const handleNewsletterSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -176,7 +176,7 @@ export const Footer = () => {
             </a>
           </p>
 
-          <div className="mx-auto grid max-w-3xl gap-4 rounded-[1.75rem] border border-slate-800 bg-slate-900/80 p-5 text-right sm:grid-cols-2">
+          <div className="mx-auto grid max-w-3xl justify-items-center gap-4 rounded-[1.75rem] border border-slate-800 bg-slate-900/80 p-5 text-center sm:grid-cols-2">
             <div className="space-y-2 text-sm text-slate-300">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
                 פרטי העסק
@@ -192,22 +192,40 @@ export const Footer = () => {
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
                 מידע משפטי
               </p>
-              <Link href="/terms" className="block underline underline-offset-4 hover:text-blue-400">
+              <Link
+                href="/terms"
+                className="block underline underline-offset-4 hover:text-blue-400"
+              >
                 תקנון האתר
               </Link>
-              <Link href="/terms#privacy" className="block underline underline-offset-4 hover:text-blue-400">
+              <Link
+                href="/terms#privacy"
+                className="block underline underline-offset-4 hover:text-blue-400"
+              >
                 מדיניות פרטיות
               </Link>
-              <Link href="/terms#cancellation" className="block underline underline-offset-4 hover:text-blue-400">
+              <Link
+                href="/terms#cancellation"
+                className="block underline underline-offset-4 hover:text-blue-400"
+              >
                 ביטול עסקה והחזרים
               </Link>
-              <Link href="/terms#delivery" className="block underline underline-offset-4 hover:text-blue-400">
+              <Link
+                href="/terms#delivery"
+                className="block underline underline-offset-4 hover:text-blue-400"
+              >
                 מדיניות אספקה
               </Link>
-              <Link href="/terms#responsibility" className="block underline underline-offset-4 hover:text-blue-400">
+              <Link
+                href="/terms#responsibility"
+                className="block underline underline-offset-4 hover:text-blue-400"
+              >
                 אחריות המוצר והשירות
               </Link>
-              <Link href="/accessibility" className="block underline underline-offset-4 hover:text-blue-400">
+              <Link
+                href="/accessibility"
+                className="block underline underline-offset-4 hover:text-blue-400"
+              >
                 הצהרת נגישות
               </Link>
             </div>

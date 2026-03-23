@@ -1,71 +1,20 @@
-"use client";
-
-import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { Instagram, Music2 } from "lucide-react";
 
-const HERO_VIDEO_SRC = "/api/video/hero";
+const socialLinks = [
+  {
+    href: "https://www.tiktok.com/@rotembaruch._?_r=1&_t=ZS-94Y4j0FFIKl",
+    label: "TikTok",
+    icon: Music2,
+  },
+  {
+    href: "https://www.instagram.com/rotembaruch._?igsh=MWZncmEwOGplcXQ1aw==",
+    label: "Instagram",
+    icon: Instagram,
+  },
+];
 
 export const Hero = () => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [videoStarted, setVideoStarted] = useState(false);
-
-  useEffect(() => {
-    const video = videoRef.current;
-
-    if (!video) {
-      return;
-    }
-
-    let cancelled = false;
-
-    const tryPlay = async () => {
-      try {
-        video.muted = true;
-        await video.play();
-        if (!cancelled) {
-          setVideoStarted(true);
-        }
-      } catch {
-        if (!cancelled) {
-          setVideoStarted(false);
-        }
-      }
-    };
-
-    const handlePlaying = () => {
-      if (!cancelled) {
-        setVideoStarted(true);
-      }
-    };
-
-    const handlePause = () => {
-      if (!document.hidden && !cancelled) {
-        void tryPlay();
-      }
-    };
-
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        void tryPlay();
-      }
-    };
-
-    video.addEventListener("playing", handlePlaying);
-    video.addEventListener("canplay", tryPlay);
-    video.addEventListener("pause", handlePause);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    void tryPlay();
-
-    return () => {
-      cancelled = true;
-      video.removeEventListener("playing", handlePlaying);
-      video.removeEventListener("canplay", tryPlay);
-      video.removeEventListener("pause", handlePause);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, []);
-
   return (
     <section className="bg-[#f8f7f4] px-4 py-6 text-slate-900 sm:px-6 lg:px-10 lg:py-10">
       <motion.div
@@ -75,34 +24,20 @@ export const Hero = () => {
         className="mx-auto max-w-7xl overflow-hidden rounded-[2rem] border border-black/10 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.10)] xl:max-w-6xl 2xl:max-w-[72rem]"
       >
         <div className="relative h-[600px] min-[478px]:h-auto min-[478px]:aspect-[5/6] min-[638px]:aspect-[5/6] lg:aspect-[4/5] xl:aspect-[5/4] 2xl:aspect-[4/3]">
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800" />
-          <div
-            className={`absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,224,143,0.18),transparent_38%),radial-gradient(circle_at_bottom,rgba(116,203,255,0.18),transparent_35%)] transition-opacity duration-500 ${
-              videoStarted ? "opacity-0" : "opacity-100"
-            }`}
-            aria-hidden="true"
-          />
+          {" "}
           <video
-            ref={videoRef}
-            src={HERO_VIDEO_SRC}
+            className="hero-video pointer-events-none absolute inset-0 h-full w-full object-cover object-center"
+            src="https://res.cloudinary.com/ddcdws24e/video/upload/%D7%A1%D7%A8%D7%98%D7%95%D7%9F_%D7%A4%D7%AA%D7%99%D7%97%D7%94_%D7%A9%D7%9C_%D7%94%D7%90%D7%AA%D7%A8_cyyn1d.mp4"
             autoPlay
             loop
             muted
             playsInline
             preload="auto"
-            aria-hidden="true"
+            controls={false}
             disablePictureInPicture
-            controlsList="nodownload noplaybackrate nofullscreen"
+            disableRemotePlayback
             tabIndex={-1}
-            onLoadedData={() => {
-              const video = videoRef.current;
-              if (video) {
-                void video.play().catch(() => {});
-              }
-            }}
-            className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-500 ${
-              videoStarted ? "opacity-100" : "opacity-0"
-            }`}
+            aria-hidden="true"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/35 to-black/10" />
           <div className="absolute inset-0 bg-black/15" />
