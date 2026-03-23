@@ -1,8 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { Music2, Instagram } from "lucide-react";
 import { api, getApiErrorCode, getApiErrorMessage } from "@/lib/api-client";
+import {
+  BUSINESS_ADDRESS,
+  BUSINESS_CONTACT_EMAIL,
+  BUSINESS_CONTACT_PHONE,
+  BUSINESS_NAME,
+  MINIMUM_PURCHASE_AGE,
+} from "@/lib/business-info";
 
 const socialLinks = [
   {
@@ -75,7 +83,7 @@ export const Footer = () => {
             </span>
           </div>
 
-          <div className="flex w-full justify-center">
+          <nav aria-label="ניווט תחתון" className="flex w-full justify-center">
             <ul className="space-y-3 text-center text-sm font-medium text-slate-300">
               <li>
                 <a
@@ -111,7 +119,7 @@ export const Footer = () => {
                 </a>
               </li>
             </ul>
-          </div>
+          </nav>
 
           <div className="mx-auto max-w-sm text-center md:flex md:flex-col md:items-center">
             <h4 className="mb-3 text-s font-bold text-blue-500">
@@ -121,14 +129,18 @@ export const Footer = () => {
               onSubmit={handleNewsletterSubmit}
               className="w-full space-y-2.5"
             >
+              <label htmlFor="newsletter-email" className="sr-only">
+                כתובת אימייל להרשמה לעדכונים
+              </label>
               <div className="flex gap-2 md:justify-center">
                 <input
+                  id="newsletter-email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="אימייל"
                   autoComplete="email"
-                  className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-white placeholder-slate-600 focus:border-blue-500 focus:outline-none"
+                  className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-white placeholder-slate-600 focus:border-blue-500"
                 />
                 <button
                   type="submit"
@@ -140,6 +152,8 @@ export const Footer = () => {
               </div>
               {message ? (
                 <p
+                  role={messageType === "error" ? "alert" : "status"}
+                  aria-live={messageType === "error" ? "assertive" : "polite"}
                   className={`text-center text-xs font-medium ${
                     messageType === "success"
                       ? "text-emerald-400"
@@ -155,12 +169,49 @@ export const Footer = () => {
           <p className="text-center text-sm text-slate-500">
             ליצירת קשר שלחו אימייל{" "}
             <a
-              href="mailto:rbdtonline@gmail.com"
+              href={`mailto:${BUSINESS_CONTACT_EMAIL}`}
               className="text-slate-400 hover:text-blue-400 transition-colors underline underline-offset-2"
             >
-              rbdtonline@gmail.com
+              {BUSINESS_CONTACT_EMAIL}
             </a>
           </p>
+
+          <div className="mx-auto grid max-w-3xl gap-4 rounded-[1.75rem] border border-slate-800 bg-slate-900/80 p-5 text-right sm:grid-cols-2">
+            <div className="space-y-2 text-sm text-slate-300">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+                פרטי העסק
+              </p>
+              <p>{BUSINESS_NAME}</p>
+              <p>טלפון: {BUSINESS_CONTACT_PHONE}</p>
+              <p>אימייל: {BUSINESS_CONTACT_EMAIL}</p>
+              <p className="leading-6">כתובת: {BUSINESS_ADDRESS}</p>
+              <p>רכישה מגיל {MINIMUM_PURCHASE_AGE} ומעלה.</p>
+            </div>
+
+            <div className="space-y-2 text-sm text-slate-300">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+                מידע משפטי
+              </p>
+              <Link href="/terms" className="block underline underline-offset-4 hover:text-blue-400">
+                תקנון האתר
+              </Link>
+              <Link href="/terms#privacy" className="block underline underline-offset-4 hover:text-blue-400">
+                מדיניות פרטיות
+              </Link>
+              <Link href="/terms#cancellation" className="block underline underline-offset-4 hover:text-blue-400">
+                ביטול עסקה והחזרים
+              </Link>
+              <Link href="/terms#delivery" className="block underline underline-offset-4 hover:text-blue-400">
+                מדיניות אספקה
+              </Link>
+              <Link href="/terms#responsibility" className="block underline underline-offset-4 hover:text-blue-400">
+                אחריות המוצר והשירות
+              </Link>
+              <Link href="/accessibility" className="block underline underline-offset-4 hover:text-blue-400">
+                הצהרת נגישות
+              </Link>
+            </div>
+          </div>
 
           <div className="flex flex-wrap items-center justify-center gap-3">
             <span className="text-xs uppercase font-bold tracking-widest text-blue-400">

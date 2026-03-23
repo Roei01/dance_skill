@@ -61,6 +61,11 @@ const port = process.env.PORT || 3000;
     // API Routes
     server.use('/api', apiRoutes);
 
+    // Chrome DevTools may probe this well-known path in development.
+    server.get('/.well-known/appspecific/com.chrome.devtools.json', (_req, res) => {
+      res.status(204).end();
+    });
+
 
     // Handle all other requests with Next.js
     server.all(/(.*)/, (req: Request, res: Response) => {

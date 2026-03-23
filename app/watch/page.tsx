@@ -77,7 +77,11 @@ function WatchContent() {
   }
 
   return (
-    <div className="min-h-screen overflow-hidden bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_45%,#fff5ef_100%)] text-slate-900">
+    <main
+      id="main-content"
+      tabIndex={-1}
+      className="min-h-screen overflow-hidden bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_45%,#fff5ef_100%)] text-slate-900"
+    >
       <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 md:py-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -88,6 +92,9 @@ function WatchContent() {
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
             {BUSINESS_NAME}
           </p>
+          <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-900 md:text-4xl">
+            שיעור מלא לצפייה
+          </h1>
           <p className="mt-2 text-base font-medium leading-7 text-slate-600 md:text-lg">
             בואו לרקוד איתי בכל מקום בכל זמן :)
           </p>
@@ -138,7 +145,7 @@ function WatchContent() {
           )}
         </motion.div>
       </div>
-    </div>
+    </main>
   );
 }
 

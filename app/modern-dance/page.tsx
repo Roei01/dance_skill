@@ -1,16 +1,24 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, PlayCircle } from "lucide-react";
 import { Demo } from "@/sections/Demo";
 import { Purchase } from "@/sections/Purchase";
 import { Footer } from "@/sections/Footer";
-import { DEFAULT_VIDEO_PRICE_ILS } from "@/lib/catalog";
+import {
+  BUSINESS_ADDRESS,
+  BUSINESS_CONTACT_EMAIL,
+  BUSINESS_CONTACT_PHONE,
+  MINIMUM_PURCHASE_AGE,
+} from "@/lib/business-info";
 
 export const dynamic = "force-dynamic";
 
 export default function ModernDancePage() {
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#faf7f1_0%,#ffffff_38%,#f7fbff_100%)] text-slate-900">
+    <main
+      id="main-content"
+      tabIndex={-1}
+      className="min-h-screen bg-[linear-gradient(180deg,#faf7f1_0%,#ffffff_38%,#f7fbff_100%)] text-slate-900"
+    >
       <section className="relative overflow-hidden px-6 py-10 lg:py-14">
         <div className="absolute inset-0">
           <div className="absolute left-10 top-10 h-64 w-64 rounded-full bg-amber-100/70 blur-3xl" />
@@ -62,6 +70,56 @@ export default function ModernDancePage() {
                 >
                   לרכישה לחצו כאן
                 </a>
+              </div>
+
+              <div className="grid gap-4 rounded-[2rem] border border-slate-200/80 bg-white/85 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur sm:grid-cols-2">
+                <div className="space-y-2 text-right">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+                    פרטי בית העסק
+                  </p>
+                  <p className="text-sm font-medium text-slate-700">
+                    טלפון: {BUSINESS_CONTACT_PHONE}
+                  </p>
+                  <p className="text-sm font-medium text-slate-700">
+                    אימייל: {BUSINESS_CONTACT_EMAIL}
+                  </p>
+                  <p className="text-sm font-medium leading-6 text-slate-700">
+                    כתובת: {BUSINESS_ADDRESS}
+                  </p>
+                  <p className="text-sm font-medium text-slate-700">
+                    רכישה מגיל {MINIMUM_PURCHASE_AGE} ומעלה.
+                  </p>
+                </div>
+
+                <div className="space-y-2 text-right">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+                    מידע משפטי
+                  </p>
+                  <Link
+                    href="/terms"
+                    className="block text-sm font-semibold text-slate-900 underline underline-offset-4"
+                  >
+                    תקנון האתר ותנאי שימוש
+                  </Link>
+                  <Link
+                    href="/terms#privacy"
+                    className="block text-sm font-medium text-slate-700 underline underline-offset-4"
+                  >
+                    מדיניות פרטיות
+                  </Link>
+                  <Link
+                    href="/terms#cancellation"
+                    className="block text-sm font-medium text-slate-700 underline underline-offset-4"
+                  >
+                    ביטול עסקה והחזרים
+                  </Link>
+                  <Link
+                    href="/terms#delivery"
+                    className="block text-sm font-medium text-slate-700 underline underline-offset-4"
+                  >
+                    מדיניות אספקת המוצר הדיגיטלי
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

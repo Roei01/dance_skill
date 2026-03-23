@@ -33,6 +33,7 @@ export const Hero = () => {
             muted
             playsInline
             preload="auto"
+            aria-hidden="true"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/35 to-black/10" />
           <div className="absolute inset-0 bg-black/15" />

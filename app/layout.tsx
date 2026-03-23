@@ -32,6 +32,9 @@ export default function RootLayout({
       className={`${rubik.variable} ${heebo.variable} scroll-smooth`}
     >
       <body className="font-sans bg-white text-slate-900">
+        <a href="#main-content" className="skip-link">
+          דלגי לתוכן הראשי
+        </a>
         <Providers>{children}</Providers>
       </body>
     </html>

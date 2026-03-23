@@ -12,7 +12,11 @@ import { PurchaseFaq } from "@/components/purchase/PurchaseFaq";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-transparent text-slate-900 space-y-10">
+    <main
+      id="main-content"
+      tabIndex={-1}
+      className="min-h-screen bg-transparent text-slate-900 space-y-10"
+    >
       <Hero />
       <Styles />
       <PurchaseFaq />

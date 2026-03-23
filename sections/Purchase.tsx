@@ -82,14 +82,14 @@ export const Purchase = () => {
         setError(
           getApiErrorMessage(
             error,
-            "אין מסוף סליקה פעיל בחשבון GreenInvoice שמחובר לאתר."
-          )
+            "אין מסוף סליקה פעיל בחשבון GreenInvoice שמחובר לאתר.",
+          ),
         );
       } else if (isNetworkError(error)) {
         setError("לא הצלחנו להתחיל את התשלום. נסי שוב.");
       } else {
         setError(
-          getApiErrorMessage(error, "לא הצלחנו להתחיל את התשלום. נסי שוב.")
+          getApiErrorMessage(error, "לא הצלחנו להתחיל את התשלום. נסי שוב."),
         );
       }
     } finally {
@@ -182,7 +182,7 @@ export const Purchase = () => {
                 required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400 focus:outline-none md:px-5 md:py-3.5"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400 md:px-5 md:py-3.5"
               />
             </div>
 
@@ -200,7 +200,7 @@ export const Purchase = () => {
                 required
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400 focus:outline-none md:px-5 md:py-3.5"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400 md:px-5 md:py-3.5"
               />
             </div>
 
@@ -218,7 +218,7 @@ export const Purchase = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400 focus:outline-none md:px-5 md:py-3.5"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400 md:px-5 md:py-3.5"
               />
             </div>
 
@@ -262,6 +262,8 @@ export const Purchase = () => {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-center text-[11px] font-bold uppercase tracking-wide text-emerald-600 md:text-xs"
+                role="status"
+                aria-live="polite"
               >
                 {statusMessage}
               </motion.div>

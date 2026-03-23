@@ -10,10 +10,19 @@ import {
 
 export const metadata: Metadata = {
   title: "תקנון ומדיניות | ROTEM BARUCH dance tutorials",
-  description: "תקנון האתר, מדיניות פרטיות, אספקה, ביטול ופרטי קשר.",
+  description: "תקנון האתר, תנאי שימוש, מדיניות פרטיות, אספקה, ביטול עסקה, אחריות ופרטי קשר.",
 };
 
 const sections = [
+  {
+    id: "terms",
+    title: "תקנון האתר ותנאי שימוש",
+    paragraphs: [
+      `האתר ${BUSINESS_NAME} מציע רכישת גישה לתכני וידאו דיגיטליים בתחום המחול והריקוד. השימוש באתר, בתכנים ובשירותים המוצעים בו כפוף לתנאים המפורטים בעמוד זה.`,
+      `ביצוע רכישה באתר מהווה אישור לכך שהמשתמש קרא את התקנון, הבין אותו ומסכים לכל תנאיו. אם המשתמש אינו מסכים לתנאי התקנון, עליו להימנע משימוש באתר ומביצוע רכישה.`,
+      `האתר רשאי לעדכן מעת לעת את תנאי השימוש, מדיניות הרכישה והמידע המשפטי המופיע בו, ובלבד שהשינויים יחולו מכאן ולהבא ובהתאם להוראות הדין.`,
+    ],
+  },
   {
     id: "privacy",
     title: "מדיניות פרטיות",
@@ -25,7 +34,7 @@ const sections = [
   },
   {
     id: "responsibility",
-    title: "אחריות",
+    title: "אחריות המוצר והשירות",
     paragraphs: [
       "השירות באתר כולל תכני לימוד דיגיטליים בתחום המחול והריקוד. השימוש בתכנים, בתרגילים ובהסברים נעשה באחריות המשתמש בלבד ובהתאם ליכולותיו האישיות, מצבו הבריאותי ושיקול דעתו.",
       "האתר ו/או מי מטעמו לא יהיו אחראים לנזק ישיר או עקיף שייגרם עקב שימוש באתר, בתוכן, בהסתמכות על מידע שמופיע בו, או עקב תקלות שמקורן בגורמים שאינם בשליטת האתר.",
@@ -50,7 +59,7 @@ const sections = [
   },
   {
     id: "cancellation",
-    title: "מדיניות ביטול",
+    title: "ביטול עסקה והחזרים",
     paragraphs: [
       "בקשה לביטול עסקה תיעשה בכתב לכתובת האימייל של העסק, תוך ציון שם הרוכש, כתובת האימייל שבאמצעותה בוצעה הרכישה ופרטי ההזמנה ככל שישנם.",
       "מאחר שמדובר במוצר דיגיטלי ובמתן גישה לתוכן מקוון, בקשות ביטול והחזר ייבחנו בהתאם להוראות חוק הגנת הצרכן, תקנותיו והדין החל, ובהתחשב בשאלה אם הגישה כבר נמסרה או נוצלה.",
@@ -65,7 +74,11 @@ export default function TermsPage() {
     BUSINESS_ADDRESS.includes("יש לעדכן");
 
   return (
-    <main className="min-h-screen bg-[#f8f7f4] px-4 py-8 text-slate-900 sm:px-6 lg:px-10 lg:py-12">
+    <main
+      id="main-content"
+      tabIndex={-1}
+      className="min-h-screen bg-[#f8f7f4] px-4 py-8 text-slate-900 sm:px-6 lg:px-10 lg:py-12"
+    >
       <div className="mx-auto max-w-4xl space-y-8">
         <section className="overflow-hidden rounded-[2rem] border border-black/10 bg-white p-6 shadow-[0_30px_80px_rgba(15,23,42,0.08)] md:p-8">
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-slate-400">
@@ -78,6 +91,24 @@ export default function TermsPage() {
             בעמוד זה מופיעים תנאי השימוש, מדיניות הפרטיות, האספקה,
             הביטולים ופרטי ההתקשרות של {BUSINESS_NAME}.
           </p>
+
+          <div className="mt-6 flex flex-wrap gap-3 text-sm font-semibold text-slate-700">
+            <a href="#terms" className="rounded-full bg-slate-100 px-4 py-2 hover:bg-slate-200">
+              תקנון האתר
+            </a>
+            <a href="#privacy" className="rounded-full bg-slate-100 px-4 py-2 hover:bg-slate-200">
+              פרטיות
+            </a>
+            <a href="#delivery" className="rounded-full bg-slate-100 px-4 py-2 hover:bg-slate-200">
+              אספקה
+            </a>
+            <a href="#cancellation" className="rounded-full bg-slate-100 px-4 py-2 hover:bg-slate-200">
+              ביטול עסקה
+            </a>
+            <a href="#responsibility" className="rounded-full bg-slate-100 px-4 py-2 hover:bg-slate-200">
+              אחריות
+            </a>
+          </div>
 
           <div className="mt-6 grid gap-3 rounded-[1.5rem] bg-slate-50 p-4 text-sm font-medium text-slate-600 md:grid-cols-2 md:p-5">
             <p>טלפון ליצירת קשר: {BUSINESS_CONTACT_PHONE}</p>
