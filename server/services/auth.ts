@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import { config } from '../config/env';
 import { User, type IUser } from '../../models/User';
 
-export const SESSION_DURATION_MS = 24 * 60 * 60 * 1000;
+export const SESSION_DURATION_MS = 2 * 60 * 1000;
 
 export type AuthTokenPayload = {
   userId: string;
@@ -35,6 +35,10 @@ export const verifyToken = (token: string): AuthTokenPayload => {
 
 export const generateSessionId = (): string => {
   return crypto.randomUUID();
+};
+
+const getSessionExpiryDate = () => {
+  return new Date(Date.now() + SESSION_DURATION_MS);
 };
 
 const clearSessionFields = (user: IUser) => {
@@ -72,6 +76,24 @@ export const hasConflictingActiveSession = async (
   return user.activeSessionId !== currentSessionId;
 };
 
+export const getActiveSessionRemainingSeconds = async (userId: string): Promise<number> => {
+  const user = await User.findById(userId);
+  if (!user) {
+    return 0;
+  }
+
+  await clearExpiredSessionIfNeeded(user);
+
+  if (!user.activeSessionId || !user.activeSessionExpiresAt) {
+    return 0;
+  }
+
+  return Math.max(
+    0,
+    Math.ceil((user.activeSessionExpiresAt.getTime() - Date.now()) / 1000),
+  );
+};
+
 export const startExclusiveSession = async (userId: string): Promise<string> => {
   const user = await User.findById(userId);
   if (!user) {
@@ -81,7 +103,7 @@ export const startExclusiveSession = async (userId: string): Promise<string> => 
   const sessionId = generateSessionId();
   user.activeSessionId = sessionId;
   user.activeSessionStartedAt = new Date();
-  user.activeSessionExpiresAt = new Date(Date.now() + SESSION_DURATION_MS);
+  user.activeSessionExpiresAt = getSessionExpiryDate();
   user.ipAddress = undefined;
   user.allowedIps = [];
   await user.save();
@@ -118,4 +140,20 @@ export const isSessionActive = async (userId: string, sessionId: string): Promis
   await clearExpiredSessionIfNeeded(user);
 
   return user.activeSessionId === sessionId;
+};
+
+export const touchActiveSession = async (userId: string, sessionId: string): Promise<void> => {
+  const user = await User.findById(userId);
+  if (!user) {
+    return;
+  }
+
+  await clearExpiredSessionIfNeeded(user);
+
+  if (user.activeSessionId !== sessionId) {
+    return;
+  }
+
+  user.activeSessionExpiresAt = getSessionExpiryDate();
+  await user.save();
 };

@@ -21,6 +21,7 @@ export interface ApiErrorResponse {
   message: string;
   code?: ApiErrorCode;
   email?: string;
+  retryAfterSeconds?: number;
 }
 
 export const api = axios.create({

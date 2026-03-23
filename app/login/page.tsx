@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
-import { api, getApiErrorCode } from "@/lib/api-client";
+import { api, getApiErrorCode, getApiErrorMessage } from "@/lib/api-client";
 import { useAuth } from "@/context/AuthContext";
 import { BUSINESS_CONTACT_EMAIL, BUSINESS_NAME } from "@/lib/business-info";
 
@@ -40,8 +40,20 @@ export default function Login() {
 
       if (code === "INVALID_CREDENTIALS") {
         setError("שם המשתמש או הסיסמה שגויים.");
+      } else if (code === "RATE_LIMITED") {
+        setError(
+          getApiErrorMessage(
+            error,
+            "בוצעו יותר מדי ניסיונות התחברות. נסה שוב בעוד כמה דקות.",
+          ),
+        );
       } else if (code === "SESSION_ALREADY_ACTIVE") {
-        setError("לא ניתן להתחבר כעת. כבר יש משתמש אחד מחובר לחשבון הזה.");
+        setError(
+          getApiErrorMessage(
+            error,
+            "לא ניתן להתחבר כעת. כבר יש משתמש אחד מחובר לחשבון הזה.",
+          ),
+        );
       } else if (code === "TOKEN_EXPIRED") {
         setError("פג תוקף ההתחברות. יש להתחבר מחדש.");
       } else {
