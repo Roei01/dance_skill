@@ -62,28 +62,28 @@ export default function Login() {
         transition={{ duration: 0.5 }}
         className="max-w-md w-full bg-slate-800 p-12 rounded-2xl shadow-2xl border border-slate-700 relative z-10"
       >
-        <div className="text-center mb-10">
+        <div className="text-center mb-4">
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-slate-500">
             {BUSINESS_NAME}
           </p>
           <h1 className="text-4xl font-black tracking-tight text-white mb-2">
             התחברות
           </h1>
-          <p className="text-slate-400 text-sm font-medium">ברוכה הבאה חזרה.</p>
+          <p className="text-slate-400 text-sm font-medium">ברוכים הבאים.</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="rounded-2xl border border-slate-700 bg-slate-900/70 px-4 py-4 text-center">
             <p className="text-sm font-semibold leading-6 text-slate-200">
-              לאחר השלמת התשלום יישלחו אלייך למייל שם המשתמש והסיסמה הזמנית
-              לעמוד ההתחברות של האתר.
+              לאחר השלמת התשלום יישלח אלייך למייל שם המשתמש והסיסמה לעמוד
+              ההתחברות של האתר.
             </p>
             <p className="mt-2 text-xs leading-5 text-slate-400">
-              אם כבר קיבלת את הפרטים במייל, אפשר להתחבר כאן עם אותם פרטים
-              ולצפות בשיעור.
+              אם כבר קיבלת את הפרטים במייל, אפשר להתחבר כאן עם אותם פרטים ולצפות
+              בשיעור.
             </p>
             <p className="mt-2 text-xs leading-5 text-slate-500">
-              ניתן להיות מחוברים לחשבון ממכשיר אחד בלבד בכל רגע.
+              אפשר להיות מחובר לחשבון רק ממכשיר אחד בלבד בכל רגע.
             </p>
           </div>
 

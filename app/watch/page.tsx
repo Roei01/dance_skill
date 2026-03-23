@@ -15,6 +15,9 @@ import { DEFAULT_VIDEO_ID } from "@/lib/catalog";
 const CLOUDINARY_PLAYER_SRC =
   "https://player.cloudinary.com/embed/?cloud_name=ddcdws24e&public_id=9F67D997-37AB-423E-9BB1-D12FB8D53455_2_hh0lu8";
 
+const MUX_PLAYER_SRC =
+  "https://player.mux.com/pRI1RXjQ7NU9JU1j65JfJdPRWcHUzCZnOKwQIxa5WkQ";
+
 function WatchContent() {
   const { access } = useAuth();
   const [authChecking, setAuthChecking] = useState(true);
@@ -93,7 +96,7 @@ function WatchContent() {
             {BUSINESS_NAME}
           </p>
           <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-900 md:text-4xl">
-            שיעור מלא לצפייה
+            אהבת השם{" "}
           </h1>
           <p className="mt-2 text-base font-medium leading-7 text-slate-600 md:text-lg">
             בואו לרקוד איתי בכל מקום בכל זמן :)
@@ -117,12 +120,12 @@ function WatchContent() {
                   ) : null}
                   <iframe
                     className="absolute inset-0 h-full w-full border-0"
-                    src={CLOUDINARY_PLAYER_SRC}
-                    title="שיעור אהבת השם"
+                    src={MUX_PLAYER_SRC}
+                    title="שיעור"
                     allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
                     allowFullScreen
                     onLoad={() => setVideoReady(true)}
-                  />
+                  />{" "}
                 </div>
               </motion.div>
 
