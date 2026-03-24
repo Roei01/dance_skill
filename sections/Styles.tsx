@@ -26,7 +26,7 @@ const categories: StyleCard[] = [
     description: "מחול מודרני עם שילוב של נוכחות, זרימה, טכניקה והבעה.",
     cta: "לצפייה בפרטי השיעור",
     mediaClassName:
-      "aspect-[11/14] min-[294px]:aspect-[5/6] min-[600px]:aspect-[4/3] xl:aspect-[5/4]",
+      "aspect-[11/14] min-[294px]:aspect-[5/6] min-[600px]:aspect-[5/6]",
     imageClassName:
       "object-cover object-bottom transition duration-500 group-hover:scale-105",
   },
@@ -38,9 +38,9 @@ const categories: StyleCard[] = [
     description:
       "שיעורים באורך של 15-30 דקות של כוראוגרפיות מלאות מוכרות וגם חדשות!",
     mediaClassName:
-      "aspect-[11/10] min-[294px]:aspect-[12/10] min-[600px]:aspect-[4/3] xl:aspect-[5/4]",
+      "aspect-[11/10] min-[294px]:aspect-[12/10] min-[600px]:aspect-[5/6]",
     imageClassName:
-      "object-cover object-[center_80%] grayscale opacity-80 scale-[1.2] translate-y-[6%] min-[600px]:object-[center_26%] min-[600px]:scale-100 min-[600px]:translate-y-0 xl:object-[center_22%]",
+      "object-cover object-[center_80%] grayscale opacity-80 scale-[1.2] translate-y-[6%] min-[600px]:object-[center_26%] min-[600px]:scale-100 min-[600px]:translate-y-0",
   },
 ] as const;
 
@@ -78,7 +78,7 @@ export const Styles = () => {
           </p>
         </motion.div>
 
-        <div className="mx-auto grid max-w-6xl gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
+        <div className="mx-auto grid max-w-6xl gap-4 md:grid-cols-2 md:gap-6">
           {categories.map((style, i) => {
             return (
               <motion.div
@@ -114,12 +114,12 @@ export const Styles = () => {
                         עכשיו באתר
                       </div>
 
-                      <div className="absolute inset-x-0 bottom-0 p-2.5 min-[294px]:p-3 min-[370px]:p-4 md:p-5 xl:p-5">
-                        <div className="rounded-[1.3rem] border border-white/10 bg-black/25 p-2.5 text-right backdrop-blur-md min-[294px]:rounded-[1.5rem] min-[294px]:p-3 min-[370px]:p-4 md:p-5 xl:p-5">
+                      <div className="absolute inset-x-0 bottom-0 p-2.5 min-[294px]:p-3 min-[370px]:p-4 md:p-5">
+                        <div className="rounded-[1.3rem] border border-white/10 bg-black/25 p-2.5 text-right backdrop-blur-md min-[294px]:rounded-[1.5rem] min-[294px]:p-3 min-[370px]:p-4 md:p-5">
                           <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#f2cf88] min-[294px]:text-[11px] min-[294px]:tracking-[0.22em] md:text-xs">
                             שיעור מלא זמין
                           </p>
-                          <h3 className="mt-1 text-base font-black tracking-tight text-white min-[294px]:mt-1.5 min-[294px]:text-lg min-[370px]:mt-2 min-[370px]:text-xl md:text-[1.9rem] xl:text-2xl">
+                          <h3 className="mt-1 text-base font-black tracking-tight text-white min-[294px]:mt-1.5 min-[294px]:text-lg min-[370px]:mt-2 min-[370px]:text-xl md:text-[1.9rem]">
                             אהבת השם - 20 דק'
                           </h3>
                           <p className="mt-1.5 max-w-md text-[12px] font-medium leading-4 text-white/90 min-[294px]:mt-2 min-[294px]:text-[13px] min-[294px]:leading-5 min-[370px]:mt-3 min-[370px]:text-sm min-[370px]:leading-6 md:text-[15px] md:leading-6">
@@ -160,9 +160,9 @@ export const Styles = () => {
                         </div>
                       </div>
 
-                      <div className="absolute inset-x-0 bottom-0 p-2.5 min-[294px]:p-3 min-[370px]:p-4 md:p-5 xl:p-5">
-                        <div className="rounded-[1.3rem] border border-white/10 bg-black/15 p-2.5 text-right backdrop-blur-sm min-[294px]:rounded-[1.5rem] min-[294px]:p-3 min-[370px]:p-4 md:p-5 xl:p-5">
-                          <h3 className="text-sm font-black tracking-tight text-white min-[294px]:text-base min-[370px]:text-lg sm:text-xl md:text-[1.8rem] xl:text-2xl">
+                      <div className="absolute inset-x-0 bottom-0 p-2.5 min-[294px]:p-3 min-[370px]:p-4 md:p-5">
+                        <div className="rounded-[1.3rem] border border-white/10 bg-black/15 p-2.5 text-right backdrop-blur-sm min-[294px]:rounded-[1.5rem] min-[294px]:p-3 min-[370px]:p-4 md:p-5">
+                          <h3 className="text-sm font-black tracking-tight text-white min-[294px]:text-base min-[370px]:text-lg sm:text-xl md:text-[1.8rem]">
                             {style.name}
                           </h3>
                           <p className="mt-1.5 text-[12px] font-medium leading-4 text-white/85 min-[294px]:mt-2 min-[294px]:text-[13px] min-[294px]:leading-5 min-[370px]:mt-3 min-[370px]:text-sm min-[370px]:leading-6 md:text-[15px] md:leading-6">

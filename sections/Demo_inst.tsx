@@ -1,13 +1,41 @@
 "use client";
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Instagram } from "lucide-react";
 
 const INSTAGRAM_URL =
   "https://www.instagram.com/reel/DVxwwKfiCgU/?igsh=aHJ0eDN3ZWswc28w";
-const DEMO_POSTER_URL =
-  "https://res.cloudinary.com/ddcdws24e/video/upload/so_0/9F67D997-37AB-423E-9BB1-D12FB8D53455_2_hh0lu8.jpg";
+const DEMO_VIDEO_URL =
+  "https://myrbdt.b-cdn.net/9F67D997-37AB-423E-9BB1-D12FB8D53455%202.mov";
+const ENABLE_DEMO_VIDEO_MOTION = false;
 
 const Demo_inst = () => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+
+    if (!video || ENABLE_DEMO_VIDEO_MOTION) {
+      return;
+    }
+
+    const freezeVideo = () => {
+      video.currentTime = 0.01;
+      video.pause();
+    };
+
+    if (video.readyState >= 2) {
+      freezeVideo();
+      return;
+    }
+
+    video.addEventListener("loadeddata", freezeVideo, { once: true });
+
+    return () => {
+      video.removeEventListener("loadeddata", freezeVideo);
+    };
+  }, []);
+
   return (
     <section
       id="demo"
@@ -37,11 +65,16 @@ const Demo_inst = () => {
         >
           <div className="relative aspect-[10/16] overflow-hidden rounded-[2rem] border border-white/80 bg-white px-2.5 pb-4 pt-2.5 shadow-[0_30px_80px_rgba(15,23,42,0.14)] transition-transform duration-500 hover:rotate-0 sm:p-2.5">
             <div className="relative h-full w-full overflow-hidden rounded-[1.4rem] bg-slate-900">
-              <img
-                src={DEMO_POSTER_URL}
-                alt=""
-                aria-hidden="true"
+              <video
+                ref={videoRef}
                 className="absolute inset-0 h-full w-full object-cover"
+                src={DEMO_VIDEO_URL}
+                autoPlay={ENABLE_DEMO_VIDEO_MOTION}
+                loop={ENABLE_DEMO_VIDEO_MOTION}
+                muted
+                playsInline
+                preload={ENABLE_DEMO_VIDEO_MOTION ? "metadata" : "auto"}
+                aria-hidden="true"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/40 to-slate-950/20" />
               <div className="relative flex h-full w-full flex-col items-center justify-center px-6 py-8 text-center text-white">
