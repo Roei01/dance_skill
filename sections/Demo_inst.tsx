@@ -51,8 +51,8 @@ const Demo_inst = () => {
                   rel="noreferrer"
                   className="mt-8 inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-[#f9b3d1]"
                 >
-                  <Instagram className="h-4 w-4" />
                   למעבר לאינסטגרם
+                  <Instagram className="h-4 w-4" />
                 </a>
               </div>
             </div>
