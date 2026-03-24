@@ -35,7 +35,7 @@ const Demo_inst = () => {
           viewport={{ once: true }}
           className="relative mx-auto w-full max-w-md"
         >
-          <div className="relative aspect-[10/16] overflow-hidden rounded-[2rem] border border-white/80 bg-white px-2.5 pb-3 pt-2.5 shadow-[0_30px_80px_rgba(15,23,42,0.14)] transition-transform duration-500 hover:rotate-0 sm:p-2.5">
+          <div className="relative aspect-[10/16] overflow-hidden rounded-[2rem] border border-white/80 bg-white px-2.5 pb-4 pt-2.5 shadow-[0_30px_80px_rgba(15,23,42,0.14)] transition-transform duration-500 hover:rotate-0 sm:p-2.5">
             <div className="relative h-full w-full overflow-hidden rounded-[1.4rem] bg-slate-900">
               <img
                 src={DEMO_POSTER_URL}
