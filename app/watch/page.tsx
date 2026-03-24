@@ -140,15 +140,15 @@ function WatchContent() {
           transition={{ duration: 0.7 }}
           className="rounded-[2rem] bg-white px-5 py-8 text-center shadow-[0_30px_80px_rgba(15,23,42,0.12)] sm:px-8"
         >
-          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+          <p className="text-sm font-semibold tracking-[0.16em] text-slate-500">
             {BUSINESS_NAME}
+          </p>
+          <p className="mt-2 text-base font-medium leading-7 text-slate-600 md:text-lg">
+            בואו לרקוד איתי בכל מקום בכל זמן :)
           </p>
           <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-900 md:text-4xl">
             אהבת השם{" "}
           </h1>
-          <p className="mt-2 text-base font-medium leading-7 text-slate-600 md:text-lg">
-            בואו לרקוד איתי בכל מקום בכל זמן :)
-          </p>
 
           {error ? (
             <div className="mt-8">
