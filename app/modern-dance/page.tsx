@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, PlayCircle } from "lucide-react";
-import { Demo } from "@/sections/Demo";
+import { Demo_inst } from "@/sections/Demo_inst";
 import { Purchase } from "@/sections/Purchase";
 import { Footer } from "@/sections/Footer";
 import {
@@ -76,7 +76,7 @@ export default function ModernDancePage() {
         </div>
       </section>
 
-      <Demo />
+      <Demo_inst />
       <Purchase />
       <Footer />
     </main>
