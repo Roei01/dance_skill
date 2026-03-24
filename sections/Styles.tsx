@@ -20,8 +20,7 @@ type StyleCard = {
 const categories: StyleCard[] = [
   {
     name: "השיעור הפעיל",
-    image:
-      "https://res.cloudinary.com/ddcdws24e/image/upload/f_auto,q_auto,w_1200/IMG_2051_sx4gm5",
+    image: "https://myrbdt.b-cdn.net/IMG_2051.jpeg",
     featured: true,
     href: "/modern-dance",
     description: "מחול מודרני עם שילוב של נוכחות, זרימה, טכניקה והבעה.",
@@ -33,8 +32,7 @@ const categories: StyleCard[] = [
   },
   {
     name: "שיעורים מלאים נוספים",
-    image:
-      "https://res.cloudinary.com/ddcdws24e/image/upload/f_auto,q_auto,w_1200/addition_qzopu3",
+    image: "https://myrbdt.b-cdn.net/addition_qzopu3.jpeg",
     muted: true,
     comingSoon: true,
     description:
