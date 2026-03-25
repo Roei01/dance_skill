@@ -4,6 +4,7 @@ import { DEFAULT_VIDEO_ID } from "../../lib/catalog";
 import { sendAccessEmail } from "./email";
 import { generateTempPassword, hashPassword } from "./auth";
 import { config } from "../config/env";
+import { logger } from "../lib/logger";
 
 const normalizeBaseUrl = (url: string) => url.replace(/\/$/, "");
 
@@ -15,6 +16,9 @@ export const provisionPurchaseAccess = async (paymentId: string) => {
   const purchase = await Purchase.findOne({ paymentId });
 
   if (!purchase) {
+    logger.warn("דילגנו על פתיחת הגישה כי לא נמצאה רכישה עבור התשלום.", {
+      paymentId,
+    });
     return null;
   }
 
@@ -47,6 +51,10 @@ export const provisionPurchaseAccess = async (paymentId: string) => {
 
   if (purchase.credentialsSentAt) {
     await purchase.save();
+    logger.info("הגישה לרכישה כבר נפתחה בעבר, מחזירים את פרטי הגישה הקיימים.", {
+      paymentId,
+      email: user.email,
+    });
 
     return {
       email: user.email,
@@ -61,7 +69,7 @@ export const provisionPurchaseAccess = async (paymentId: string) => {
     await user.save();
   }
 
-  const loginLink = `${config.appUrl}/login`;
+  const loginLink = buildLoginLink(config.appUrl);
   await sendAccessEmail(
     user.email,
     user.username,
@@ -70,6 +78,11 @@ export const provisionPurchaseAccess = async (paymentId: string) => {
   );
   purchase.credentialsSentAt = new Date();
   await purchase.save();
+  logger.info("הגישה לרכישה נפתחה בהצלחה.", {
+    paymentId,
+    email: user.email,
+    username: user.username,
+  });
 
   return {
     email: user.email,

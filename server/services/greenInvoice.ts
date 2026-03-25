@@ -27,6 +27,12 @@ type CreateGreenInvoicePaymentOptions = {
   fullName?: string;
   phone?: string;
   orderId?: string;
+  returnTo?: string;
+};
+
+export type GreenInvoicePaymentResult = {
+  checkoutUrl: string;
+  paymentId: string;
 };
 
 type GreenInvoiceApiError = {
@@ -87,6 +93,8 @@ const resolveCallbackBaseUrl = (appBaseUrl?: string) => {
   }
   return null;
 };
+
+const isMockPaymentMode = () => config.paymentMode === "test" && !config.isProduction;
 
 const getConfiguredBaseUrls = () => {
   const configured = normalizeBaseUrl(config.greenInvoice.url);
@@ -222,17 +230,44 @@ export const createGreenInvoicePayment = async (
   amount: number,
   description: string,
   options?: CreateGreenInvoicePaymentOptions,
-) => {
+) : Promise<GreenInvoicePaymentResult> => {
   try {
+    if (isMockPaymentMode()) {
+      const paymentId = `mock_${Date.now()}`;
+      logger.info("Using mock payment mode for GreenInvoice.", {
+        email,
+        paymentId,
+        amount,
+      });
+
+      return {
+        checkoutUrl: `${config.appUrl}/success?mock=true`,
+        paymentId,
+      };
+    }
+
     const { token, baseUrl } = await getGreenInvoiceAccessToken();
 
     const callbackBase = resolveCallbackBaseUrl(options?.appBaseUrl);
     const callbackUrls = callbackBase
-      ? {
-          successUrl: `${callbackBase}/success?email=${encodeURIComponent(email)}`,
-          failureUrl: `${callbackBase}/cancel`,
-          notifyUrl: `${callbackBase}/api/purchase/webhook`,
-        }
+      ? (() => {
+          const successUrl = new URL("/success", `${callbackBase}/`);
+          successUrl.searchParams.set("email", email);
+
+          const failureUrl = new URL("/cancel", `${callbackBase}/`);
+          const notifyUrl = `${callbackBase}/api/purchase/webhook`;
+
+          if (options?.returnTo) {
+            successUrl.searchParams.set("returnTo", options.returnTo);
+            failureUrl.searchParams.set("returnTo", options.returnTo);
+          }
+
+          return {
+            successUrl: successUrl.toString(),
+            failureUrl: failureUrl.toString(),
+            notifyUrl,
+          };
+        })()
       : {};
 
     const normalizedPhone = options?.phone?.trim();

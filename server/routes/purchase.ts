@@ -5,11 +5,11 @@ import { User } from "../../models/User";
 import {
   createGreenInvoicePayment,
   GreenInvoiceError,
-} from '../services/greenInvoice';
-import { provisionPurchaseAccess } from '../services/purchase';
-import { purchaseRateLimiter } from '../middleware/rateLimit';
-import { logger } from '../lib/logger';
-import { config } from '../config/env';
+} from "../services/greenInvoice";
+import { provisionPurchaseAccess } from "../services/purchase";
+import { purchaseRateLimiter } from "../middleware/rateLimit";
+import { logger } from "../lib/logger";
+import { config } from "../config/env";
 import {
   DEFAULT_VIDEO_ID,
   DEFAULT_VIDEO_PRICE_ILS,
@@ -55,6 +55,7 @@ const purchaseSchema = z.object({
   fullName: z.string().trim().min(2),
   phone: z.string().trim().min(9),
   email: z.string().email(),
+  returnTo: z.string().trim().url().optional(),
 });
 
 router.post("/create", purchaseRateLimiter, async (req, res) => {
@@ -68,7 +69,7 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
       });
     }
 
-    const { email, fullName, phone } = validation.data;
+    const { email, fullName, phone, returnTo } = validation.data;
     const appBaseUrl = deriveAppBaseUrlFromRequest(req);
     const existingUser = await User.findOne({ email });
 
@@ -97,6 +98,7 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
         fullName,
         phone,
         orderId: `${DEFAULT_VIDEO_ID}:${email}`,
+        returnTo,
       },
     );
 
@@ -112,7 +114,7 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
       customerFullName: fullName,
       customerPhone: phone,
       customerEmail: email,
-      status: 'pending',
+      status: "pending",
       appBaseUrl,
     });
 
@@ -154,21 +156,56 @@ router.post("/webhook", async (req, res) => {
     req.body?.paymentStatus ||
     (req.body?.transactions?.length ? "completed" : undefined);
 
+  logger.info("Purchase webhook triggered.", {
+    paymentId,
+    status,
+    paymentMode: config.paymentMode,
+  });
+
+  if (
+    config.paymentMode === "test" &&
+    typeof paymentId === "string" &&
+    paymentId.startsWith("mock_")
+  ) {
+    if (status === "failed") {
+      await Purchase.findOneAndUpdate({ paymentId }, { status: "failed" });
+      return res.status(200).json({ ok: true, mocked: true, status: "failed" });
+    }
+
+    const provisioned = await provisionPurchaseAccess(paymentId);
+    return res.status(200).json({
+      ok: true,
+      mocked: true,
+      status: "completed",
+      provisioned: Boolean(provisioned),
+    });
+  }
+
+  if (typeof paymentId === "string" && paymentId.startsWith("mock_")) {
+    return res.status(400).json({
+      code: "MOCK_PAYMENT_DISABLED",
+      message: "Mock payments are disabled in production mode.",
+    });
+  }
+
   if (paymentId && (status === "success" || status === "completed")) {
     try {
       const provisioned = await provisionPurchaseAccess(paymentId);
 
       if (!provisioned) {
-        logger.warn('Webhook completed but no pending purchase found for paymentId', {
-          paymentId,
-          body: req.body,
-        });
+        logger.warn(
+          "Webhook completed but no pending purchase found for paymentId",
+          {
+            paymentId,
+            body: req.body,
+          },
+        );
       }
     } catch (error) {
       logger.error("Webhook provisioning error:", error);
     }
-  } else if (paymentId && status === 'failed') {
-    await Purchase.findOneAndUpdate({ paymentId }, { status: 'failed' });
+  } else if (paymentId && status === "failed") {
+    await Purchase.findOneAndUpdate({ paymentId }, { status: "failed" });
   }
 
   res.sendStatus(200);

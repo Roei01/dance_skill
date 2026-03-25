@@ -1,9 +1,9 @@
-import dotenv from 'dotenv';
-import path from 'path';
-import { z } from 'zod';
+import dotenv from "dotenv";
+import path from "path";
+import { z } from "zod";
 
 // Load environment variables from .env file
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
 const envSchema = z.object({
   DATABASE_URL: z.string().url(),
@@ -17,7 +17,7 @@ const envSchema = z.object({
   GREENINVOICE_API_URL: z
     .string()
     .url()
-    .default('https://api.greeninvoice.co.il/api/v1'),
+    .default("https://api.greeninvoice.co.il/api/v1"),
   EMAIL_HOST: z.string().min(1),
   EMAIL_PORT: z.string().transform((val) => parseInt(val, 10)),
   EMAIL_USER: z.string().optional(),
@@ -27,18 +27,28 @@ const envSchema = z.object({
   APP_BASE_URL: z.string().url().optional(),
   RENDER_EXTERNAL_URL: z.string().url().optional(),
   VERCEL_URL: z.string().optional(),
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  PORT: z.string().optional().default('3000').transform((val) => parseInt(val, 10)),
+  PAYMENT_MODE: z.enum(["test", "production"]).optional().default("production"),
+  NODE_ENV: z
+    .enum(["development", "production", "test"])
+    .default("development"),
+  PORT: z
+    .string()
+    .optional()
+    .default("3000")
+    .transform((val) => parseInt(val, 10)),
 });
 
 const env = envSchema.safeParse(process.env);
 
 if (!env.success) {
-  console.error('❌ Invalid environment variables:', JSON.stringify(env.error.format(), null, 2));
+  console.error(
+    "❌ Invalid environment variables:",
+    JSON.stringify(env.error.format(), null, 2),
+  );
   process.exit(1);
 }
 
-const normalizeBaseUrl = (url: string) => url.replace(/\/$/, '');
+const normalizeBaseUrl = (url: string) => url.replace(/\/$/, "");
 
 const resolveAppUrl = () => {
   if (env.data.APP_BASE_URL) {
@@ -53,7 +63,7 @@ const resolveAppUrl = () => {
     return normalizeBaseUrl(`https://${env.data.VERCEL_URL}`);
   }
 
-  return 'http://localhost:3000';
+  return "https://rbdt-online.onrender.com/";
 };
 
 export const config = {
@@ -74,6 +84,9 @@ export const config = {
     pass: env.data.EMAIL_PASS,
   },
   appUrl: resolveAppUrl(),
-  isProduction: env.data.NODE_ENV === 'production',
+  isProduction: env.data.NODE_ENV === "production",
+  isTest: env.data.NODE_ENV === "test",
+  paymentMode:
+    env.data.NODE_ENV === "production" ? "production" : env.data.PAYMENT_MODE,
   port: env.data.PORT,
 };

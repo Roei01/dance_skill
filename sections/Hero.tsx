@@ -77,7 +77,7 @@ export const Hero = () => {
                         el.getBoundingClientRect().top + window.scrollY + 290;
                       window.scrollTo({ top: y, behavior: "smooth" });
                     }}
-                    className="rounded-xl bg-[#ffe08f] px-7 py-4 text-sm font-bold uppercase tracking-[0.12em] text-slate-950 shadow-[0_14px_30px_rgba(143,214,255,0.35)] transition hover:bg-[#74cbff]"
+                    className="rounded-xl bg-[#ffe08f] px-7 py-4 text-sm font-bold uppercase tracking-[0.12em] text-slate-950 shadow-[0_14px_30px_rgba(143,214,255,0.35)] transition hover:bg-[#ffc42b]"
                   >
                     לצפייה בשיעורים
                   </button>

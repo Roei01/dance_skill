@@ -1,13 +1,9 @@
 import express, { Request, Response } from 'express';
 import next from 'next';
 import mongoose from 'mongoose';
-import cors from 'cors';
-import helmet from 'helmet';
-import cookieParser from 'cookie-parser';
 import { config } from './config/env';
 import { logger } from './lib/logger';
-
-import apiRoutes from './routes';
+import { createApiApp } from './app';
 
 const dev = config.isProduction === false;
 const app = next({ dev });
@@ -44,27 +40,7 @@ const port = process.env.PORT || 3000;
     }
 
     // 3. Initialize Express
-    const server = express();
-
-    // Middleware
-    server.use(cors());
-    // Helmet helps secure Express apps, but be careful with CSP and Next.js
-    server.use(
-      helmet({
-        contentSecurityPolicy: false, // Disable CSP for now to avoid Next.js conflicts in dev
-        crossOriginEmbedderPolicy: false,
-      })
-    );
-    server.use(express.json({ limit: '1mb' }));
-    server.use(cookieParser());
-
-    // API Routes
-    server.use('/api', apiRoutes);
-
-    // Chrome DevTools may probe this well-known path in development.
-    server.get('/.well-known/appspecific/com.chrome.devtools.json', (_req, res) => {
-      res.status(204).end();
-    });
+    const server = createApiApp();
 
 
     // Handle all other requests with Next.js
