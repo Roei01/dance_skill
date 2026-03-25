@@ -9,6 +9,11 @@ const envSchema = z.object({
   DATABASE_URL: z.string().url(),
   GREENINVOICE_API_KEY: z.string().optional(),
   GREENINVOICE_API_SECRET: z.string().optional(),
+  GREENINVOICE_PLUGIN_ID: z.string().optional(),
+  GREENINVOICE_GROUP: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : undefined)),
   GREENINVOICE_API_URL: z
     .string()
     .url()
@@ -58,6 +63,8 @@ export const config = {
   greenInvoice: {
     key: env.data.GREENINVOICE_API_KEY,
     secret: env.data.GREENINVOICE_API_SECRET,
+    pluginId: env.data.GREENINVOICE_PLUGIN_ID,
+    group: env.data.GREENINVOICE_GROUP,
     url: env.data.GREENINVOICE_API_URL,
   },
   email: {

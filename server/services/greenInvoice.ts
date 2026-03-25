@@ -22,6 +22,13 @@ type GreenInvoicePaymentFormResponse = {
   };
 };
 
+type CreateGreenInvoicePaymentOptions = {
+  appBaseUrl?: string;
+  fullName?: string;
+  phone?: string;
+  orderId?: string;
+};
+
 type GreenInvoiceApiError = {
   errorCode?: number;
   errorMessage?: string;
@@ -44,6 +51,7 @@ export class GreenInvoiceError extends Error {
 }
 
 const PRODUCTION_GREENINVOICE_URL = "https://api.greeninvoice.co.il/api/v1";
+const SANDBOX_GREENINVOICE_URL = "https://sandbox.d.greeninvoice.co.il/api/v1";
 
 const normalizeBaseUrl = (url: string) => url.replace(/\/$/, "");
 
@@ -85,7 +93,15 @@ const getConfiguredBaseUrls = () => {
   const fallbacks = [configured];
 
   if (
-    configured.includes("sandbox.d.greeninvoice.co.il") &&
+    configured.includes("sandbox.greeninvoice.co.il") &&
+    !fallbacks.includes(SANDBOX_GREENINVOICE_URL)
+  ) {
+    fallbacks.push(SANDBOX_GREENINVOICE_URL);
+  }
+
+  if (
+    (configured.includes("sandbox.d.greeninvoice.co.il") ||
+      configured.includes("sandbox.greeninvoice.co.il")) &&
     !fallbacks.includes(PRODUCTION_GREENINVOICE_URL)
   ) {
     // The current credentials in this project authenticate against production.
@@ -205,7 +221,7 @@ export const createGreenInvoicePayment = async (
   email: string,
   amount: number,
   description: string,
-  options?: { appBaseUrl?: string },
+  options?: CreateGreenInvoicePaymentOptions,
 ) => {
   try {
     const { token, baseUrl } = await getGreenInvoiceAccessToken();
@@ -214,20 +230,54 @@ export const createGreenInvoicePayment = async (
     const callbackUrls = callbackBase
       ? {
           successUrl: `${callbackBase}/success?email=${encodeURIComponent(email)}`,
-          cancelUrl: `${callbackBase}/cancel`,
-          callbackUrl: `${callbackBase}/api/purchase/webhook`,
+          failureUrl: `${callbackBase}/cancel`,
+          notifyUrl: `${callbackBase}/api/purchase/webhook`,
         }
       : {};
 
+    const normalizedPhone = options?.phone?.trim();
+    const payload = {
+      description,
+      type: 320,
+      lang: "he",
+      currency: "ILS",
+      vatType: 0,
+      amount,
+      maxPayments: 1,
+      ...(config.greenInvoice.pluginId
+        ? { pluginId: config.greenInvoice.pluginId }
+        : {}),
+      ...(typeof config.greenInvoice.group === "number"
+        ? { group: config.greenInvoice.group }
+        : {}),
+      client: {
+        name: options?.fullName?.trim() || email.split("@")[0],
+        emails: [email],
+        ...(normalizedPhone
+          ? {
+              phone: normalizedPhone,
+              mobile: normalizedPhone,
+            }
+          : {}),
+        add: true,
+      },
+      income: [
+        {
+          description,
+          quantity: 1,
+          price: amount,
+          currency: "ILS",
+          vatType: 1,
+        },
+      ],
+      remarks: description,
+      custom: options?.orderId || email,
+      ...callbackUrls,
+    };
+
     const response = await axios.post<GreenInvoicePaymentFormResponse>(
       `${baseUrl}/payments/form`,
-      {
-        type: 320,
-        amount,
-        description,
-        email,
-        ...callbackUrls,
-      },
+      payload,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -271,7 +321,7 @@ export const createGreenInvoicePayment = async (
           throw new GreenInvoiceError(
             400,
             "PAYMENT_TERMINAL_INACTIVE",
-            "GreenInvoice account has no active payment terminal. Activate digital payments in GreenInvoice to accept card payments.",
+            "לא נמצא מסוף סליקה פעיל בחשבון GreenInvoice. יש לוודא שהופעל מסוף דיגיטלי פעיל עבור סליקת אשראי.",
           );
         }
 

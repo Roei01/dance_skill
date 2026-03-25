@@ -92,7 +92,12 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
       email,
       DEFAULT_VIDEO_PRICE_ILS,
       DEFAULT_VIDEO_TITLE,
-      { appBaseUrl },
+      {
+        appBaseUrl,
+        fullName,
+        phone,
+        orderId: `${DEFAULT_VIDEO_ID}:${email}`,
+      },
     );
 
     await Purchase.deleteMany({
