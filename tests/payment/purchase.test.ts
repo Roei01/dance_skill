@@ -218,4 +218,35 @@ describe('purchase integration flow', () => {
     expect(user).not.toBeNull();
     expect(mockedSendAccessEmail).toHaveBeenCalledTimes(1);
   });
+
+  it('matches webhook by payer email when provider does not return matching ids', async () => {
+    await request(app).post('/api/purchase/create').send({
+      fullName: 'Email Match Buyer',
+      phone: '0505555555',
+      email: 'email-match@example.com',
+      returnTo: 'https://www.example.com/#purchase',
+    });
+
+    const webhookResponse = await request(app).post('/api/purchase/webhook').send({
+      id: 'provider_event_789',
+      transactions: [
+        {
+          id: 'provider_transaction_789',
+        },
+      ],
+      payer: {
+        email: 'email-match@example.com',
+      },
+    });
+
+    const purchase = await Purchase.findOne({
+      orderId: `${DEFAULT_VIDEO_ID}:email-match@example.com`,
+    }).lean();
+    const user = await User.findOne({ email: 'email-match@example.com' }).lean();
+
+    expect(webhookResponse.status).toBe(200);
+    expect(purchase?.status).toBe('completed');
+    expect(user).not.toBeNull();
+    expect(mockedSendAccessEmail).toHaveBeenCalledTimes(1);
+  });
 });

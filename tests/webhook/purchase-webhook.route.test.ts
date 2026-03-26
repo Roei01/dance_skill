@@ -126,4 +126,31 @@ describe('purchase webhook route', () => {
     expect(response.status).toBe(200);
     expect(purchase?.status).toBe('completed');
   });
+
+  it('should match webhook by payer email when ids do not match', async () => {
+    await Purchase.create({
+      videoId: DEFAULT_VIDEO_ID,
+      paymentId: 'provider_placeholder_email_match',
+      customerFullName: 'Webhook Email Match',
+      customerPhone: '0500000004',
+      customerEmail: 'webhook-email-match@example.com',
+      status: 'pending',
+    });
+
+    const response = await request(app).post('/api/purchase/webhook').send({
+      id: 'provider_event_999',
+      transactions: [{ id: 'provider_transaction_999' }],
+      payer: {
+        email: 'webhook-email-match@example.com',
+      },
+    });
+
+    const purchase = await Purchase.findOne({
+      customerEmail: 'webhook-email-match@example.com',
+      status: 'completed',
+    });
+
+    expect(response.status).toBe(200);
+    expect(purchase?.status).toBe('completed');
+  });
 });
