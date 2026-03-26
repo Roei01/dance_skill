@@ -41,6 +41,14 @@ export const sendAccessEmail = async (
   accessLink: string,
   password?: string,
 ) => {
+  const siteUrl = (() => {
+    try {
+      const parsedUrl = new URL(accessLink);
+      return parsedUrl.origin;
+    } catch {
+      return config.appUrl;
+    }
+  })();
   const accessHost = (() => {
     try {
       return new URL(accessLink).host;
@@ -64,7 +72,6 @@ export const sendAccessEmail = async (
           <li><strong>שם משתמש:</strong> ${username}</li>
           ${password ? `<li><strong>סיסמה:</strong> ${password}</li>` : ""}
         </ul>
-        <p>דף ההתחברות ייפתח דרך האתר שלך בכתובת: <strong>${accessHost}</strong></p>
         <p>קישור להתחברות לצפייה בשיעור:</p>
         <p><a href="${accessLink}" style="padding: 10px 20px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 5px; display: inline-block;">מעבר לדף ההתחברות</a></p>
         <p style="font-size: 0.9em; color: #555;">אם הכפתור לא נפתח, אפשר להעתיק את הקישור הזה:</p>

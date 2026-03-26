@@ -7,6 +7,7 @@ export interface IPurchase extends Document {
   customerFullName: string;
   customerPhone: string;
   customerEmail: string;
+  appBaseUrl?: string;
   status: 'pending' | 'completed' | 'failed';
   credentialsSentAt?: Date;
   createdAt: Date;
@@ -19,6 +20,7 @@ const PurchaseSchema = new Schema<IPurchase>({
   customerFullName: { type: String, required: true, trim: true },
   customerPhone: { type: String, required: true, trim: true },
   customerEmail: { type: String, required: true, trim: true, lowercase: true, index: true },
+  appBaseUrl: { type: String, trim: true },
   status: { type: String, enum: ['pending', 'completed', 'failed'], default: 'pending' },
   credentialsSentAt: { type: Date },
   createdAt: { type: Date, default: Date.now },
