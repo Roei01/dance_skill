@@ -145,6 +145,8 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
 });
 
 router.post("/webhook", async (req, res) => {
+  console.log("🔥 WEBHOOK RECEIVED:");
+  console.log(JSON.stringify(req.body, null, 2));
   const paymentId =
     req.body?.paymentId ||
     req.body?.id ||
