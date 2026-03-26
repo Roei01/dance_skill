@@ -66,7 +66,29 @@ const extractWebhookOrderId = (body: Record<string, any>) =>
   body?.data?.orderId ||
   body?.payload?.custom;
 
-const findPurchaseForWebhook = async (paymentId?: string, orderId?: string) => {
+const extractWebhookEmail = (body: Record<string, any>) => {
+  const rawEmail =
+    body?.payer?.email ||
+    body?.client?.email ||
+    body?.email ||
+    body?.customerEmail ||
+    body?.data?.payer?.email ||
+    body?.data?.client?.email ||
+    body?.payload?.payer?.email ||
+    body?.payload?.client?.email ||
+    (Array.isArray(body?.client?.emails) ? body.client.emails[0] : undefined) ||
+    (Array.isArray(body?.data?.client?.emails)
+      ? body.data.client.emails[0]
+      : undefined);
+
+  return typeof rawEmail === "string" ? rawEmail.trim().toLowerCase() : undefined;
+};
+
+const findPurchaseForWebhook = async (
+  paymentId?: string,
+  orderId?: string,
+  payerEmail?: string,
+) => {
   if (paymentId) {
     const purchaseByPaymentId = await Purchase.findOne({ paymentId });
     if (purchaseByPaymentId) {
@@ -76,6 +98,13 @@ const findPurchaseForWebhook = async (paymentId?: string, orderId?: string) => {
 
   if (orderId) {
     return Purchase.findOne({ orderId });
+  }
+
+  if (payerEmail) {
+    return Purchase.findOne({
+      customerEmail: payerEmail,
+      status: "pending",
+    }).sort({ createdAt: -1 });
   }
 
   return null;
@@ -173,6 +202,7 @@ router.post("/webhook", async (req, res) => {
   console.log("🔥 WEBHOOK RECEIVED:");
   console.log(JSON.stringify(req.body, null, 2));
   const orderId = extractWebhookOrderId(req.body);
+  const payerEmail = extractWebhookEmail(req.body);
   const paymentId =
     req.body?.paymentId ||
     req.body?.id ||
@@ -187,6 +217,7 @@ router.post("/webhook", async (req, res) => {
   logger.info("Purchase webhook triggered.", {
     paymentId,
     orderId,
+    payerEmail,
     status,
     paymentMode: config.paymentMode,
   });
@@ -196,7 +227,11 @@ router.post("/webhook", async (req, res) => {
     typeof paymentId === "string" &&
     paymentId.startsWith("mock_")
   ) {
-    const mockPurchase = await findPurchaseForWebhook(paymentId, orderId);
+    const mockPurchase = await findPurchaseForWebhook(
+      paymentId,
+      orderId,
+      payerEmail,
+    );
 
     if (status === "failed") {
       if (mockPurchase) {
@@ -224,7 +259,7 @@ router.post("/webhook", async (req, res) => {
     });
   }
 
-  const purchase = await findPurchaseForWebhook(paymentId, orderId);
+  const purchase = await findPurchaseForWebhook(paymentId, orderId, payerEmail);
 
   if (purchase && (status === "success" || status === "completed")) {
     try {
@@ -236,6 +271,7 @@ router.post("/webhook", async (req, res) => {
           {
             paymentId,
             orderId,
+            payerEmail,
             body: req.body,
           },
         );
