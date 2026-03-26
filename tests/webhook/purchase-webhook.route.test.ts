@@ -77,4 +77,28 @@ describe('purchase webhook route', () => {
     });
     expect(purchase?.status).toBe('failed');
   });
+
+  it('should handle form-encoded webhook payloads', async () => {
+    await Purchase.create({
+      videoId: DEFAULT_VIDEO_ID,
+      paymentId: 'mock_1003',
+      customerFullName: 'Webhook Form',
+      customerPhone: '0500000002',
+      customerEmail: 'webhook-form@example.com',
+      status: 'pending',
+    });
+
+    const response = await request(app)
+      .post('/api/purchase/webhook')
+      .type('form')
+      .send({
+        paymentId: 'mock_1003',
+        status: 'success',
+      });
+
+    const purchase = await Purchase.findOne({ paymentId: 'mock_1003' });
+
+    expect(response.status).toBe(200);
+    expect(purchase?.status).toBe('completed');
+  });
 });

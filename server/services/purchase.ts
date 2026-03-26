@@ -12,6 +12,21 @@ const buildLoginLink = (baseUrl: string) => {
   return new URL("/login", `${normalizeBaseUrl(baseUrl)}/`).toString();
 };
 
+const resolveSiteBaseUrl = (purchaseBaseUrl?: string) => {
+  if (purchaseBaseUrl) {
+    try {
+      const parsedUrl = new URL(purchaseBaseUrl);
+      if (!["localhost", "127.0.0.1", "::1"].includes(parsedUrl.hostname)) {
+        return normalizeBaseUrl(purchaseBaseUrl);
+      }
+    } catch {
+      // Fall back to the configured app URL below.
+    }
+  }
+
+  return normalizeBaseUrl(config.appUrl);
+};
+
 export const provisionPurchaseAccess = async (paymentId: string) => {
   const purchase = await Purchase.findOne({ paymentId });
 
@@ -69,7 +84,7 @@ export const provisionPurchaseAccess = async (paymentId: string) => {
     await user.save();
   }
 
-  const loginLink = buildLoginLink(config.appUrl);
+  const loginLink = buildLoginLink(resolveSiteBaseUrl(purchase.appBaseUrl));
   await sendAccessEmail(
     user.email,
     user.username,
