@@ -1,6 +1,6 @@
 export const DEFAULT_VIDEO_ID = "video_001";
 export const DEFAULT_VIDEO_TITLE = "שיעור ריקוד מלא";
-export const DEFAULT_VIDEO_PRICE_ILS = 45;
+export const DEFAULT_VIDEO_PRICE_ILS = 0.1;
 
 export const DEFAULT_VIDEO_FEATURES = [
   "גישה מלאה לשיעור המצולם",
