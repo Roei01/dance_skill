@@ -7,12 +7,12 @@ export const dynamic = "force-dynamic";
 
 const rubik = Rubik({
   subsets: ["latin", "hebrew"],
-  variable: "--font-sans",
+  variable: "--font-heading",
 });
 
 const heebo = Heebo({
   subsets: ["latin", "hebrew"],
-  variable: "--font-display",
+  variable: "--font-body",
 });
 
 export const metadata: Metadata = {
