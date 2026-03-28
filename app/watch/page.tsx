@@ -148,19 +148,8 @@ function WatchContent() {
     <main
       id="main-content"
       tabIndex={-1}
-      className="min-h-screen overflow-hidden bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_45%,#fff5ef_100%)] text-slate-900"
+      className="min-h-screen overflow-hidden bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_45%,#fff5ef_100%)] pt-6 text-slate-900 sm:pt-8"
     >
-      <div className="flex justify-center py-6">
-        <button
-          type="button"
-          onClick={() => void handleManualLogout()}
-          disabled={loggingOut}
-          className="inline-flex items-center justify-center rounded-full bg-rose-600 px-6 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(225,29,72,0.24)] transition hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {loggingOut ? "מתנתק..." : "התנתקות"}
-        </button>
-      </div>
-
       <div className="mx-auto max-w-4xl px-4 sm:px-6 ">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -168,7 +157,7 @@ function WatchContent() {
           transition={{ duration: 0.7 }}
           className="rounded-[2rem] bg-white px-5 py-8 text-center shadow-[0_30px_80px_rgba(15,23,42,0.12)] sm:px-8"
         >
-          <div className="text-center sm:text-right">
+          <div className="text-center">
             <p className="text-sm font-semibold tracking-[0.16em] text-slate-500">
               {BUSINESS_NAME}
             </p>
@@ -201,20 +190,33 @@ function WatchContent() {
             </div>
           </motion.div>
 
-          <div className="mt-6 flex justify-end">
-            <div className="space-y-2 text-right text-lg text-slate-700">
+          <div className="mt-6 flex w-full justify-end">
+            <div
+              dir="rtl"
+              className="ml-auto space-y-2 text-right text-lg text-slate-700"
+            >
               {classBreakdown.map((section) => (
-                <div
+                <p
                   key={`${section.time}-${section.label}`}
-                  className="flex items-center justify-end gap-2"
+                  className="text-right"
                 >
-                  <span>{section.label}</span>
-                  <span className="font-medium text-slate-500">
+                  <span className="font-medium tabular-nums text-slate-500">
                     {section.time}
-                  </span>
-                </div>
+                  </span>{" "}
+                  <span>{section.label}</span>
+                </p>
               ))}
             </div>
+          </div>
+          <div dir="ltr" className="mt-8 flex justify-start">
+            <button
+              type="button"
+              onClick={() => void handleManualLogout()}
+              disabled={loggingOut}
+              className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(5,150,105,0.22)] transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {loggingOut ? "מתנתק" : "התנתקות"}
+            </button>
           </div>
         </motion.div>
       </div>
