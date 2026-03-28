@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Instagram, Music2 } from "lucide-react";
+import { BUSINESS_NAME } from "@/lib/business-info";
 
 const socialLinks = [
   {
@@ -15,6 +16,9 @@ const socialLinks = [
 ];
 
 export const Hero = () => {
+  const brandTitle = BUSINESS_NAME.replace(" dance tutorials", "");
+  const brandSubtitle = "dance tutorials";
+
   return (
     <section className="bg-[#f8f7f4] px-4 py-6 text-slate-900 sm:px-6 lg:px-10 lg:py-10">
       <motion.div
@@ -41,18 +45,25 @@ export const Hero = () => {
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/35 to-black/10" />
           <div className="absolute inset-0 bg-black/15" />
+          <div
+            dir="ltr"
+            className="absolute left-1/2 top-6 z-20 w-[min(92%,26rem)] -translate-x-1/2 px-4 text-center sm:top-8 sm:px-6"
+          >
+            <p className="font-display text-sm font-black uppercase tracking-[0.24em] text-white drop-shadow-[0_8px_24px_rgba(15,23,42,0.55)] sm:text-base md:text-lg">
+              {brandTitle}
+            </p>
+            <p className="font-display mt-1 text-[0.68rem] font-semibold tracking-[0.36em] text-[#f7d98f] drop-shadow-[0_6px_18px_rgba(15,23,42,0.45)] sm:text-xs md:text-sm">
+              {brandSubtitle}
+            </p>
+          </div>
           <div className="relative z-10 flex h-full items-end px-6 py-7 sm:px-6 lg:px-10">
             <div className="w-full space-y-6 text-white sm:space-y-0">
               <div
                 dir="ltr"
                 className="mr-auto max-w-[18rem] self-start text-left sm:absolute sm:bottom-32 sm:left-6 sm:mr-0 sm:max-w-[26rem] lg:bottom-36 lg:left-10 lg:max-w-[34rem]"
               >
-                <p className="text-xs font-semibold tracking-[0.28em] text-[#f7d98f] sm:text-sm">
-                  Online tutorials
-                </p>
-
                 <h1 className="mt-4 font-black uppercase leading-[0.95] tracking-[-0.05em] text-white">
-                  <span className="block text-2xl sm:text-3xl lg:text-4xl">
+                  <span className="block text-1xl sm:text-3xl lg:text-4xl">
                     Dance is for everyone.
                   </span>
                   <span className="block text-[#ffe08f] text-4xl sm:text-6xl lg:text-7xl">
@@ -62,7 +73,7 @@ export const Hero = () => {
               </div>
 
               <div className="ml-auto max-w-md text-right">
-                <p className="text-base font-semibold leading-7 text-white/90 sm:mt-4 sm:text-lg">
+                <p className="text-base font-medium leading-7 text-white/90 sm:mt-4 sm:text-lg">
                   פיוז׳ן עם רותם ברוך
                   <br />
                   בואו לרקוד איתי בכל מקום, בכל זמן.

@@ -33,7 +33,9 @@ export const PurchaseFaq = () => {
       className="relative z-10 mx-auto mt-10 max-w-5xl px-6 md:mt-16"
     >
       <div className="rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)] md:p-8">
-        <h2 className="text-2xl font-black text-slate-900">שאלות נפוצות</h2>
+        <h2 className="font-display text-2xl font-black text-slate-900">
+          שאלות נפוצות
+        </h2>
         <div className="mt-4 grid gap-3 md:mt-6 md:gap-4 md:grid-cols-3">
           {faqItems.map((item, index) => {
             const isOpen = openQuestion === item.question;
@@ -57,7 +59,7 @@ export const PurchaseFaq = () => {
                   aria-expanded={isOpen}
                   aria-controls={panelId}
                 >
-                  <span className="text-base font-bold text-slate-800">
+                  <span className="font-display text-base font-bold text-slate-800">
                     {item.question}
                   </span>
                   <ChevronDown
@@ -74,7 +76,7 @@ export const PurchaseFaq = () => {
                   aria-labelledby={buttonId}
                   className={isOpen ? "mt-3" : "hidden"}
                 >
-                  <p className="whitespace-pre-line text-sm font-medium leading-6 text-slate-600">
+                  <p className="whitespace-pre-line text-sm font-normal leading-6 text-slate-600">
                     {item.answer}
                   </p>
                 </div>

@@ -19,8 +19,8 @@
   --color-card: #ffffff;
   --color-card-foreground: #1e293b;
 
-  --font-sans: Inter, system-ui, sans-serif;
-  --font-display: Montserrat, sans-serif;
+  --font-sans: var(--font-body), system-ui, sans-serif;
+  --font-display: var(--font-heading), var(--font-body), sans-serif;
 
   --animate-float: float 6s ease-in-out infinite;
   
@@ -60,6 +60,10 @@
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-display font-bold tracking-tight text-slate-900;
+  }
+
+  p, li, label, input, textarea, button {
+    font-feature-settings: "kern" 1, "liga" 1;
   }
 
   :where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {

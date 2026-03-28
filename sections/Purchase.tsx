@@ -117,7 +117,7 @@ export const Purchase = () => {
           <h2 className="text-3xl font-black uppercase tracking-tight leading-[0.95] text-slate-900 sm:text-4xl md:text-7xl md:tracking-tighter md:leading-[0.9]">
             גישה לשיעור המלא
           </h2>
-          <p className="max-w-lg text-base font-medium leading-7 text-slate-600 sm:text-lg md:text-2xl md:leading-snug">
+          <p className="max-w-lg text-base font-normal leading-7 text-slate-600 sm:text-lg md:text-2xl md:leading-snug">
             לאחר התשלום מקבלים גישה מיידית לשיעור המלא, עם צפייה נוחה הסברים
             ברורים וקצב למידה נוח, מכל מקום ובכל זמן.
           </p>
@@ -127,7 +127,7 @@ export const Purchase = () => {
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 md:h-10 md:w-10">
                 <ShieldCheck className="h-4 w-4 text-emerald-600 md:h-5 md:w-5" />
               </div>
-              <p className="text-xs font-semibold leading-5 text-slate-800 md:mt-3 md:text-sm">
+              <p className="text-xs font-medium leading-5 text-slate-800 md:mt-3 md:text-sm">
                 תשלום מאובטח דרך GreenInvoice
               </p>
             </div>
@@ -135,7 +135,7 @@ export const Purchase = () => {
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-50 md:h-10 md:w-10">
                 <Smartphone className="h-4 w-4 text-rose-500 md:h-5 md:w-5" />
               </div>
-              <p className="text-xs font-semibold leading-5 text-slate-800 md:mt-3 md:text-sm">
+              <p className="text-xs font-medium leading-5 text-slate-800 md:mt-3 md:text-sm">
                 צפייה במובייל, טאבלט או מחשב
               </p>
             </div>
@@ -143,7 +143,7 @@ export const Purchase = () => {
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-50 md:h-10 md:w-10">
                 <BadgeDollarSign className="h-4 w-4 text-amber-500 md:h-5 md:w-5" />
               </div>
-              <p className="text-xs font-semibold leading-5 text-slate-800 md:mt-3 md:text-sm">
+              <p className="text-xs font-medium leading-5 text-slate-800 md:mt-3 md:text-sm">
                 אישור תקנון לפני המעבר לתשלום
               </p>
             </div>
@@ -159,18 +159,18 @@ export const Purchase = () => {
           <div className="pointer-events-none absolute right-0 top-0 h-32 w-32 bg-orange-200 blur-[100px] opacity-70" />
 
           <div className="mb-6 md:mb-8">
-            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400 md:text-xs md:tracking-widest">
+            <p className="font-display mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400 md:text-xs md:tracking-widest">
               תשלום חד־פעמי
             </p>
             <div className="flex items-baseline justify-center gap-2">
-              <span className="text-5xl font-black tracking-tight text-slate-900 sm:text-6xl md:text-7xl md:tracking-tighter">
+              <span className="font-display text-5xl font-black tracking-tight text-slate-900 sm:text-6xl md:text-7xl md:tracking-tighter">
                 ₪{DEFAULT_VIDEO_PRICE_ILS}
               </span>
             </div>
           </div>
 
           <form onSubmit={handlePurchase} className="space-y-3">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-right text-sm font-semibold text-slate-600">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-right text-sm font-medium text-slate-600">
               לפני המעבר לתשלום יש למלא פרטי לקוח ולאשר את התנאים והתקנון.
             </div>
 
@@ -236,7 +236,7 @@ export const Purchase = () => {
                 onChange={(e) => setAcceptedTerms(e.target.checked)}
                 className="mt-1 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-400"
               />
-              <span className="text-sm font-medium leading-6 text-slate-600">
+              <span className="text-sm font-normal leading-6 text-slate-600">
                 אני מאשר/ת את{" "}
                 <Link
                   href="/terms"
@@ -268,7 +268,7 @@ export const Purchase = () => {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-center text-[11px] font-bold uppercase tracking-wide text-emerald-600 md:text-xs"
+                className="font-display rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-center text-[11px] font-bold uppercase tracking-wide text-emerald-600 md:text-xs"
                 role="status"
                 aria-live="polite"
               >
@@ -278,7 +278,7 @@ export const Purchase = () => {
 
             <button
               disabled={loading || !acceptedTerms}
-              className="relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-slate-900 py-4 text-base font-black text-white shadow-lg transition-all hover:-translate-y-1 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 md:py-5 md:text-lg"
+              className="font-display relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-slate-900 py-4 text-base font-black text-white shadow-lg transition-all hover:-translate-y-1 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 md:py-5 md:text-lg"
             >
               <span className="relative z-10">
                 {loading ? "מכינים תשלום מאובטח..." : "להמשך רכישה"}
@@ -290,7 +290,7 @@ export const Purchase = () => {
           </form>
 
           <div className="mt-6 flex justify-center gap-4 transition-all duration-300">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <span className="font-display text-xs font-bold uppercase tracking-wider text-slate-400">
               תשלום מאובטח דרך GreenInvoice
             </span>
           </div>
