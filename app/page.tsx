@@ -17,7 +17,9 @@ export default function Home() {
     >
       <Hero />
       <Styles />
-      <PurchaseFaq />
+      <div className="pb-10 md:pb-10">
+        <PurchaseFaq />
+      </div>
       <Footer />
     </main>
   );

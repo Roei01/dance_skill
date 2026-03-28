@@ -3,12 +3,6 @@ import { ArrowLeft, PlayCircle } from "lucide-react";
 import { Demo_inst } from "@/sections/Demo_inst";
 import { Purchase } from "@/sections/Purchase";
 import { Footer } from "@/sections/Footer";
-import {
-  BUSINESS_ADDRESS,
-  BUSINESS_CONTACT_EMAIL,
-  BUSINESS_CONTACT_PHONE,
-  MINIMUM_PURCHASE_AGE,
-} from "@/lib/business-info";
 
 export const dynamic = "force-dynamic";
 
