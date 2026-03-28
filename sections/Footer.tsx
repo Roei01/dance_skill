@@ -139,7 +139,7 @@ export const Footer = () => {
 
           <div className="mx-auto max-w-sm text-center md:flex md:flex-col md:items-center">
             <h4 className="mb-3 text-s font-bold text-blue-500">
-              להרשמה לקבלת עדכונים על תכנים חדשים .{" "}
+              להרשמה לקבלת עדכונים על תכנים חדשים.{" "}
             </h4>
             <form
               onSubmit={handleNewsletterSubmit}
@@ -191,7 +191,6 @@ export const Footer = () => {
               {BUSINESS_CONTACT_EMAIL}
             </a>
           </p>
-
         </div>
       </div>
       <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
