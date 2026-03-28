@@ -12,6 +12,23 @@ const buildLoginLink = (baseUrl: string) => {
   return new URL("/login", `${normalizeBaseUrl(baseUrl)}/`).toString();
 };
 
+const buildBaseUsername = (email: string) => {
+  return email.split("@")[0]?.trim().replace(/[^a-zA-Z0-9]/g, "") || "user";
+};
+
+const generateUniqueUsername = async (email: string) => {
+  const baseUsername = buildBaseUsername(email);
+  let candidate = baseUsername;
+  let suffix = 2;
+
+  while (await User.findOne({ username: candidate })) {
+    candidate = `${baseUsername}${suffix}`;
+    suffix += 1;
+  }
+
+  return candidate;
+};
+
 const resolveSiteBaseUrl = (purchaseBaseUrl?: string) => {
   if (purchaseBaseUrl) {
     try {
@@ -47,12 +64,7 @@ export const provisionPurchaseAccess = async (paymentId: string) => {
   if (!user) {
     generatedPassword = generateTempPassword();
     const passwordHash = await hashPassword(generatedPassword);
-    const baseUsername =
-      purchase.customerEmail.split("@")[0].replace(/[^a-zA-Z0-9]/g, "") ||
-      "user";
-    const username = `${baseUsername}_${Date.now().toString(36)}${Math.random()
-      .toString(36)
-      .slice(2, 6)}`;
+    const username = await generateUniqueUsername(purchase.customerEmail);
 
     user = await User.create({
       email: purchase.customerEmail,

@@ -37,7 +37,16 @@ const defaultAccess: AuthAccess = {
   defaultVideo: false,
   videos: [],
 };
-const publicPathnames = new Set(["/", "/modern-dance"]);
+const publicPathnames = new Set([
+  "/",
+  "/modern-dance",
+  "/terms",
+  "/accessibility",
+  "/success",
+  "/cancel",
+  "/checkout",
+  "/login",
+]);
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 

@@ -118,6 +118,22 @@ export const Footer = () => {
                   שאלות נפוצות
                 </a>
               </li>
+              <li>
+                <Link
+                  href="/terms"
+                  className="block tracking-wide transition-colors hover:text-blue-500"
+                >
+                  תקנון האתר
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/accessibility"
+                  className="block tracking-wide transition-colors hover:text-blue-500"
+                >
+                  הצהרת נגישות
+                </Link>
+              </li>
             </ul>
           </nav>
 
@@ -176,42 +192,24 @@ export const Footer = () => {
             </a>
           </p>
 
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <span className="text-xs uppercase font-bold tracking-widest text-blue-400">
-              עקבו אחרי
-            </span>
-            {socialLinks.map(({ href, label, icon: Icon }) => (
-              <a
-                key={label}
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={label}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-blue-500/50 bg-blue-500/20 text-blue-400 transition hover:border-blue-400 hover:bg-blue-500/30 hover:text-blue-300"
-              >
-                <Icon className="h-4 w-4" />
-              </a>
-            ))}
-          </div>
-
-          <div className="justify-items-center space-y-2 text-sm text-slate-300">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
-              מידע משפטי
-            </p>
-            <Link
-              href="/terms"
-              className="block underline underline-offset-4 hover:text-blue-400"
-            >
-              תקנון האתר
-            </Link>
-            <Link
-              href="/accessibility"
-              className="block underline underline-offset-4 hover:text-blue-400"
-            >
-              הצהרת נגישות
-            </Link>
-          </div>
         </div>
+      </div>
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+        <span className="text-xs uppercase font-bold tracking-widest text-blue-400">
+          עקבו אחרי
+        </span>
+        {socialLinks.map(({ href, label, icon: Icon }) => (
+          <a
+            key={label}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={label}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-blue-500/50 bg-blue-500/20 text-blue-400 transition hover:border-blue-400 hover:bg-blue-500/30 hover:text-blue-300"
+          >
+            <Icon className="h-4 w-4" />
+          </a>
+        ))}
       </div>
 
       <p className="mt-8 px-6 text-center text-xs tracking-wider text-slate-600 sm:mt-10">

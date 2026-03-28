@@ -10,7 +10,8 @@ import {
 
 export const metadata: Metadata = {
   title: "תקנון ומדיניות | ROTEM BARUCH dance tutorials",
-  description: "תקנון האתר, תנאי שימוש, מדיניות פרטיות, אספקה, ביטול עסקה, אחריות ופרטי קשר.",
+  description:
+    "תקנון האתר, תנאי שימוש, מדיניות פרטיות, אספקה, ביטול עסקה, אחריות ופרטי קשר.",
 };
 
 const sections = [
@@ -88,24 +89,39 @@ export default function TermsPage() {
             תקנון האתר ומדיניות הרכישה
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 md:text-lg">
-            בעמוד זה מופיעים תנאי השימוש, מדיניות הפרטיות, האספקה,
-            הביטולים ופרטי ההתקשרות של {BUSINESS_NAME}.
+            בעמוד זה מופיעים תנאי השימוש, מדיניות הפרטיות, האספקה, הביטולים
+            ופרטי ההתקשרות של {BUSINESS_NAME}.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3 text-sm font-semibold text-slate-700">
-            <a href="#terms" className="rounded-full bg-slate-100 px-4 py-2 hover:bg-slate-200">
+            <a
+              href="#terms"
+              className="rounded-full bg-slate-100 px-4 py-2 hover:bg-slate-200"
+            >
               תקנון האתר
             </a>
-            <a href="#privacy" className="rounded-full bg-slate-100 px-4 py-2 hover:bg-slate-200">
+            <a
+              href="#privacy"
+              className="rounded-full bg-slate-100 px-4 py-2 hover:bg-slate-200"
+            >
               פרטיות
             </a>
-            <a href="#delivery" className="rounded-full bg-slate-100 px-4 py-2 hover:bg-slate-200">
+            <a
+              href="#delivery"
+              className="rounded-full bg-slate-100 px-4 py-2 hover:bg-slate-200"
+            >
               אספקה
             </a>
-            <a href="#cancellation" className="rounded-full bg-slate-100 px-4 py-2 hover:bg-slate-200">
+            <a
+              href="#cancellation"
+              className="rounded-full bg-slate-100 px-4 py-2 hover:bg-slate-200"
+            >
               ביטול עסקה
             </a>
-            <a href="#responsibility" className="rounded-full bg-slate-100 px-4 py-2 hover:bg-slate-200">
+            <a
+              href="#responsibility"
+              className="rounded-full bg-slate-100 px-4 py-2 hover:bg-slate-200"
+            >
               אחריות
             </a>
           </div>
@@ -117,7 +133,10 @@ export default function TermsPage() {
             <p>רכישה מותרת מגיל {MINIMUM_PURCHASE_AGE} ומעלה.</p>
             <p>
               לעמוד הרכישה:{" "}
-              <Link href="/modern-dance#purchase" className="font-bold underline">
+              <Link
+                href="/modern-dance#purchase"
+                className="font-bold underline"
+              >
                 מעבר לרכישה
               </Link>
             </p>
@@ -129,6 +148,15 @@ export default function TermsPage() {
               סליקה.
             </div>
           ) : null}
+
+          <div className="mt-4">
+            <Link
+              href="/"
+              className="font-semibold text-slate-900 underline underline-offset-4"
+            >
+              חזרה לאתר
+            </Link>
+          </div>
         </section>
 
         {sections.map((section) => (

@@ -122,22 +122,28 @@ export const Purchase = () => {
             ברורים וקצב למידה נוח, מכל מקום ובכל זמן.
           </p>
 
-          <div className="grid grid-cols-2 gap-3 pt-1 sm:grid-cols-3 md:gap-4 md:pt-6">
-            <div className="rounded-2xl border border-white/80 bg-white/80 p-3 shadow-sm md:p-4">
-              <ShieldCheck className="h-4 w-4 text-emerald-600 md:h-5 md:w-5" />
-              <p className="mt-2 text-xs font-semibold leading-5 text-slate-800 md:mt-3 md:text-sm">
+          <div className="grid grid-cols-1 gap-2.5 pt-1 sm:grid-cols-3 md:gap-4 md:pt-6">
+            <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/75 px-3.5 py-3 text-right shadow-[0_8px_24px_rgba(15,23,42,0.05)] backdrop-blur-sm md:block md:p-4">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 md:h-10 md:w-10">
+                <ShieldCheck className="h-4 w-4 text-emerald-600 md:h-5 md:w-5" />
+              </div>
+              <p className="text-xs font-semibold leading-5 text-slate-800 md:mt-3 md:text-sm">
                 תשלום מאובטח דרך GreenInvoice
               </p>
             </div>
-            <div className="rounded-2xl border border-white/80 bg-white/80 p-3 shadow-sm md:p-4">
-              <Smartphone className="h-4 w-4 text-rose-500 md:h-5 md:w-5" />
-              <p className="mt-2 text-xs font-semibold leading-5 text-slate-800 md:mt-3 md:text-sm">
+            <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/75 px-3.5 py-3 text-right shadow-[0_8px_24px_rgba(15,23,42,0.05)] backdrop-blur-sm md:block md:p-4">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-50 md:h-10 md:w-10">
+                <Smartphone className="h-4 w-4 text-rose-500 md:h-5 md:w-5" />
+              </div>
+              <p className="text-xs font-semibold leading-5 text-slate-800 md:mt-3 md:text-sm">
                 צפייה במובייל, טאבלט או מחשב
               </p>
             </div>
-            <div className="rounded-2xl border border-white/80 bg-white/80 p-3 shadow-sm md:p-4">
-              <BadgeDollarSign className="h-4 w-4 text-amber-500 md:h-5 md:w-5" />
-              <p className="mt-2 text-xs font-semibold leading-5 text-slate-800 md:mt-3 md:text-sm">
+            <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/75 px-3.5 py-3 text-right shadow-[0_8px_24px_rgba(15,23,42,0.05)] backdrop-blur-sm md:block md:p-4">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-50 md:h-10 md:w-10">
+                <BadgeDollarSign className="h-4 w-4 text-amber-500 md:h-5 md:w-5" />
+              </div>
+              <p className="text-xs font-semibold leading-5 text-slate-800 md:mt-3 md:text-sm">
                 אישור תקנון לפני המעבר לתשלום
               </p>
             </div>

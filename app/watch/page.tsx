@@ -11,6 +11,7 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { AuthErrorCard } from "@/components/errors/AuthErrorCard";
 import { BUSINESS_NAME } from "@/lib/business-info";
 import { DEFAULT_VIDEO_ID } from "@/lib/catalog";
+import { useRouter } from "next/navigation";
 
 const CLOUDINARY_PLAYER_SRC =
   "https://player.cloudinary.com/embed/?cloud_name=ddcdws24e&public_id=9F67D997-37AB-423E-9BB1-D12FB8D53455_2_hh0lu8";
@@ -18,12 +19,18 @@ const CLOUDINARY_PLAYER_SRC =
 const MUX_PLAYER_SRC =
   "https://player.mux.com/pRI1RXjQ7NU9JU1j65JfJdPRWcHUzCZnOKwQIxa5WkQ";
 
+const SESSION_IDLE_TIMEOUT_MS = 2 * 60 * 1000;
+const HEARTBEAT_THROTTLE_MS = 30_000;
+
 function WatchContent() {
-  const { access } = useAuth();
+  const { access, clearAuthState } = useAuth();
+  const router = useRouter();
   const [authChecking, setAuthChecking] = useState(true);
   const [error, setError] = useState("");
   const [videoReady, setVideoReady] = useState(false);
   const hasLoggedOutRef = useRef(false);
+  const lastActivityAtRef = useRef(Date.now());
+  const lastHeartbeatAtRef = useRef(Date.now());
 
   useEffect(() => {
     const checkAccess = async () => {
@@ -68,6 +75,73 @@ function WatchContent() {
   }, []);
 
   useEffect(() => {
+    const logoutForInactivity = (message?: string) => {
+      if (hasLoggedOutRef.current) {
+        return;
+      }
+
+      hasLoggedOutRef.current = true;
+      clearAuthState();
+
+      void api.post("/auth/logout").catch(() => {
+        // Clear local auth state even if the request races with session expiry.
+      });
+
+      const search = new URLSearchParams();
+      if (message) {
+        search.set("message", message);
+      }
+
+      router.replace(search.size > 0 ? `/login?${search.toString()}` : "/login");
+    };
+
+    const sendHeartbeat = () => {
+      lastHeartbeatAtRef.current = Date.now();
+
+      void api.post("/auth/heartbeat").catch((heartbeatError: unknown) => {
+        const code = getApiErrorCode(heartbeatError);
+        if (code === "AUTH_REQUIRED" || code === "TOKEN_EXPIRED") {
+          logoutForInactivity("פג תוקף ההתחברות. יש להתחבר מחדש.");
+        }
+      });
+    };
+
+    const recordActivity = () => {
+      lastActivityAtRef.current = Date.now();
+
+      if (Date.now() - lastHeartbeatAtRef.current >= HEARTBEAT_THROTTLE_MS) {
+        sendHeartbeat();
+      }
+    };
+
+    const activityEvents: Array<keyof WindowEventMap> = [
+      "mousemove",
+      "mousedown",
+      "keydown",
+      "scroll",
+      "touchstart",
+      "focus",
+    ];
+
+    activityEvents.forEach((eventName) => {
+      window.addEventListener(eventName, recordActivity, { passive: true });
+    });
+
+    const intervalId = window.setInterval(() => {
+      if (Date.now() - lastActivityAtRef.current >= SESSION_IDLE_TIMEOUT_MS) {
+        logoutForInactivity("נותקת אוטומטית עקב חוסר פעילות. יש להתחבר מחדש.");
+      }
+    }, 15_000);
+
+    return () => {
+      activityEvents.forEach((eventName) => {
+        window.removeEventListener(eventName, recordActivity);
+      });
+      window.clearInterval(intervalId);
+    };
+  }, [clearAuthState, router]);
+
+  useEffect(() => {
     const logoutOnExit = () => {
       if (hasLoggedOutRef.current) {
         return;
@@ -99,18 +173,6 @@ function WatchContent() {
     return () => {
       window.removeEventListener("pagehide", logoutOnExit);
       window.removeEventListener("beforeunload", logoutOnExit);
-    };
-  }, []);
-
-  useEffect(() => {
-    const intervalId = window.setInterval(() => {
-      void api.post("/auth/heartbeat").catch(() => {
-        // Let the existing auth/access checks handle expired sessions.
-      });
-    }, 30_000);
-
-    return () => {
-      window.clearInterval(intervalId);
     };
   }, []);
 

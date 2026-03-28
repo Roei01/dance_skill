@@ -34,6 +34,7 @@ describe('provisionPurchaseAccess', () => {
 
     expect(result?.email).toBe('create-user@example.com');
     expect(user).not.toBeNull();
+    expect(user?.username).toBe('createuser');
     expect(getSentAccessEmails()).toHaveLength(1);
   });
 
