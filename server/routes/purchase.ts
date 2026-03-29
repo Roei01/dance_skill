@@ -142,18 +142,23 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
       }
     }
 
-    const payment = await createGreenInvoicePayment(
-      email,
-      DEFAULT_VIDEO_PRICE_ILS,
-      DEFAULT_VIDEO_TITLE,
-      {
-        appBaseUrl,
-        fullName,
-        phone,
-        orderId,
-        returnTo,
-      },
-    );
+    const isTestMode = config.paymentMode === 'test';
+    const tempPaymentId = isTestMode 
+      ? `mock_${Date.now()}_${Math.random().toString(36).substring(7)}` 
+      : `link_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    
+    // Set up the success URL to return to
+    const successUrl = new URL("/success", `${appBaseUrl}/`);
+    successUrl.searchParams.set("email", email);
+    if (returnTo) {
+      successUrl.searchParams.set("returnTo", returnTo);
+    }
+    
+    // We add successUrl, redirectUrl, and returnUrl to the query string in hopes Morning picks it up
+    // However, the best way is to configure this in the Morning dashboard for the specific link.
+    const checkoutUrl = isTestMode
+      ? `${config.appUrl}/success?mock=true`
+      : `https://mrng.to/BKXBaFbl0K?email=${encodeURIComponent(email)}&successUrl=${encodeURIComponent(successUrl.toString())}&redirectUrl=${encodeURIComponent(successUrl.toString())}`;
 
     await Purchase.deleteMany({
       customerEmail: email,
@@ -163,7 +168,7 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
 
     await Purchase.create({
       videoId: DEFAULT_VIDEO_ID,
-      paymentId: payment.paymentId,
+      paymentId: tempPaymentId,
       customerFullName: fullName,
       customerPhone: phone,
       customerEmail: email,
@@ -173,8 +178,9 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
     });
 
     res.json({
-      checkoutUrl: payment.checkoutUrl,
-      paymentId: payment.paymentId,
+      url: checkoutUrl,
+      checkoutUrl,
+      paymentId: tempPaymentId,
     });
   } catch (error) {
     if (error instanceof GreenInvoiceError) {
