@@ -10,7 +10,7 @@ import {
 import { buildSummary } from "./shared/summary.js";
 
 const baseUrl = getBaseUrl();
-const vus = parseNumberEnv("VUS", 10);
+const vus = parseNumberEnv("VUS", 20);
 
 export const options = buildSharedIterationOptions({
   vus,
