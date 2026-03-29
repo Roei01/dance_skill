@@ -35,7 +35,10 @@ export const Purchase = () => {
   const [error, setError] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
 
-  const handlePurchase = async (e: React.FormEvent) => {
+  const handlePurchase = async (
+    e: React.FormEvent | React.MouseEvent,
+    method: "credit_card" | "hosted" = "credit_card",
+  ) => {
     e.preventDefault();
     setError("");
     setStatusMessage("");
@@ -68,9 +71,12 @@ export const Purchase = () => {
         fullName: fullName.trim(),
         phone: phone.trim(),
         email: email.trim(),
+        paymentMethod: method,
       });
 
-      if (response.data.checkoutUrl) {
+      if (response.data.url) {
+        window.location.href = response.data.url;
+      } else if (response.data.checkoutUrl) {
         window.location.href = response.data.checkoutUrl;
       }
     } catch (error: unknown) {
@@ -286,6 +292,32 @@ export const Purchase = () => {
               {loading && (
                 <Loader2 className="w-5 h-5 animate-spin relative z-10" />
               )}
+            </button>
+
+            <button
+              type="button"
+              onClick={(e) => handlePurchase(e, "hosted")}
+              disabled={loading || !acceptedTerms}
+              className="font-display relative flex w-full flex-wrap items-center justify-center gap-2.5 overflow-hidden rounded-2xl border-2 border-slate-200 bg-white py-3 px-4 text-base font-black text-slate-900 shadow-sm transition-all hover:-translate-y-1 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 md:py-3.5 md:text-lg"
+            >
+              <span className="relative z-10 pt-1">תשלום מהיר ב-</span>
+              <div className="flex items-center justify-center gap-3">
+                <img
+                  src="/assets/bit.svg"
+                  alt="Bit"
+                  className="h-8 w-auto object-contain"
+                />
+                <img
+                  src="/assets/google-pay.svg"
+                  alt="Google Pay"
+                  className="h-12 w-auto object-contain"
+                />
+                <img
+                  src="/assets/apple-pay.svg"
+                  alt="Apple Pay"
+                  className="h-12 w-auto object-contain"
+                />
+              </div>
             </button>
           </form>
 
