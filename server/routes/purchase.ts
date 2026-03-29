@@ -56,6 +56,7 @@ const purchaseSchema = z.object({
   phone: z.string().trim().min(9),
   email: z.string().email(),
   returnTo: z.string().trim().url().optional(),
+  paymentMethod: z.enum(["credit_card", "hosted"]).optional().default("credit_card"),
 });
 
 const extractWebhookOrderId = (body: Record<string, any>) =>
@@ -121,7 +122,7 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
       });
     }
 
-    const { email, fullName, phone, returnTo } = validation.data;
+    const { email, fullName, phone, returnTo, paymentMethod } = validation.data;
     const appBaseUrl = deriveAppBaseUrlFromRequest(req);
     const orderId = `${DEFAULT_VIDEO_ID}:${email}`;
     const existingUser = await User.findOne({ email });
@@ -140,6 +141,47 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
             "You already own this tutorial. Check your email for access.",
         });
       }
+    }
+
+    if (paymentMethod === "hosted") {
+      const isTestMode = config.paymentMode === 'test';
+      const tempPaymentId = isTestMode 
+        ? `mock_${Date.now()}_${Math.random().toString(36).substring(7)}` 
+        : `link_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      
+      // Set up the success URL to return to
+      const successUrl = new URL("/success", `${appBaseUrl}/`);
+      successUrl.searchParams.set("email", email);
+      if (returnTo) {
+        successUrl.searchParams.set("returnTo", returnTo);
+      }
+      
+      const checkoutUrl = isTestMode
+        ? `${config.appUrl}/success?mock=true`
+        : `https://mrng.to/BKXBaFbl0K?email=${encodeURIComponent(email)}&successUrl=${encodeURIComponent(successUrl.toString())}&redirectUrl=${encodeURIComponent(successUrl.toString())}`;
+
+      await Purchase.deleteMany({
+        customerEmail: email,
+        videoId: DEFAULT_VIDEO_ID,
+        status: "pending",
+      });
+
+      await Purchase.create({
+        videoId: DEFAULT_VIDEO_ID,
+        paymentId: tempPaymentId,
+        customerFullName: fullName,
+        customerPhone: phone,
+        customerEmail: email,
+        orderId,
+        status: "pending",
+        appBaseUrl,
+      });
+
+      return res.json({
+        url: checkoutUrl,
+        checkoutUrl,
+        paymentId: tempPaymentId,
+      });
     }
 
     const payment = await createGreenInvoicePayment(
