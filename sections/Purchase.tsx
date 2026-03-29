@@ -305,17 +305,17 @@ export const Purchase = () => {
                 <img
                   src="/assets/bit.svg"
                   alt="Bit"
-                  className="h-8 w-auto object-contain"
+                  className="h-6 w-auto object-contain"
                 />
                 <img
                   src="/assets/google-pay.svg"
                   alt="Google Pay"
-                  className="h-12 w-auto object-contain"
+                  className="h-9 w-auto object-contain"
                 />
                 <img
                   src="/assets/apple-pay.svg"
                   alt="Apple Pay"
-                  className="h-12 w-auto object-contain"
+                  className="h-9 w-auto object-contain"
                 />
               </div>
             </button>
