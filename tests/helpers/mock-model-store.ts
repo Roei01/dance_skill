@@ -144,6 +144,32 @@ export const mockPurchaseModel = {
     createSingleQuery(() => purchases.find((purchase) => matchesQuery(purchase, query)) ?? null),
   find: (query: Record<string, any>) =>
     createManyQuery(() => purchases.filter((purchase) => matchesQuery(purchase, query))),
+  updateOne: async (query: Record<string, any>, update: Record<string, any>) => {
+    const purchase = purchases.find((p) => matchesQuery(p, query));
+    if (purchase && update.$set) {
+      Object.assign(purchase, update.$set);
+    }
+    return { acknowledged: true, modifiedCount: purchase ? 1 : 0 };
+  },
+  findOneAndUpdate: (query: Record<string, any>, update: Record<string, any>, options: any) =>
+    createSingleQuery(() => {
+      let purchase = purchases.find((p) => matchesQuery(p, query));
+      if (purchase) {
+        if (update.$set) Object.assign(purchase, update.$set);
+        return purchase;
+      }
+      if (options?.upsert) {
+        purchase = attachPurchaseSave({
+          _id: buildId(),
+          createdAt: new Date(),
+          ...query,
+          ...(update.$set || {}),
+        }) as PurchaseRecord;
+        purchases.push(purchase);
+        return purchase;
+      }
+      return null;
+    }),
   create: async (data: Partial<PurchaseRecord>) => {
     const purchase = attachPurchaseSave({
       _id: buildId(),
@@ -166,14 +192,6 @@ export const mockPurchaseModel = {
     const remaining = purchases.filter((purchase) => !matchesQuery(purchase, query));
     purchases.splice(0, purchases.length, ...remaining);
     return { deletedCount: before - purchases.length };
-  },
-  findOneAndUpdate: async (query: Record<string, any>, update: Record<string, any>) => {
-    const purchase = purchases.find((entry) => matchesQuery(entry, query)) ?? null;
-    if (!purchase) {
-      return null;
-    }
-    Object.assign(purchase, update);
-    return purchase;
   },
 };
 

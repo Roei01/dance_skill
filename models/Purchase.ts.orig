@@ -5,7 +5,6 @@ export interface IPurchase extends Document {
   videoId: string;
   paymentId: string;
   orderId?: string;
-  checkoutUrl?: string;
   customerFullName: string;
   customerPhone: string;
   customerEmail: string;
@@ -20,7 +19,6 @@ const PurchaseSchema = new Schema<IPurchase>({
   videoId: { type: String, required: true, index: true },
   paymentId: { type: String, required: true, unique: true, index: true },
   orderId: { type: String, trim: true, index: true },
-  checkoutUrl: { type: String, trim: true },
   customerFullName: { type: String, required: true, trim: true },
   customerPhone: { type: String, required: true, trim: true },
   customerEmail: { type: String, required: true, trim: true, lowercase: true, index: true },
@@ -29,7 +27,5 @@ const PurchaseSchema = new Schema<IPurchase>({
   credentialsSentAt: { type: Date },
   createdAt: { type: Date, default: Date.now },
 });
-
-PurchaseSchema.index({ customerEmail: 1, videoId: 1, status: 1 });
 
 export const Purchase = mongoose.models.Purchase || mongoose.model<IPurchase>('Purchase', PurchaseSchema);
