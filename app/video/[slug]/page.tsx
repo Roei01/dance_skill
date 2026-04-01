@@ -75,6 +75,8 @@ export default function VideoPage({ params }: VideoPageProps) {
     );
   }
 
+  const headlineDescription = video.description.replace(/מודרני\s+פיוז['׳]?ן\s*/g, "").trim();
+
   return (
     <main
       id="main-content"
@@ -100,21 +102,23 @@ export default function VideoPage({ params }: VideoPageProps) {
             <div className="space-y-6">
               <div className="space-y-4">
                 <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">
-                  {video.level}
+                  מודרני פיוז'ן
                 </p>
 
                 <h1 className="max-w-3xl text-[clamp(2rem,6vw,4.5rem)] font-black leading-[1.02] tracking-[-0.04em] text-slate-900">
-                  <span className="block">{video.title}</span>
+                  <span className="block"> {headlineDescription}</span>
                   <span className="mt-2 block text-[0.82em] leading-[1.08] text-slate-700">
-                    {video.description}
+                    {video.level}{" "}
                   </span>
                 </h1>
                 <p className="max-w-xl text-lg font-medium leading-6 text-slate-600">
-                  כדי לצפות בקטע לחצו ״לצפייה״
+                  כדי לצפות בקומבו לחצו ״לצפייה״
                   <br />
                   כדי לרכוש את השיעור בעלות של{" "}
-                  <span className="font-bold text-slate-900">₪{video.price}</span> לחצו
-                  ״לרכישה״
+                  <span className="font-bold text-slate-900">
+                    {video.price}₪
+                  </span>{" "}
+                  לחצו ״לרכישה״
                 </p>
               </div>
 
@@ -139,7 +143,11 @@ export default function VideoPage({ params }: VideoPageProps) {
       </section>
 
       <Demo_inst previewUrl={video.previewUrl} />
-      <Purchase videoSlug={video.slug} price={video.price} title={video.title} />
+      <Purchase
+        videoSlug={video.slug}
+        price={video.price}
+        title={video.title}
+      />
       <Footer />
     </main>
   );

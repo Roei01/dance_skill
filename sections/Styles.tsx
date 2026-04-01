@@ -92,19 +92,19 @@ export const Styles = () => {
                       </div>
                     </div>
 
-                    <div className="absolute inset-x-0 bottom-0 p-2.5 min-[294px]:p-3 min-[370px]:p-4 md:p-5">
-                      <div className="rounded-[1.3rem] border border-white/10 bg-black/25 p-2.5 text-right backdrop-blur-md min-[294px]:rounded-[1.5rem] min-[294px]:p-3 min-[370px]:p-4 md:p-5">
+                    <div className="absolute inset-x-0 bottom-0 p-2 min-[294px]:p-2.5 min-[370px]:p-3 md:p-4">
+                      <div className="rounded-[1.2rem] border border-white/10 bg-black/16 p-2 text-right backdrop-blur-sm min-[294px]:rounded-[1.35rem] min-[294px]:p-2.5 min-[370px]:p-3 md:p-4">
                         <p className="font-display text-[10px] font-bold uppercase tracking-[0.16em] text-[#f2cf88] min-[294px]:text-[11px] min-[294px]:tracking-[0.22em] md:text-xs">
                           שיעור מלא זמין
                         </p>
-                        <h3 className="mt-1 text-base font-black tracking-tight text-white min-[294px]:mt-1.5 min-[294px]:text-lg min-[370px]:mt-2 min-[370px]:text-xl md:text-[1.9rem]">
+                        <h3 className="mt-1 text-[15px] font-black tracking-tight text-white min-[294px]:text-base min-[370px]:mt-1.5 min-[370px]:text-lg md:text-[1.65rem]">
                           {video.title}
                         </h3>
-                        <p className="mt-1.5 max-w-md text-[12px] font-normal leading-4 text-white/90 min-[294px]:mt-2 min-[294px]:text-[13px] min-[294px]:leading-5 min-[370px]:mt-3 min-[370px]:text-sm min-[370px]:leading-6 md:text-[15px] md:leading-6">
+                        <p className="mt-1 max-w-md text-[11px] font-normal leading-4 text-white/90 min-[294px]:text-[12px] min-[294px]:leading-5 min-[370px]:mt-2 min-[370px]:text-[13px] min-[370px]:leading-5 md:text-[14px] md:leading-6">
                           {video.description}
                           {" "}({video.level})
                         </p>
-                        <div className="font-display mt-2 inline-flex items-center gap-1 rounded-full border border-white/25 bg-white/12 px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-[0.1em] text-white backdrop-blur-md transition group-hover:bg-white/20 min-[294px]:mt-3 min-[294px]:gap-1.5 min-[294px]:px-3 min-[294px]:text-[10px] min-[294px]:tracking-[0.16em] min-[370px]:mt-4 min-[370px]:gap-2 min-[370px]:px-4 min-[370px]:py-2 min-[370px]:text-[11px] min-[370px]:tracking-[0.18em] md:px-5 md:py-1 md:text-xs">
+                        <div className="font-display mt-2 inline-flex items-center gap-1 rounded-full border border-white/25 bg-white/10 px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-[0.1em] text-white backdrop-blur-sm transition group-hover:bg-white/18 min-[294px]:gap-1.5 min-[294px]:px-3 min-[294px]:text-[10px] min-[294px]:tracking-[0.16em] min-[370px]:mt-3 min-[370px]:gap-2 min-[370px]:px-4 min-[370px]:py-2 min-[370px]:text-[11px] min-[370px]:tracking-[0.18em] md:px-5 md:py-1 md:text-xs">
                           <span>לצפייה בפרטי השיעור</span>
                           <ArrowUpRight className="h-3.5 w-3.5 min-[294px]:h-4 min-[294px]:w-4" />
                         </div>
@@ -141,12 +141,12 @@ export const Styles = () => {
                   </div>
                 </div>
 
-                <div className="absolute inset-x-0 bottom-0 p-2.5 min-[294px]:p-3 min-[370px]:p-4 md:p-5">
-                  <div className="rounded-[1.3rem] border border-white/10 bg-black/15 p-2.5 text-right backdrop-blur-sm min-[294px]:rounded-[1.5rem] min-[294px]:p-3 min-[370px]:p-4 md:p-5">
-                    <h3 className="text-sm font-black tracking-tight text-white min-[294px]:text-base min-[370px]:text-lg sm:text-xl md:text-[1.8rem]">
+                <div className="absolute inset-x-0 bottom-0 p-2 min-[294px]:p-2.5 min-[370px]:p-3 md:p-4">
+                  <div className="rounded-[1.2rem] border border-white/10 bg-black/12 p-2 text-right backdrop-blur-sm min-[294px]:rounded-[1.35rem] min-[294px]:p-2.5 min-[370px]:p-3 md:p-4">
+                    <h3 className="text-sm font-black tracking-tight text-white min-[294px]:text-base min-[370px]:text-lg md:text-[1.6rem]">
                       שיעורים מלאים נוספים
                     </h3>
-                    <p className="mt-1.5 text-[12px] font-normal leading-4 text-white/85 min-[294px]:mt-2 min-[294px]:text-[13px] min-[294px]:leading-5 min-[370px]:mt-3 min-[370px]:text-sm min-[370px]:leading-6 md:text-[15px] md:leading-6">
+                    <p className="mt-1 text-[11px] font-normal leading-4 text-white/85 min-[294px]:text-[12px] min-[294px]:leading-5 min-[370px]:mt-2 min-[370px]:text-[13px] min-[370px]:leading-5 md:text-[14px] md:leading-6">
                       שיעורים באורך של 15-30 דקות של כוראוגרפיות מלאות מוכרות
                       וגם חדשות!
                     </p>
