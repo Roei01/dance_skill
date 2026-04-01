@@ -6,7 +6,7 @@ type BaseRecord = {
 
 type PurchaseRecord = BaseRecord & {
   userId?: string;
-  videoId: string;
+  videoId: string | { toString: () => string };
   paymentId: string;
   orderId?: string;
   customerFullName: string;
@@ -29,6 +29,7 @@ type UserRecord = BaseRecord & {
 };
 
 type VideoRecord = BaseRecord & {
+  videoId?: string;
   slug: string;
   title: string;
   description: string;
@@ -36,6 +37,7 @@ type VideoRecord = BaseRecord & {
   level: string;
   videoUrl: string;
   previewUrl: string;
+  imageUrl?: string;
   isActive: boolean;
 };
 
@@ -273,6 +275,7 @@ export const mockVideoModel = {
         'Mock description',
       price: update.$set?.price ?? update.$setOnInsert?.price ?? 45,
       level: update.$set?.level ?? update.$setOnInsert?.level ?? 'Mock level',
+      videoId: update.$set?.videoId ?? update.$setOnInsert?.videoId ?? query.videoId,
       videoUrl:
         update.$set?.videoUrl ??
         update.$setOnInsert?.videoUrl ??
@@ -281,6 +284,10 @@ export const mockVideoModel = {
         update.$set?.previewUrl ??
         update.$setOnInsert?.previewUrl ??
         'https://example.com/preview',
+      imageUrl:
+        update.$set?.imageUrl ??
+        update.$setOnInsert?.imageUrl ??
+        'https://example.com/image',
       isActive: update.$set?.isActive ?? update.$setOnInsert?.isActive ?? true,
     });
 

@@ -18,6 +18,7 @@ function WatchContent() {
   const { loggingOut, handleManualLogout } = useProtectedSession();
   const [videos, setVideos] = useState<VideoRecord[]>([]);
   const [videosLoading, setVideosLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState<string>("all");
 
   useEffect(() => {
     let cancelled = false;
@@ -48,8 +49,36 @@ function WatchContent() {
 
   const ownedVideos = useMemo(() => {
     const owned = new Set(access.videos);
-    return videos.filter((video) => owned.has(video.slug));
-  }, [access.videos, videos]);
+    const orderIndex = new Map(
+      access.videoOrder.map((slug, index) => [slug, index] as const),
+    );
+
+    return videos
+      .filter((video) => owned.has(video.slug))
+      .sort((a, b) => {
+        const aOrder = orderIndex.get(a.slug) ?? Number.MAX_SAFE_INTEGER;
+        const bOrder = orderIndex.get(b.slug) ?? Number.MAX_SAFE_INTEGER;
+        return aOrder - bOrder;
+      });
+  }, [access.videoOrder, access.videos, videos]);
+
+  useEffect(() => {
+    if (activeFilter === "all") {
+      return;
+    }
+
+    if (!ownedVideos.some((video) => video.slug === activeFilter)) {
+      setActiveFilter("all");
+    }
+  }, [activeFilter, ownedVideos]);
+
+  const filteredVideos = useMemo(() => {
+    if (activeFilter === "all") {
+      return ownedVideos;
+    }
+
+    return ownedVideos.filter((video) => video.slug === activeFilter);
+  }, [activeFilter, ownedVideos]);
 
   return (
     <main
@@ -76,6 +105,41 @@ function WatchContent() {
             </h1>
           </div>
 
+          {!videosLoading && ownedVideos.length > 0 ? (
+            <div className="mt-8 rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-3 shadow-sm">
+              <p className="mb-3 text-center text-sm font-bold tracking-[0.14em] text-slate-500">
+                סינון לפי שיעור
+              </p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveFilter("all")}
+                  className={`w-full rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
+                    activeFilter === "all"
+                      ? "border-slate-900 bg-slate-900 text-white shadow-sm"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-100"
+                  }`}
+                >
+                  כל השיעורים
+                </button>
+                {ownedVideos.map((video) => (
+                  <button
+                    key={video.slug}
+                    type="button"
+                    onClick={() => setActiveFilter(video.slug)}
+                    className={`w-full rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
+                      activeFilter === video.slug
+                        ? "border-slate-600 bg-slate-600 text-white shadow-sm"
+                        : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-100"
+                    }`}
+                  >
+                    {video.title}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
           {videosLoading ? (
             <div className="mt-8 grid gap-4 md:grid-cols-2">
               {Array.from({ length: Math.max(access.videos.length, 1) }).map(
@@ -97,22 +161,21 @@ function WatchContent() {
             </div>
           ) : (
             <div className="mt-8 grid gap-4 md:grid-cols-2">
-              {ownedVideos.map((video) => (
+              {filteredVideos.map((video) => (
                 <Link
                   key={video.id}
                   href={`/watch/${video.slug}`}
                   className="group overflow-hidden rounded-[1.75rem] border border-slate-200 bg-slate-50 text-right shadow-sm transition hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_18px_40px_rgba(15,23,42,0.08)]"
                 >
-                  <div className="aspect-[16/10] overflow-hidden bg-slate-950">
-                    <video
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                      src={video.previewUrl}
-                      muted
-                      playsInline
-                      autoPlay
-                      loop
-                      preload="metadata"
-                    />
+                  <div className="overflow-hidden rounded-b-[1.35rem] rounded-t-[1.35rem] bg-[linear-gradient(180deg,#f7f9fc_0%,#eef4ff_70%)] p-3">
+                    <div className="aspect-[4/5] overflow-hidden rounded-[1.2rem] bg-white">
+                      <img
+                        className="h-full w-full object-cover object-top transition duration-500 group-hover:scale-[1.02]"
+                        src={video.imageUrl || video.previewUrl}
+                        alt={video.title}
+                        loading="lazy"
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2 px-5 py-4">
                     <p className="text-sm font-semibold tracking-[0.16em] text-slate-500">
@@ -125,7 +188,7 @@ function WatchContent() {
                       {video.description}
                     </p>
                     <p className="font-display text-sm font-bold uppercase tracking-[0.14em] text-emerald-600">
-                      לצפייה בשיעור
+                      לצפייה בשיעור לחץ
                     </p>
                   </div>
                 </Link>
@@ -133,10 +196,10 @@ function WatchContent() {
             </div>
           )}
 
-          {!videosLoading && !ownedVideos.length ? (
+          {!videosLoading && !filteredVideos.length ? (
             <div className="mt-8 rounded-[1.75rem] border border-slate-200 bg-slate-50 px-6 py-8 text-center">
               <p className="text-lg font-semibold text-slate-700">
-                עדיין אין שיעורים זמינים בחשבון הזה.
+                לא נמצאו שיעורים עבור הסינון שבחרת.
               </p>
             </div>
           ) : null}

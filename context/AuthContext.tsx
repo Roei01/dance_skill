@@ -22,6 +22,7 @@ export type AuthUser = {
 export type AuthAccess = {
   defaultVideo: boolean;
   videos: string[];
+  videoOrder: string[];
 };
 
 type AuthContextValue = {
@@ -42,7 +43,18 @@ type AuthContextValue = {
 const defaultAccess: AuthAccess = {
   defaultVideo: false,
   videos: [],
+  videoOrder: [],
 };
+
+const normalizeAccess = (access?: Partial<AuthAccess> | null): AuthAccess => ({
+  defaultVideo: Boolean(access?.defaultVideo),
+  videos: Array.isArray(access?.videos) ? access.videos : [],
+  videoOrder: Array.isArray(access?.videoOrder)
+    ? access.videoOrder
+    : Array.isArray(access?.videos)
+      ? access.videos
+      : [],
+});
 const publicPathnames = new Set([
   "/",
   "/modern-dance",
@@ -95,7 +107,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const response = await api.get("/auth/me");
         const nextSnapshot: AuthSnapshot = {
           user: response.data.user,
-          access: response.data.access ?? defaultAccess,
+          access: normalizeAccess(response.data.access),
           sessionExpiresAt: response.data.sessionExpiresAt ?? null,
           errorCode: undefined,
         };
@@ -168,12 +180,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }) => {
         authSnapshot = {
           user: nextUser,
-          access: nextAccess,
+          access: normalizeAccess(nextAccess),
           sessionExpiresAt: nextSessionExpiresAt ?? null,
           errorCode: undefined,
         };
         setUser(nextUser);
-        setAccess(nextAccess);
+        setAccess(normalizeAccess(nextAccess));
         setSessionExpiresAt(nextSessionExpiresAt ?? null);
         setErrorCode(undefined);
       },

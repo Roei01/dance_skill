@@ -18,7 +18,7 @@ import {
 } from "../middleware/authenticate";
 import { DEFAULT_VIDEO_SLUG } from "../../lib/catalog";
 import { authRateLimiter } from "../middleware/rateLimit";
-import { normalizeOwnedVideoId } from "../services/videos";
+import { resolveOwnedVideoSlugs } from "../services/videos";
 
 const router = express.Router();
 
@@ -103,10 +103,12 @@ router.post("/login", authRateLimiter, async (req, res) => {
   const purchases = await Purchase.find({
     userId: user._id,
     status: "completed",
-  }).lean();
+  })
+    .sort({ createdAt: -1 })
+    .lean();
 
-  const ownedVideoIds = Array.from(
-    new Set(purchases.map((purchase) => normalizeOwnedVideoId(String(purchase.videoId))))
+  const ownedVideoIds = await resolveOwnedVideoSlugs(
+    purchases.map((purchase) => purchase.videoId),
   );
 
   res.json({
@@ -120,6 +122,7 @@ router.post("/login", authRateLimiter, async (req, res) => {
     access: {
       defaultVideo: ownedVideoIds.includes(DEFAULT_VIDEO_SLUG),
       videos: ownedVideoIds,
+      videoOrder: ownedVideoIds,
     },
   });
 });
@@ -137,10 +140,12 @@ router.get("/me", authenticate, async (req: AuthenticatedRequest, res) => {
   const purchases = await Purchase.find({
     userId: user._id,
     status: "completed",
-  }).lean();
+  })
+    .sort({ createdAt: -1 })
+    .lean();
 
-  const ownedVideoIds = Array.from(
-    new Set(purchases.map((purchase) => normalizeOwnedVideoId(String(purchase.videoId))))
+  const ownedVideoIds = await resolveOwnedVideoSlugs(
+    purchases.map((purchase) => purchase.videoId),
   );
 
   return res.json({
@@ -153,6 +158,7 @@ router.get("/me", authenticate, async (req: AuthenticatedRequest, res) => {
     access: {
       defaultVideo: ownedVideoIds.includes(DEFAULT_VIDEO_SLUG),
       videos: ownedVideoIds,
+      videoOrder: ownedVideoIds,
     },
   });
 });

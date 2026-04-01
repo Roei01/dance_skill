@@ -30,19 +30,22 @@ function WatchVideoContent({ slug }: { slug: string }) {
 
     setVideoLoading(true);
 
-    void getCachedVideoBySlug(slug).then((response) => {
-      if (!cancelled) {
-        setVideo(response);
-      }
-    }).catch(() => {
-      if (!cancelled) {
-        setVideo(null);
-      }
-    }).finally(() => {
-      if (!cancelled) {
-        setVideoLoading(false);
-      }
-    });
+    void getCachedVideoBySlug(slug)
+      .then((response) => {
+        if (!cancelled) {
+          setVideo(response);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setVideo(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setVideoLoading(false);
+        }
+      });
 
     return () => {
       cancelled = true;
@@ -109,7 +112,7 @@ function WatchVideoContent({ slug }: { slug: string }) {
       tabIndex={-1}
       className="min-h-screen overflow-hidden bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_45%,#fff5ef_100%)] pt-6 text-slate-900 sm:pt-8"
     >
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 ">
+      <div className="mx-auto max-w-5xl px-3 sm:px-6 ">
         <div className="mb-4">
           <Link
             href="/watch"
@@ -118,21 +121,25 @@ function WatchVideoContent({ slug }: { slug: string }) {
             חזרה לספרייה שלי
           </Link>
         </div>
-        <div className="rounded-[2rem] bg-white px-5 py-8 text-center shadow-[0_30px_80px_rgba(15,23,42,0.12)] sm:px-8">
+        <div className="rounded-[2rem] bg-white px-4 py-7 text-center shadow-[0_30px_80px_rgba(15,23,42,0.12)] sm:px-8 sm:py-8">
           <div className="text-center">
             <p className="text-sm font-semibold tracking-[0.16em] text-slate-500">
               {BUSINESS_NAME}
             </p>
             <p className="mt-2 text-base font-medium leading-7 text-slate-600 md:text-lg">
-              {video.level}
+              בואו לרקוד איתי בכל מקום בכל זמן :)
             </p>
+
             <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-900 md:text-4xl">
               {video.title}
             </h1>
+            <p className="mt-2 text-base font-medium leading-7 text-slate-600 md:text-lg">
+              {video.level}
+            </p>
           </div>
 
-          <div className="mt-6 overflow-hidden rounded-[1.75rem] border-[5px] border-slate-500 bg-white p-2 shadow-inner">
-            <div className="relative aspect-video overflow-hidden rounded-[1.35rem] bg-slate-950">
+          <div className="mt-7 overflow-hidden rounded-[1.9rem] border-[4px] border-slate-300/90 bg-white p-2 shadow-[0_18px_45px_rgba(15,23,42,0.1)] sm:mt-8 sm:p-3">
+            <div className="relative aspect-[5/4] overflow-hidden rounded-[1.5rem] bg-slate-950 sm:aspect-video">
               {!videoReady ? (
                 <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-slate-800 via-slate-700 to-slate-800" />
               ) : null}

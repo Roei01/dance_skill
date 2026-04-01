@@ -1,6 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IVideo extends Document {
+  videoId?: string;
   slug: string;
   title: string;
   description: string;
@@ -14,6 +15,7 @@ export interface IVideo extends Document {
 }
 
 const VideoSchema = new Schema<IVideo>({
+  videoId: { type: String, trim: true, index: true, sparse: true },
   slug: { type: String, required: true, unique: true, index: true, trim: true },
   title: { type: String, required: true, trim: true },
   description: { type: String, required: true, trim: true },

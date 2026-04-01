@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { Video, type IVideo } from "../../models/Video";
 import { type VideoRecord } from "../../lib/video-types";
 import {
@@ -13,6 +14,7 @@ import {
 } from "../../lib/catalog";
 
 const DEFAULT_VIDEO_SEED = {
+  videoId: DEFAULT_VIDEO_ID,
   slug: DEFAULT_VIDEO_SLUG,
   title: DEFAULT_VIDEO_TITLE,
   description: DEFAULT_VIDEO_DESCRIPTION,
@@ -37,20 +39,168 @@ const serializeVideo = (video: IVideo): VideoRecord => ({
   isActive: video.isActive,
 });
 
-export const normalizeOwnedVideoId = (videoId: string) => {
-  return videoId === DEFAULT_VIDEO_ID ? DEFAULT_VIDEO_SLUG : videoId;
-};
+type PurchaseVideoReference = mongoose.Types.ObjectId | string;
 
-export const getPurchaseVideoId = (video: Pick<IVideo, "slug">) => {
-  return video.slug === DEFAULT_VIDEO_SLUG ? DEFAULT_VIDEO_ID : video.slug;
-};
+const asUniqueLookupValues = (
+  values: Array<PurchaseVideoReference | null | undefined>,
+) => {
+  const seen = new Set<string>();
+  const uniqueValues: PurchaseVideoReference[] = [];
 
-export const getAcceptedPurchaseVideoIds = (slug: string) => {
-  if (slug === DEFAULT_VIDEO_SLUG) {
-    return [DEFAULT_VIDEO_ID, DEFAULT_VIDEO_SLUG];
+  for (const value of values) {
+    if (!value) {
+      continue;
+    }
+
+    const key = String(value);
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    uniqueValues.push(value);
   }
 
-  return [slug];
+  return uniqueValues;
+};
+
+const toObjectId = (value: unknown) => {
+  if (value instanceof mongoose.Types.ObjectId) {
+    return value;
+  }
+
+  if (typeof value === "string" && mongoose.Types.ObjectId.isValid(value)) {
+    return new mongoose.Types.ObjectId(value);
+  }
+
+  return null;
+};
+
+export const getLegacyPurchaseVideoId = (video: Pick<IVideo, "slug" | "videoId">) => {
+  return video.videoId || (video.slug === DEFAULT_VIDEO_SLUG ? DEFAULT_VIDEO_ID : video.slug);
+};
+
+export const getPurchaseVideoReference = (video: Pick<IVideo, "_id">) => {
+  return toObjectId(video._id) ?? String(video._id);
+};
+
+export const getAcceptedPurchaseVideoIds = (
+  video: Pick<IVideo, "_id" | "slug" | "videoId">,
+) => {
+  return asUniqueLookupValues([
+    getPurchaseVideoReference(video),
+    video.slug,
+    video.videoId,
+    video.slug === DEFAULT_VIDEO_SLUG ? DEFAULT_VIDEO_ID : undefined,
+  ]);
+};
+
+export const resolveOwnedVideoSlug = async (
+  videoId: PurchaseVideoReference | null | undefined,
+) => {
+  const [slug] = await resolveOwnedVideoSlugs(videoId ? [videoId] : []);
+  return slug ?? null;
+};
+
+export const resolveOwnedVideoSlugs = async (
+  videoIds: Array<PurchaseVideoReference | null | undefined>,
+) => {
+  const orderedEntries = videoIds
+    .map((videoId, index) => ({ videoId, index }))
+    .filter(
+      (
+        entry,
+      ): entry is { videoId: PurchaseVideoReference; index: number } =>
+        Boolean(entry.videoId),
+    );
+  const objectIds: mongoose.Types.ObjectId[] = [];
+  const legacyValues: string[] = [];
+
+  for (const { videoId: rawVideoId } of orderedEntries) {
+    if (!rawVideoId) {
+      continue;
+    }
+
+    if (rawVideoId instanceof mongoose.Types.ObjectId) {
+      objectIds.push(rawVideoId);
+      continue;
+    }
+
+    if (typeof rawVideoId === "string") {
+      const objectId = toObjectId(rawVideoId);
+      if (objectId && rawVideoId !== DEFAULT_VIDEO_ID && rawVideoId !== DEFAULT_VIDEO_SLUG) {
+        objectIds.push(objectId);
+        continue;
+      }
+
+      legacyValues.push(rawVideoId);
+    }
+  }
+
+  const orderedSlugs = new Map<number, string>();
+
+  if (legacyValues.length > 0) {
+    const legacyVideos = await Video.find({
+      $or: [{ slug: { $in: legacyValues } }, { videoId: { $in: legacyValues } }],
+    }).select({ slug: 1, videoId: 1 });
+
+    const legacyMap = new Map<string, string>();
+    for (const video of legacyVideos) {
+      legacyMap.set(video.slug, video.slug);
+      if (video.videoId) {
+        legacyMap.set(video.videoId, video.slug);
+      }
+    }
+
+    for (const { videoId: rawVideoId, index } of orderedEntries) {
+      if (typeof rawVideoId !== "string") {
+        continue;
+      }
+
+      if (rawVideoId === DEFAULT_VIDEO_ID) {
+        orderedSlugs.set(index, DEFAULT_VIDEO_SLUG);
+        continue;
+      }
+
+      if (legacyValues.includes(rawVideoId)) {
+        orderedSlugs.set(index, legacyMap.get(rawVideoId) ?? rawVideoId);
+      }
+    }
+  }
+
+  if (objectIds.length > 0) {
+    const videos = await Video.find({
+      _id: { $in: asUniqueLookupValues(objectIds) },
+    }).select({ slug: 1 });
+
+    const objectIdToSlug = new Map<string, string>();
+    for (const video of videos) {
+      objectIdToSlug.set(String(video._id), video.slug);
+    }
+
+    for (const { videoId: rawVideoId, index } of orderedEntries) {
+      const objectId =
+        rawVideoId instanceof mongoose.Types.ObjectId
+          ? rawVideoId
+          : typeof rawVideoId === "string"
+            ? toObjectId(rawVideoId)
+            : null;
+
+      if (!objectId) {
+        continue;
+      }
+
+      const slug = objectIdToSlug.get(String(objectId));
+      if (slug) {
+        orderedSlugs.set(index, slug);
+      }
+    }
+  }
+
+  return Array.from(orderedSlugs.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([, slug]) => slug)
+    .filter((slug, index, array) => array.indexOf(slug) === index);
 };
 
 export const ensureDefaultVideoExists = async () => {
@@ -67,6 +217,19 @@ export const ensureDefaultVideoExists = async () => {
     },
     { $set: { imageUrl: DEFAULT_VIDEO_IMAGE_URL } },
   );
+
+  await Video.findOneAndUpdate(
+    {
+      slug: DEFAULT_VIDEO_SLUG,
+      $or: [{ videoId: { $exists: false } }, { videoId: "" }],
+    },
+    { $set: { videoId: DEFAULT_VIDEO_ID } },
+  );
+};
+
+export const getActiveVideoDocumentBySlug = async (slug: string) => {
+  await ensureDefaultVideoExists();
+  return Video.findOne({ slug, isActive: true });
 };
 
 export const listActiveVideos = async () => {
@@ -77,8 +240,6 @@ export const listActiveVideos = async () => {
 };
 
 export const getActiveVideoBySlug = async (slug: string) => {
-  await ensureDefaultVideoExists();
-
-  const video = await Video.findOne({ slug, isActive: true });
+  const video = await getActiveVideoDocumentBySlug(slug);
   return video ? serializeVideo(video) : null;
 };

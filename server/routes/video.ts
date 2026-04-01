@@ -6,7 +6,10 @@ import {
   authenticate,
   type AuthenticatedRequest,
 } from "../middleware/authenticate";
-import { getAcceptedPurchaseVideoIds, getActiveVideoBySlug } from "../services/videos";
+import {
+  getAcceptedPurchaseVideoIds,
+  getActiveVideoDocumentBySlug,
+} from "../services/videos";
 
 const router = express.Router();
 const CLOUDINARY_PREVIEW_URL =
@@ -87,14 +90,18 @@ router.get(
     const videoIdParam = Array.isArray(req.params.videoId)
       ? req.params.videoId[0]
       : req.params.videoId;
-    const video = await getActiveVideoBySlug(videoIdParam);
-    const acceptedVideoIds = getAcceptedPurchaseVideoIds(
-      video?.slug ?? videoIdParam
-    );
+    const video = await getActiveVideoDocumentBySlug(videoIdParam);
+
+    if (!video) {
+      return res.status(404).json({
+        code: "VIDEO_UNAVAILABLE",
+        message: "Unable to load video. Please refresh the page.",
+      });
+    }
 
     const purchase = await Purchase.findOne({
       userId: req.user?.userId,
-      videoId: { $in: acceptedVideoIds },
+      videoId: { $in: getAcceptedPurchaseVideoIds(video) },
       status: "completed",
     });
 
@@ -130,14 +137,18 @@ router.get(
     const videoIdParam = Array.isArray(req.params.videoId)
       ? req.params.videoId[0]
       : req.params.videoId;
-    const video = await getActiveVideoBySlug(videoIdParam);
-    const acceptedVideoIds = getAcceptedPurchaseVideoIds(
-      video?.slug ?? videoIdParam
-    );
+    const video = await getActiveVideoDocumentBySlug(videoIdParam);
+
+    if (!video) {
+      return res.status(404).json({
+        code: "VIDEO_UNAVAILABLE",
+        message: "Unable to load video. Please refresh the page.",
+      });
+    }
 
     const purchase = await Purchase.findOne({
       userId: req.user?.userId,
-      videoId: { $in: acceptedVideoIds },
+      videoId: { $in: getAcceptedPurchaseVideoIds(video) },
       status: "completed",
     });
 

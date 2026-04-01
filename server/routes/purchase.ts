@@ -10,14 +10,12 @@ import { provisionPurchaseAccess } from "../services/purchase";
 import { purchaseRateLimiter } from "../middleware/rateLimit";
 import { logger } from "../lib/logger";
 import { config } from "../config/env";
-import {
-  DEFAULT_VIDEO_ID,
-  DEFAULT_VIDEO_SLUG,
-} from "../../lib/catalog";
+import { DEFAULT_VIDEO_SLUG } from "../../lib/catalog";
 import {
   getAcceptedPurchaseVideoIds,
-  getActiveVideoBySlug,
-  getPurchaseVideoId,
+  getActiveVideoDocumentBySlug,
+  getLegacyPurchaseVideoId,
+  getPurchaseVideoReference,
 } from "../services/videos";
 
 const router = express.Router();
@@ -129,7 +127,7 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
 
     const { email, fullName, phone, returnTo, paymentMethod, videoSlug } = validation.data;
     const appBaseUrl = deriveAppBaseUrlFromRequest(req);
-    const video = await getActiveVideoBySlug(videoSlug);
+    const video = await getActiveVideoDocumentBySlug(videoSlug);
 
     if (!video) {
       return res.status(404).json({
@@ -138,9 +136,9 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
       });
     }
 
-    const purchaseVideoId = getPurchaseVideoId(video);
-    const acceptedPurchaseVideoIds = getAcceptedPurchaseVideoIds(video.slug);
-    const orderId = `${purchaseVideoId}:${email}`;
+    const purchaseVideoId = getPurchaseVideoReference(video);
+    const acceptedPurchaseVideoIds = getAcceptedPurchaseVideoIds(video);
+    const orderId = `${getLegacyPurchaseVideoId(video)}:${email}`;
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {

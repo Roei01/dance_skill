@@ -1,11 +1,10 @@
 import { Purchase } from "../../models/Purchase";
 import { User } from "../../models/User";
-import { DEFAULT_VIDEO_ID } from "../../lib/catalog";
 import { sendAccessEmail } from "./email";
 import { generateTempPassword, hashPassword } from "./auth";
 import { config } from "../config/env";
 import { logger } from "../lib/logger";
-import { normalizeOwnedVideoId } from "./videos";
+import { resolveOwnedVideoSlug } from "./videos";
 
 const normalizeBaseUrl = (url: string) => url.replace(/\/$/, "");
 
@@ -76,6 +75,7 @@ export const provisionPurchaseAccess = async (paymentId: string) => {
 
   purchase.userId = user._id;
   purchase.status = "completed";
+  const ownedVideoSlug = await resolveOwnedVideoSlug(purchase.videoId);
 
   if (purchase.credentialsSentAt) {
     await purchase.save();
@@ -87,7 +87,7 @@ export const provisionPurchaseAccess = async (paymentId: string) => {
     return {
       email: user.email,
       username: user.username,
-      videoId: normalizeOwnedVideoId(String(purchase.videoId ?? DEFAULT_VIDEO_ID)),
+      videoId: ownedVideoSlug ?? "",
     };
   }
 
@@ -115,6 +115,6 @@ export const provisionPurchaseAccess = async (paymentId: string) => {
   return {
     email: user.email,
     username: user.username,
-    videoId: normalizeOwnedVideoId(String(purchase.videoId ?? DEFAULT_VIDEO_ID)),
+    videoId: ownedVideoSlug ?? "",
   };
 };
