@@ -301,18 +301,6 @@ export const Purchase = ({
             ) : null}
 
             <button
-              disabled={loading || !acceptedTerms}
-              className="font-display relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-slate-900 py-4 text-base font-black text-white shadow-lg transition-all hover:-translate-y-1 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 md:py-5 md:text-lg"
-            >
-              <span className="relative z-10">
-                {loading ? "מכינים תשלום מאובטח..." : "להמשך רכישה"}
-              </span>
-              {loading && (
-                <Loader2 className="w-5 h-5 animate-spin relative z-10" />
-              )}
-            </button>
-
-            <button
               type="button"
               onClick={(e) => handlePurchase(e, "hosted")}
               disabled={loading || !acceptedTerms}
@@ -336,6 +324,18 @@ export const Purchase = ({
                   className="h-9 w-auto object-contain"
                 />
               </div>
+            </button>
+
+            <button
+              disabled={loading || !acceptedTerms}
+              className="font-display relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-slate-900 py-4 text-base font-black text-white shadow-lg transition-all hover:-translate-y-1 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 md:py-5 md:text-lg"
+            >
+              <span className="relative z-10">
+                {loading ? "מכינים תשלום מאובטח..." : "להמשך רכישה"}
+              </span>
+              {loading && (
+                <Loader2 className="w-5 h-5 animate-spin relative z-10" />
+              )}
             </button>
           </form>
 

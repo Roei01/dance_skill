@@ -22,6 +22,7 @@ describe('sendAccessEmail', () => {
     expect(getSentAccessEmails()).toHaveLength(1);
     expect(getSentAccessEmails()[0]).toMatchObject({
       email: 'email-test@example.com',
+      bcc: ['royinagar1@gmail.com'],
       username: 'email_test_user',
       mocked: true,
     });

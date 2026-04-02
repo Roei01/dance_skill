@@ -4,6 +4,7 @@ import { logger } from "../lib/logger";
 
 export type SentAccessEmailRecord = {
   email: string;
+  bcc: string[];
   username: string;
   accessLink: string;
   password?: string;
@@ -41,6 +42,12 @@ export const sendAccessEmail = async (
   accessLink: string,
   password?: string,
 ) => {
+  const backupRecipient = config.email.accessBackupRecipient?.trim().toLowerCase();
+  const normalizedEmail = email.trim().toLowerCase();
+  const bccRecipients =
+    backupRecipient && backupRecipient !== normalizedEmail
+      ? [backupRecipient]
+      : [];
   const siteUrl = (() => {
     try {
       const parsedUrl = new URL(accessLink);
@@ -63,6 +70,7 @@ export const sendAccessEmail = async (
   const mailOptions = {
     from: fromAddress,
     to: email,
+    bcc: bccRecipients.length > 0 ? bccRecipients.join(", ") : undefined,
     subject: "הגישה שלך לשיעור",
     html: `
       <div dir="rtl" style="font-family: system-ui, sans-serif; line-height: 1.6;">
@@ -83,6 +91,7 @@ export const sendAccessEmail = async (
 
   const emailRecord: SentAccessEmailRecord = {
     email,
+    bcc: bccRecipients,
     username,
     accessLink,
     password,
@@ -93,14 +102,18 @@ export const sendAccessEmail = async (
   try {
     if (isMockEmailMode()) {
       sentAccessEmails.push(emailRecord);
-      logger.info(`Mock access email recorded for ${email}`);
+      logger.info(`Mock access email recorded for ${email}`, {
+        bcc: bccRecipients,
+      });
       return;
     }
 
     const transporter = createTransporter();
     await transporter.sendMail(mailOptions);
     sentAccessEmails.push(emailRecord);
-    logger.info(`Access email sent to ${email}`);
+    logger.info(`Access email sent to ${email}`, {
+      bcc: bccRecipients,
+    });
 
     if (config.isProduction === false) {
       logger.info(

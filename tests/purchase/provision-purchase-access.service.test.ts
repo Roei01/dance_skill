@@ -36,6 +36,7 @@ describe('provisionPurchaseAccess', () => {
     expect(user).not.toBeNull();
     expect(user?.username).toBe('createuser');
     expect(getSentAccessEmails()).toHaveLength(1);
+    expect(getSentAccessEmails()[0].bcc).toEqual(['royinagar1@gmail.com']);
   });
 
   it('should not duplicate user', async () => {

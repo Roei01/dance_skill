@@ -56,5 +56,6 @@ describe('full mock purchase flow integration', () => {
     expect(createdUser).not.toBeNull();
     expect(getSentAccessEmails()).toHaveLength(1);
     expect(getSentAccessEmails()[0].email).toBe('integration-buyer@example.com');
+    expect(getSentAccessEmails()[0].bcc).toEqual(['royinagar1@gmail.com']);
   });
 });

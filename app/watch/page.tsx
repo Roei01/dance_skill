@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AuthErrorCard } from "@/components/errors/AuthErrorCard";
@@ -19,6 +20,7 @@ function WatchContent() {
   const [videos, setVideos] = useState<VideoRecord[]>([]);
   const [videosLoading, setVideosLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<string>("all");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -80,6 +82,17 @@ function WatchContent() {
     return ownedVideos.filter((video) => video.slug === activeFilter);
   }, [activeFilter, ownedVideos]);
 
+  const activeFilterLabel = useMemo(() => {
+    if (activeFilter === "all") {
+      return "כל השיעורים";
+    }
+
+    return (
+      ownedVideos.find((video) => video.slug === activeFilter)?.title ??
+      "כל השיעורים"
+    );
+  }, [activeFilter, ownedVideos]);
+
   return (
     <main
       id="main-content"
@@ -106,37 +119,69 @@ function WatchContent() {
           </div>
 
           {!videosLoading && ownedVideos.length > 0 ? (
-            <div className="mt-8 rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-3 shadow-sm">
-              <p className="mb-3 text-center text-sm font-bold tracking-[0.14em] text-slate-500">
-                סינון לפי שיעור
-              </p>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveFilter("all")}
-                  className={`w-full rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
-                    activeFilter === "all"
-                      ? "border-slate-900 bg-slate-900 text-white shadow-sm"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-100"
+            <div className="mt-5 rounded-[1.25rem] border border-slate-200/80 bg-slate-50/70 p-2 shadow-sm">
+              <button
+                type="button"
+                onClick={() => setFiltersOpen((current) => !current)}
+                className="flex w-full items-center justify-between rounded-[1rem] bg-white px-3 py-2.5 text-right transition hover:bg-slate-50"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-white shadow-sm">
+                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                  </span>
+                  <div>
+                    <p className="text-[11px] font-bold tracking-[0.12em] text-slate-500">
+                      סינון שיעורים
+                    </p>
+                    <p className="text-sm font-semibold text-slate-900">
+                      {activeFilterLabel}
+                    </p>
+                  </div>
+                </div>
+                <span
+                  className={`rounded-full border border-slate-200 p-1.5 text-slate-500 transition ${
+                    filtersOpen ? "rotate-180 bg-slate-100" : "bg-white"
                   }`}
                 >
-                  כל השיעורים
-                </button>
-                {ownedVideos.map((video) => (
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </span>
+              </button>
+
+              {filtersOpen ? (
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
                   <button
-                    key={video.slug}
                     type="button"
-                    onClick={() => setActiveFilter(video.slug)}
-                    className={`w-full rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
-                      activeFilter === video.slug
-                        ? "border-slate-600 bg-slate-600 text-white shadow-sm"
+                    onClick={() => {
+                      setActiveFilter("all");
+                      setFiltersOpen(false);
+                    }}
+                    className={`w-full rounded-[0.95rem] border px-3 py-2.5 text-sm font-semibold transition ${
+                      activeFilter === "all"
+                        ? "border-slate-900 bg-slate-900 text-white shadow-sm"
                         : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-100"
                     }`}
                   >
-                    {video.title}
+                    כל השיעורים
                   </button>
-                ))}
-              </div>
+                  {ownedVideos.map((video) => (
+                    <button
+                      key={video.slug}
+                      type="button"
+                      onClick={() => {
+                        setActiveFilter(video.slug);
+                        setFiltersOpen(false);
+                      }}
+                      className={`w-full rounded-[0.95rem] border px-3 py-2.5 text-sm font-semibold transition ${
+                        activeFilter === video.slug
+                          ? "border-slate-600 bg-slate-600 text-white shadow-sm"
+                          : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-100"
+                      }`}
+                    >
+                      {video.title}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
             </div>
           ) : null}
 
@@ -167,15 +212,26 @@ function WatchContent() {
                   href={`/watch/${video.slug}`}
                   className="group overflow-hidden rounded-[1.75rem] border border-slate-200 bg-slate-50 text-right shadow-sm transition hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_18px_40px_rgba(15,23,42,0.08)]"
                 >
-                  <div className="overflow-hidden rounded-b-[1.35rem] rounded-t-[1.35rem] bg-[linear-gradient(180deg,#f7f9fc_0%,#eef4ff_70%)] p-3">
-                    <div className="aspect-[4/5] overflow-hidden rounded-[1.2rem] bg-white">
-                      <img
-                        className="h-full w-full object-cover object-top transition duration-500 group-hover:scale-[1.02]"
-                        src={video.imageUrl || video.previewUrl}
-                        alt={video.title}
-                        loading="lazy"
+                  <div className="overflow-hidden rounded-b-[1.3rem] rounded-t-[1.4rem] bg-[linear-gradient(180deg,#f7f9fc_0%,#eef4ff_70%)] p-3">
+                    <div className="aspect-[4/5] relative overflow-hidden rounded-[1.2rem]">
+                      {/* רקע מטושטש */}
+                      <video
+                        className="absolute inset-0 w-full h-full object-cover blur-xl scale-110"
+                        src={video.previewUrl}
+                        muted
+                        autoPlay
+                        loop
                       />
-                    </div>
+
+                      {/* וידאו אמיתי */}
+                      <video
+                        className="relative w-full h-full object-contain"
+                        src={video.previewUrl}
+                        muted
+                        autoPlay
+                        loop
+                      />
+                    </div>{" "}
                   </div>
                   <div className="space-y-2 px-5 py-4">
                     <p className="text-sm font-semibold tracking-[0.16em] text-slate-500">

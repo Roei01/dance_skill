@@ -18,6 +18,12 @@ const DEFAULT_VIDEO_SEED = {
   slug: DEFAULT_VIDEO_SLUG,
   title: DEFAULT_VIDEO_TITLE,
   description: DEFAULT_VIDEO_DESCRIPTION,
+  watchDescription: DEFAULT_VIDEO_DESCRIPTION,
+  classBreakdown: [
+    { time: "18:10", label: "קצב איטי" },
+    { time: "19:10", label: "קצב רגיל" },
+    { time: "19:55", label: "מלא עם מוזיקה" },
+  ],
   price: DEFAULT_VIDEO_PRICE_ILS,
   level: DEFAULT_VIDEO_LEVEL,
   videoUrl: DEFAULT_VIDEO_PLAYER_URL,
@@ -31,6 +37,8 @@ const serializeVideo = (video: IVideo): VideoRecord => ({
   slug: video.slug,
   title: video.title,
   description: video.description,
+  watchDescription: video.watchDescription || video.description,
+  classBreakdown: Array.isArray(video.classBreakdown) ? video.classBreakdown : [],
   price: video.price,
   level: video.level,
   videoUrl: video.videoUrl,
@@ -74,25 +82,6 @@ const toObjectId = (value: unknown) => {
   }
 
   return null;
-};
-
-export const getLegacyPurchaseVideoId = (video: Pick<IVideo, "slug" | "videoId">) => {
-  return video.videoId || (video.slug === DEFAULT_VIDEO_SLUG ? DEFAULT_VIDEO_ID : video.slug);
-};
-
-export const getPurchaseVideoReference = (video: Pick<IVideo, "_id">) => {
-  return toObjectId(video._id) ?? String(video._id);
-};
-
-export const getAcceptedPurchaseVideoIds = (
-  video: Pick<IVideo, "_id" | "slug" | "videoId">,
-) => {
-  return asUniqueLookupValues([
-    getPurchaseVideoReference(video),
-    video.slug,
-    video.videoId,
-    video.slug === DEFAULT_VIDEO_SLUG ? DEFAULT_VIDEO_ID : undefined,
-  ]);
 };
 
 export const resolveOwnedVideoSlug = async (
@@ -139,9 +128,16 @@ export const resolveOwnedVideoSlugs = async (
 
   const orderedSlugs = new Map<number, string>();
 
-  if (legacyValues.length > 0) {
+  const nonDefaultLegacyValues = legacyValues.filter(
+    (value) => value !== DEFAULT_VIDEO_ID && value !== DEFAULT_VIDEO_SLUG,
+  );
+
+  if (nonDefaultLegacyValues.length > 0) {
     const legacyVideos = await Video.find({
-      $or: [{ slug: { $in: legacyValues } }, { videoId: { $in: legacyValues } }],
+      $or: [
+        { slug: { $in: nonDefaultLegacyValues } },
+        { videoId: { $in: nonDefaultLegacyValues } },
+      ],
     }).select({ slug: 1, videoId: 1 });
 
     const legacyMap = new Map<string, string>();
@@ -157,12 +153,12 @@ export const resolveOwnedVideoSlugs = async (
         continue;
       }
 
-      if (rawVideoId === DEFAULT_VIDEO_ID) {
+      if (rawVideoId === DEFAULT_VIDEO_ID || rawVideoId === DEFAULT_VIDEO_SLUG) {
         orderedSlugs.set(index, DEFAULT_VIDEO_SLUG);
         continue;
       }
 
-      if (legacyValues.includes(rawVideoId)) {
+      if (nonDefaultLegacyValues.includes(rawVideoId)) {
         orderedSlugs.set(index, legacyMap.get(rawVideoId) ?? rawVideoId);
       }
     }
@@ -224,6 +220,22 @@ export const ensureDefaultVideoExists = async () => {
       $or: [{ videoId: { $exists: false } }, { videoId: "" }],
     },
     { $set: { videoId: DEFAULT_VIDEO_ID } },
+  );
+
+  await Video.findOneAndUpdate(
+    {
+      slug: DEFAULT_VIDEO_SLUG,
+      $or: [{ watchDescription: { $exists: false } }, { watchDescription: "" }],
+    },
+    { $set: { watchDescription: DEFAULT_VIDEO_DESCRIPTION } },
+  );
+
+  await Video.findOneAndUpdate(
+    {
+      slug: DEFAULT_VIDEO_SLUG,
+      $or: [{ classBreakdown: { $exists: false } }, { classBreakdown: { $size: 0 } }],
+    },
+    { $set: { classBreakdown: DEFAULT_VIDEO_SEED.classBreakdown } },
   );
 };
 

@@ -22,6 +22,11 @@ const envSchema = z.object({
   EMAIL_PORT: z.string().transform((val) => parseInt(val, 10)),
   EMAIL_USER: z.string().optional(),
   EMAIL_PASS: z.string().optional(),
+  EMAIL_ACCESS_BACKUP_RECIPIENT: z
+    .string()
+    .email()
+    .optional()
+    .default("royinagar1@gmail.com"),
   JWT_SECRET: z.string().min(8),
   VIDEO_SECRET_TOKEN: z.string().min(8),
   APP_BASE_URL: z.string().url().optional(),
@@ -82,6 +87,7 @@ export const config = {
     port: env.data.EMAIL_PORT,
     user: env.data.EMAIL_USER,
     pass: env.data.EMAIL_PASS,
+    accessBackupRecipient: env.data.EMAIL_ACCESS_BACKUP_RECIPIENT,
   },
   appUrl: resolveAppUrl(),
   isProduction: env.data.NODE_ENV === "production",

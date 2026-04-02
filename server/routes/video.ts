@@ -6,10 +6,7 @@ import {
   authenticate,
   type AuthenticatedRequest,
 } from "../middleware/authenticate";
-import {
-  getAcceptedPurchaseVideoIds,
-  getActiveVideoDocumentBySlug,
-} from "../services/videos";
+import { getActiveVideoDocumentBySlug } from "../services/videos";
 
 const router = express.Router();
 const CLOUDINARY_PREVIEW_URL =
@@ -101,7 +98,7 @@ router.get(
 
     const purchase = await Purchase.findOne({
       userId: req.user?.userId,
-      videoId: { $in: getAcceptedPurchaseVideoIds(video) },
+      videoId: video._id,
       status: "completed",
     });
 
@@ -148,7 +145,7 @@ router.get(
 
     const purchase = await Purchase.findOne({
       userId: req.user?.userId,
-      videoId: { $in: getAcceptedPurchaseVideoIds(video) },
+      videoId: video._id,
       status: "completed",
     });
 

@@ -11,12 +11,7 @@ import { purchaseRateLimiter } from "../middleware/rateLimit";
 import { logger } from "../lib/logger";
 import { config } from "../config/env";
 import { DEFAULT_VIDEO_SLUG } from "../../lib/catalog";
-import {
-  getAcceptedPurchaseVideoIds,
-  getActiveVideoDocumentBySlug,
-  getLegacyPurchaseVideoId,
-  getPurchaseVideoReference,
-} from "../services/videos";
+import { getActiveVideoDocumentBySlug } from "../services/videos";
 
 const router = express.Router();
 
@@ -59,7 +54,10 @@ const purchaseSchema = z.object({
   email: z.string().email(),
   returnTo: z.string().trim().url().optional(),
   videoSlug: z.string().trim().min(1).optional().default(DEFAULT_VIDEO_SLUG),
-  paymentMethod: z.enum(["credit_card", "hosted"]).optional().default("credit_card"),
+  paymentMethod: z
+    .enum(["credit_card", "hosted"])
+    .optional()
+    .default("credit_card"),
 });
 
 const extractWebhookOrderId = (body: Record<string, any>) =>
@@ -69,6 +67,15 @@ const extractWebhookOrderId = (body: Record<string, any>) =>
   body?.data?.custom ||
   body?.data?.orderId ||
   body?.payload?.custom;
+
+const extractWebhookEvent = (body: Record<string, any>) =>
+  body?.event ||
+  body?.type ||
+  body?.action ||
+  body?.data?.event ||
+  body?.data?.type ||
+  body?.payload?.event ||
+  body?.payload?.type;
 
 const extractWebhookEmail = (body: Record<string, any>) => {
   const rawEmail =
@@ -85,8 +92,64 @@ const extractWebhookEmail = (body: Record<string, any>) => {
       ? body.data.client.emails[0]
       : undefined);
 
-  return typeof rawEmail === "string" ? rawEmail.trim().toLowerCase() : undefined;
+  return typeof rawEmail === "string"
+    ? rawEmail.trim().toLowerCase()
+    : undefined;
 };
+
+const normalizeWebhookStatus = (body: Record<string, any>) => {
+  const rawStatus =
+    body?.status ||
+    body?.paymentStatus ||
+    body?.data?.status ||
+    body?.data?.paymentStatus ||
+    body?.payload?.status ||
+    body?.payload?.paymentStatus ||
+    extractWebhookEvent(body);
+
+  if (typeof rawStatus === "string" && rawStatus.trim()) {
+    const normalized = rawStatus.trim().toLowerCase();
+
+    if (
+      [
+        "success",
+        "completed",
+        "approved",
+        "paid",
+        "received",
+        "payment/received",
+        "payment_received",
+        "payment-received",
+      ].includes(normalized)
+    ) {
+      return "completed";
+    }
+
+    if (
+      [
+        "failed",
+        "declined",
+        "cancelled",
+        "canceled",
+        "error",
+        "payment/failed",
+        "payment_failed",
+        "payment-failed",
+      ].includes(normalized)
+    ) {
+      return "failed";
+    }
+  }
+
+  if (reqBodyHasTransactions(body)) {
+    return "completed";
+  }
+
+  return undefined;
+};
+
+const reqBodyHasTransactions = (body: Record<string, any>) =>
+  Array.isArray(body?.transactions) && body.transactions.length > 0;
 
 const findPurchaseForWebhook = async (
   paymentId?: string,
@@ -125,7 +188,8 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
       });
     }
 
-    const { email, fullName, phone, returnTo, paymentMethod, videoSlug } = validation.data;
+    const { email, fullName, phone, returnTo, paymentMethod, videoSlug } =
+      validation.data;
     const appBaseUrl = deriveAppBaseUrlFromRequest(req);
     const video = await getActiveVideoDocumentBySlug(videoSlug);
 
@@ -136,9 +200,11 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
       });
     }
 
-    const purchaseVideoId = getPurchaseVideoReference(video);
-    const acceptedPurchaseVideoIds = getAcceptedPurchaseVideoIds(video);
-    const orderId = `${getLegacyPurchaseVideoId(video)}:${email}`;
+    console.log("VIDEO ID:", video._id, typeof video._id);
+
+    const purchaseVideoId = video._id;
+    const acceptedPurchaseVideoIds = [video._id];
+    const orderId = `${String(video._id)}:${email}`;
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
@@ -158,18 +224,18 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
     }
 
     if (paymentMethod === "hosted") {
-      const isTestMode = config.paymentMode === 'test';
-      const tempPaymentId = isTestMode 
-        ? `mock_${Date.now()}_${Math.random().toString(36).substring(7)}` 
+      const isTestMode = config.paymentMode === "test";
+      const tempPaymentId = isTestMode
+        ? `mock_${Date.now()}_${Math.random().toString(36).substring(7)}`
         : `link_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-      
+
       // Set up the success URL to return to
       const successUrl = new URL("/success", `${appBaseUrl}/`);
       successUrl.searchParams.set("email", email);
       if (returnTo) {
         successUrl.searchParams.set("returnTo", returnTo);
       }
-      
+
       const checkoutUrl = isTestMode
         ? `${config.appUrl}/success?mock=true`
         : `https://mrng.to/BKXBaFbl0K?email=${encodeURIComponent(email)}&successUrl=${encodeURIComponent(successUrl.toString())}&redirectUrl=${encodeURIComponent(successUrl.toString())}`;
@@ -258,21 +324,24 @@ router.post("/webhook", async (req, res) => {
   console.log("🔥 WEBHOOK RECEIVED:");
   console.log(JSON.stringify(req.body, null, 2));
   const orderId = extractWebhookOrderId(req.body);
+  const event = extractWebhookEvent(req.body);
   const payerEmail = extractWebhookEmail(req.body);
   const paymentId =
     req.body?.paymentId ||
     req.body?.id ||
     req.body?.productId ||
-    req.body?.transactions?.[0]?.id;
+    req.body?.transactions?.[0]?.id ||
+    req.body?.data?.id ||
+    req.body?.data?.paymentId ||
+    req.body?.payload?.id ||
+    req.body?.payload?.paymentId;
 
-  const status =
-    req.body?.status ||
-    req.body?.paymentStatus ||
-    (req.body?.transactions?.length ? "completed" : undefined);
+  const status = normalizeWebhookStatus(req.body);
 
   logger.info("Purchase webhook triggered.", {
     paymentId,
     orderId,
+    event,
     payerEmail,
     status,
     paymentMode: config.paymentMode,
@@ -317,9 +386,11 @@ router.post("/webhook", async (req, res) => {
 
   const purchase = await findPurchaseForWebhook(paymentId, orderId, payerEmail);
 
-  if (purchase && (status === "success" || status === "completed")) {
+  if (purchase && status === "completed") {
     try {
-      const provisioned = await provisionPurchaseAccess(String(purchase.paymentId));
+      const provisioned = await provisionPurchaseAccess(
+        String(purchase.paymentId),
+      );
 
       if (!provisioned) {
         logger.warn(

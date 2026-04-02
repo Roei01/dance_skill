@@ -106,6 +106,8 @@ function WatchVideoContent({ slug }: { slug: string }) {
     );
   }
 
+  const watchDescription = video.watchDescription || video.description;
+
   return (
     <main
       id="main-content"
@@ -139,7 +141,7 @@ function WatchVideoContent({ slug }: { slug: string }) {
           </div>
 
           <div className="mt-7 overflow-hidden rounded-[1.9rem] border-[4px] border-slate-300/90 bg-white p-2 shadow-[0_18px_45px_rgba(15,23,42,0.1)] sm:mt-8 sm:p-3">
-            <div className="relative aspect-[5/4] overflow-hidden rounded-[1.5rem] bg-slate-950 sm:aspect-video">
+            <div className="relative aspect-[] overflow-hidden rounded-[1.5rem] bg-slate-950 sm:aspect-video">
               {!videoReady ? (
                 <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-slate-800 via-slate-700 to-slate-800" />
               ) : null}
@@ -154,9 +156,26 @@ function WatchVideoContent({ slug }: { slug: string }) {
             </div>
           </div>
 
-          <div className="mt-6 ml-auto max-w-xl text-right text-lg text-slate-700">
-            <p>{video.description}</p>
-          </div>
+          {video.classBreakdown.length > 0 ? (
+            <div className="mt-6 flex w-full justify-end">
+              <div
+                dir="rtl"
+                className="ml-auto space-y-2 text-right text-lg text-slate-700"
+              >
+                {video.classBreakdown.map((section) => (
+                  <p
+                    key={`${section.time}-${section.label}`}
+                    className="text-right"
+                  >
+                    <span className="font-medium tabular-nums text-slate-500">
+                      {section.time}
+                    </span>{" "}
+                    <span>{section.label}</span>
+                  </p>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           <div dir="ltr" className="mt-8 flex justify-start">
             <button

@@ -16,7 +16,7 @@ export const Styles = () => {
     void getCachedVideos()
       .then((response) => {
         if (!cancelled) {
-          setVideos(response);
+          setVideos([...response].reverse());
         }
       })
       .catch(() => {
@@ -88,7 +88,7 @@ export const Styles = () => {
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/30 to-transparent" />
                     <div className="absolute inset-x-0 top-3 flex justify-center min-[294px]:top-4">
                       <div className="font-display inline-flex items-center rounded-full border border-[#f2cf88]/80 bg-[#f2cf88]/92 px-3 py-1.5 text-[10px] font-bold text-slate-950 shadow-lg backdrop-blur min-[294px]:px-4 min-[294px]:py-2 min-[294px]:text-[11px] sm:text-xs">
-                        <span>עכשיו באתר</span>
+                        <span>{i === 0 ? "חדש באתר" : "עכשיו באתר"}</span>
                       </div>
                     </div>
 
@@ -101,8 +101,7 @@ export const Styles = () => {
                           {video.title}
                         </h3>
                         <p className="mt-1 max-w-md text-[11px] font-normal leading-4 text-white/90 min-[294px]:text-[12px] min-[294px]:leading-5 min-[370px]:mt-2 min-[370px]:text-[13px] min-[370px]:leading-5 md:text-[14px] md:leading-6">
-                          {video.description}
-                          {" "}({video.level})
+                          {video.description} ({video.level})
                         </p>
                         <div className="font-display mt-2 inline-flex items-center gap-1 rounded-full border border-white/25 bg-white/10 px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-[0.1em] text-white backdrop-blur-sm transition group-hover:bg-white/18 min-[294px]:gap-1.5 min-[294px]:px-3 min-[294px]:text-[10px] min-[294px]:tracking-[0.16em] min-[370px]:mt-3 min-[370px]:gap-2 min-[370px]:px-4 min-[370px]:py-2 min-[370px]:text-[11px] min-[370px]:tracking-[0.18em] md:px-5 md:py-1 md:text-xs">
                           <span>לצפייה בפרטי השיעור</span>

@@ -75,7 +75,9 @@ export default function VideoPage({ params }: VideoPageProps) {
     );
   }
 
-  const headlineDescription = video.description.replace(/מודרני\s+פיוז['׳]?ן\s*/g, "").trim();
+  const headlineDescription = video.description
+    .replace(/מודרני\s+פיוז['׳]?ן\s*/g, "")
+    .trim();
 
   return (
     <main
@@ -127,8 +129,8 @@ export default function VideoPage({ params }: VideoPageProps) {
                   href="#demo"
                   className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-6 py-4 text-sm font-bold uppercase tracking-[0.12em] text-white shadow-lg transition hover:bg-blue-700"
                 >
-                  <PlayCircle className="h-4 w-4" />
                   <span>לצפייה</span>
+                  <PlayCircle className="h-4 w-4" />
                 </a>
                 <a
                   href="#purchase"

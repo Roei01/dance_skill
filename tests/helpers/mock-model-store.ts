@@ -33,6 +33,11 @@ type VideoRecord = BaseRecord & {
   slug: string;
   title: string;
   description: string;
+  watchDescription?: string;
+  classBreakdown?: Array<{
+    time: string;
+    label: string;
+  }>;
   price: number;
   level: string;
   videoUrl: string;
@@ -273,6 +278,14 @@ export const mockVideoModel = {
         update.$set?.description ??
         update.$setOnInsert?.description ??
         'Mock description',
+      watchDescription:
+        update.$set?.watchDescription ??
+        update.$setOnInsert?.watchDescription ??
+        'Mock watch description',
+      classBreakdown:
+        update.$set?.classBreakdown ??
+        update.$setOnInsert?.classBreakdown ??
+        [],
       price: update.$set?.price ?? update.$setOnInsert?.price ?? 45,
       level: update.$set?.level ?? update.$setOnInsert?.level ?? 'Mock level',
       videoId: update.$set?.videoId ?? update.$setOnInsert?.videoId ?? query.videoId,
