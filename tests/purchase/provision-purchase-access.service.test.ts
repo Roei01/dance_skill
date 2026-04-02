@@ -58,13 +58,22 @@ describe('provisionPurchaseAccess', () => {
     await provisionPurchaseAccess('mock_purchase_existing_user');
 
     const users = await User.find({ email: 'existing-user@example.com' });
+    const updatedUser = await User.findById(existingUser._id);
     const updatedPurchase = await Purchase.findOne({
       paymentId: 'mock_purchase_existing_user',
     });
 
     expect(users).toHaveLength(1);
     expect(String(users[0]._id)).toBe(String(existingUser._id));
+    expect(updatedUser?.passwordHash).toBe('hashed-password');
     expect(updatedPurchase?.status).toBe('completed');
+    expect(getSentAccessEmails()).toHaveLength(1);
+    expect(getSentAccessEmails()[0]).toMatchObject({
+      email: 'existing-user@example.com',
+      username: 'existing_user',
+      template: 'existing_user',
+      password: undefined,
+    });
   });
 
   it('should mark purchase as completed', async () => {

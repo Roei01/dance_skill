@@ -8,6 +8,9 @@ export type SentAccessEmailRecord = {
   username: string;
   accessLink: string;
   password?: string;
+  subject: string;
+  template: "new_user" | "existing_user";
+  videoTitle?: string;
   sentAt: Date;
   mocked: boolean;
 };
@@ -36,57 +39,52 @@ export const resetSentAccessEmails = () => {
   sentAccessEmails.length = 0;
 };
 
-export const sendAccessEmail = async (
-  email: string,
-  username: string,
-  accessLink: string,
-  password?: string,
-) => {
+const getEmailContext = (email: string, accessLink: string) => {
   const backupRecipient = config.email.accessBackupRecipient?.trim().toLowerCase();
   const normalizedEmail = email.trim().toLowerCase();
   const bccRecipients =
     backupRecipient && backupRecipient !== normalizedEmail
       ? [backupRecipient]
       : [];
-  const siteUrl = (() => {
-    try {
-      const parsedUrl = new URL(accessLink);
-      return parsedUrl.origin;
-    } catch {
-      return config.appUrl;
-    }
-  })();
-  const accessHost = (() => {
-    try {
-      return new URL(accessLink).host;
-    } catch {
-      return accessLink;
-    }
-  })();
   const fromAddress = config.email.user
     ? `"${brandName}" <${config.email.user}>`
     : `"${brandName}" <no-reply@rotembaruch.dance>`;
+
+  return {
+    bccRecipients,
+    fromAddress,
+  };
+};
+
+type SendPurchaseEmailArgs = {
+  email: string;
+  username: string;
+  accessLink: string;
+  password?: string;
+  subject: string;
+  html: string;
+  template: "new_user" | "existing_user";
+  videoTitle?: string;
+};
+
+const sendPurchaseEmail = async ({
+  email,
+  username,
+  accessLink,
+  password,
+  subject,
+  html,
+  template,
+  videoTitle,
+}: SendPurchaseEmailArgs) => {
+  const { bccRecipients, fromAddress } = getEmailContext(email, accessLink);
 
   const mailOptions = {
     from: fromAddress,
     to: email,
     bcc: bccRecipients.length > 0 ? bccRecipients.join(", ") : undefined,
-    subject: "הגישה שלך לשיעור",
-    html: `
-      <div dir="rtl" style="font-family: system-ui, sans-serif; line-height: 1.6;">
-        <h1 style="margin-bottom: 0.5em;">${brandName}</h1>
-        <p>תודה על הרכישה. להלן פרטי ההתחברות שלך:</p>
-        <ul style="padding-right: 1.25em;">
-          <li><strong>שם משתמש:</strong> ${username}</li>
-          ${password ? `<li><strong>סיסמה:</strong> ${password}</li>` : ""}
-        </ul>
-        <p>קישור להתחברות לצפייה בשיעור:</p>
-        <p><a href="${accessLink}" style="padding: 10px 20px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 5px; display: inline-block;">מעבר לדף ההתחברות</a></p>
-        <p style="font-size: 0.9em; color: #555;">אם הכפתור לא נפתח, אפשר להעתיק את הקישור הזה:</p>
-        <p style="word-break: break-all; font-size: 0.9em; color: #2563eb;">${accessLink}</p>
-        <p style="font-size: 0.9em; color: #555;">הקישור והסיסמה לשימושך האישי בלבד.</p>
-      </div>
-    `,
+    subject,
+    html,
   };
 
   const emailRecord: SentAccessEmailRecord = {
@@ -95,6 +93,9 @@ export const sendAccessEmail = async (
     username,
     accessLink,
     password,
+    subject,
+    template,
+    videoTitle,
     sentAt: new Date(),
     mocked: isMockEmailMode(),
   };
@@ -124,4 +125,71 @@ export const sendAccessEmail = async (
     logger.error("❌ Error sending email:", error);
     throw new Error("Email service failed");
   }
+};
+
+export const sendAccessEmail = async (
+  email: string,
+  username: string,
+  accessLink: string,
+  password?: string,
+) => {
+  await sendPurchaseEmail({
+    email,
+    username,
+    accessLink,
+    password,
+    subject: "הגישה שלך לשיעור",
+    template: "new_user",
+    html: `
+      <div dir="rtl" style="font-family: system-ui, sans-serif; line-height: 1.6;">
+        <h1 style="margin-bottom: 0.5em;">${brandName}</h1>
+        <p>תודה על הרכישה. להלן פרטי ההתחברות שלך:</p>
+        <ul style="padding-right: 1.25em;">
+          <li><strong>שם משתמש:</strong> ${username}</li>
+          ${password ? `<li><strong>סיסמה:</strong> ${password}</li>` : ""}
+        </ul>
+        <p>קישור להתחברות לצפייה בשיעור:</p>
+        <p><a href="${accessLink}" style="padding: 10px 20px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 5px; display: inline-block;">מעבר לדף ההתחברות</a></p>
+        <p style="font-size: 0.9em; color: #555;">אם הכפתור לא נפתח, אפשר להעתיק את הקישור הזה:</p>
+        <p style="word-break: break-all; font-size: 0.9em; color: #2563eb;">${accessLink}</p>
+        <p style="font-size: 0.9em; color: #555;">הקישור והסיסמה לשימושך האישי בלבד.</p>
+      </div>
+    `,
+  });
+};
+
+type SendExistingUserPurchaseEmailArgs = {
+  email: string;
+  username: string;
+  videoTitle: string;
+  accessLink: string;
+};
+
+export const sendExistingUserPurchaseEmail = async ({
+  email,
+  username,
+  videoTitle,
+  accessLink,
+}: SendExistingUserPurchaseEmailArgs) => {
+  await sendPurchaseEmail({
+    email,
+    username,
+    accessLink,
+    subject: "רכישה בוצעה בהצלחה 🎉",
+    template: "existing_user",
+    videoTitle,
+    html: `
+      <div dir="rtl" style="font-family: system-ui, sans-serif; line-height: 1.6;">
+        <h1 style="margin-bottom: 0.5em;">${brandName}</h1>
+        <p>הרכישה בוצעה בהצלחה 🎉</p>
+        <p>נוסף לך שיעור חדש לחשבון:</p>
+        <p><strong>${videoTitle}</strong></p>
+        <p>ניתן להתחבר עם הפרטים הקיימים:</p>
+        <p><strong>שם משתמש:</strong> ${username}</p>
+        <p>קישור להתחברות:</p>
+        <p><a href="${accessLink}" style="padding: 10px 20px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 5px; display: inline-block;">מעבר לדף ההתחברות</a></p>
+        <p style="word-break: break-all; font-size: 0.9em; color: #2563eb;">${accessLink}</p>
+      </div>
+    `,
+  });
 };

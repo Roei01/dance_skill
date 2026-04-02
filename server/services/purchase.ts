@@ -1,10 +1,10 @@
 import { Purchase } from "../../models/Purchase";
 import { User } from "../../models/User";
-import { sendAccessEmail } from "./email";
+import { sendAccessEmail, sendExistingUserPurchaseEmail } from "./email";
 import { generateTempPassword, hashPassword } from "./auth";
 import { config } from "../config/env";
 import { logger } from "../lib/logger";
-import { resolveOwnedVideoSlug } from "./videos";
+import { getActiveVideoDocumentBySlug, resolveOwnedVideoSlug } from "./videos";
 
 const normalizeBaseUrl = (url: string) => url.replace(/\/$/, "");
 
@@ -56,9 +56,11 @@ export const provisionPurchaseAccess = async (paymentId: string) => {
 
   let user = purchase.userId ? await User.findById(purchase.userId) : null;
   let generatedPassword: string | undefined;
+  let isExistingUser = Boolean(user);
 
   if (!user) {
     user = await User.findOne({ email: purchase.customerEmail });
+    isExistingUser = Boolean(user);
   }
 
   if (!user) {
@@ -71,14 +73,29 @@ export const provisionPurchaseAccess = async (paymentId: string) => {
       username,
       passwordHash,
     });
+    logger.info("New user created", {
+      paymentId,
+      email: user.email,
+      username: user.username,
+    });
+  } else {
+    logger.info("Existing user detected", {
+      paymentId,
+      email: user.email,
+      username: user.username,
+    });
   }
 
   purchase.userId = user._id;
   purchase.status = "completed";
+
+  // Persist access before sending email so the DB state
+  // stays correct even if the final notification step fails.
+  await purchase.save();
+
   const ownedVideoSlug = await resolveOwnedVideoSlug(purchase.videoId);
 
   if (purchase.credentialsSentAt) {
-    await purchase.save();
     logger.info("הגישה לרכישה כבר נפתחה בעבר, מחזירים את פרטי הגישה הקיימים.", {
       paymentId,
       email: user.email,
@@ -91,19 +108,27 @@ export const provisionPurchaseAccess = async (paymentId: string) => {
     };
   }
 
-  if (!generatedPassword) {
-    generatedPassword = generateTempPassword();
-    user.passwordHash = await hashPassword(generatedPassword);
-    await user.save();
-  }
-
   const loginLink = buildLoginLink(resolveSiteBaseUrl(purchase.appBaseUrl));
-  await sendAccessEmail(
-    user.email,
-    user.username,
-    loginLink,
-    generatedPassword
-  );
+  if (isExistingUser) {
+    const ownedVideo = ownedVideoSlug
+      ? await getActiveVideoDocumentBySlug(ownedVideoSlug)
+      : null;
+    const videoTitle = ownedVideo?.title ?? "השיעור החדש שלך";
+
+    await sendExistingUserPurchaseEmail({
+      email: user.email,
+      username: user.username,
+      videoTitle,
+      accessLink: loginLink,
+    });
+  } else {
+    await sendAccessEmail(
+      user.email,
+      user.username,
+      loginLink,
+      generatedPassword,
+    );
+  }
   purchase.credentialsSentAt = new Date();
   await purchase.save();
   logger.info("הגישה לרכישה נפתחה בהצלחה.", {

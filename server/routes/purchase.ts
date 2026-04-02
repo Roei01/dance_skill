@@ -16,6 +16,8 @@ import { getActiveVideoDocumentBySlug } from "../services/videos";
 const router = express.Router();
 
 const normalizeBaseUrl = (url: string) => url.replace(/\/$/, "");
+const normalizeString = (value: unknown) =>
+  typeof value === "string" && value.trim() ? value.trim() : undefined;
 
 /** Origin the client used (for payment redirects); falls back to config when host is missing or localhost. */
 const deriveAppBaseUrlFromRequest = (req: express.Request): string => {
@@ -61,12 +63,17 @@ const purchaseSchema = z.object({
 });
 
 const extractWebhookOrderId = (body: Record<string, any>) =>
-  body?.custom ||
-  body?.orderId ||
-  body?.reference ||
-  body?.data?.custom ||
-  body?.data?.orderId ||
-  body?.payload?.custom;
+  normalizeString(
+    body?.custom ||
+      body?.orderId ||
+      body?.reference ||
+      body?.description ||
+      body?.data?.custom ||
+      body?.data?.orderId ||
+      body?.data?.reference ||
+      body?.payload?.custom ||
+      body?.payload?.orderId,
+  );
 
 const extractWebhookEvent = (body: Record<string, any>) =>
   body?.event ||
@@ -90,7 +97,9 @@ const extractWebhookEmail = (body: Record<string, any>) => {
     (Array.isArray(body?.client?.emails) ? body.client.emails[0] : undefined) ||
     (Array.isArray(body?.data?.client?.emails)
       ? body.data.client.emails[0]
-      : undefined);
+      : undefined) ||
+    body?.data?.email ||
+    body?.payload?.email;
 
   return typeof rawEmail === "string"
     ? rawEmail.trim().toLowerCase()
@@ -326,19 +335,28 @@ router.post("/webhook", async (req, res) => {
   const orderId = extractWebhookOrderId(req.body);
   const event = extractWebhookEvent(req.body);
   const payerEmail = extractWebhookEmail(req.body);
-  const paymentId =
+  const paymentId = normalizeString(
     req.body?.paymentId ||
-    req.body?.id ||
-    req.body?.productId ||
-    req.body?.transactions?.[0]?.id ||
-    req.body?.data?.id ||
-    req.body?.data?.paymentId ||
-    req.body?.payload?.id ||
-    req.body?.payload?.paymentId;
+      req.body?.id ||
+      req.body?.productId ||
+      req.body?.transactions?.[0]?.id ||
+      req.body?.data?.id ||
+      req.body?.data?.paymentId ||
+      req.body?.payload?.id ||
+      req.body?.payload?.paymentId,
+  );
 
   const status = normalizeWebhookStatus(req.body);
 
   logger.info("Purchase webhook triggered.", {
+    paymentId,
+    orderId,
+    event,
+    payerEmail,
+    status,
+    paymentMode: config.paymentMode,
+  });
+  console.log("WEBHOOK_NORMALIZED", {
     paymentId,
     orderId,
     event,
@@ -363,12 +381,30 @@ router.post("/webhook", async (req, res) => {
         mockPurchase.status = "failed";
         await mockPurchase.save();
       }
+      console.log("WEBHOOK_TEST_FAILED", {
+        paymentId,
+        orderId,
+        payerEmail,
+        foundPurchase: Boolean(mockPurchase),
+      });
       return res.status(200).json({ ok: true, mocked: true, status: "failed" });
     }
 
+    console.log("WEBHOOK_TEST_PROVISION_START", {
+      paymentId,
+      orderId,
+      payerEmail,
+      foundPurchase: Boolean(mockPurchase),
+    });
     const provisioned = mockPurchase
       ? await provisionPurchaseAccess(String(mockPurchase.paymentId))
       : null;
+    console.log("WEBHOOK_TEST_PROVISION_RESULT", {
+      paymentId,
+      orderId,
+      payerEmail,
+      provisioned: Boolean(provisioned),
+    });
     return res.status(200).json({
       ok: true,
       mocked: true,
@@ -385,12 +421,59 @@ router.post("/webhook", async (req, res) => {
   }
 
   const purchase = await findPurchaseForWebhook(paymentId, orderId, payerEmail);
+  console.log("WEBHOOK_PURCHASE_LOOKUP_RESULT", {
+    paymentId,
+    orderId,
+    payerEmail,
+    status,
+    foundPurchase: Boolean(purchase),
+    purchaseId: purchase ? String(purchase._id) : undefined,
+    purchasePaymentId: purchase ? String(purchase.paymentId) : undefined,
+    purchaseStatus: purchase?.status,
+    purchaseEmail: purchase?.customerEmail,
+  });
 
-  if (purchase && status === "completed") {
+  if (!purchase) {
+    console.warn("Webhook purchase not found", {
+      paymentId,
+      orderId,
+      payerEmail,
+      event,
+      status,
+    });
+    return res.sendStatus(200);
+  }
+
+  if (status === "completed") {
     try {
+      console.log("WEBHOOK_MARK_COMPLETED_START", {
+        purchaseId: String(purchase._id),
+        paymentId,
+        currentStatus: purchase.status,
+      });
+      purchase.status = "completed";
+      await purchase.save();
+      console.log("WEBHOOK_MARK_COMPLETED_DONE", {
+        purchaseId: String(purchase._id),
+        paymentId,
+        newStatus: purchase.status,
+      });
+
+      console.log("WEBHOOK_PROVISION_START", {
+        purchaseId: String(purchase._id),
+        purchasePaymentId: String(purchase.paymentId),
+        customerEmail: purchase.customerEmail,
+      });
       const provisioned = await provisionPurchaseAccess(
         String(purchase.paymentId),
       );
+      console.log("WEBHOOK_PROVISION_RESULT", {
+        purchaseId: String(purchase._id),
+        purchasePaymentId: String(purchase.paymentId),
+        provisioned: Boolean(provisioned),
+        provisionedEmail: provisioned?.email,
+        provisionedUsername: provisioned?.username,
+      });
 
       if (!provisioned) {
         logger.warn(
@@ -404,11 +487,37 @@ router.post("/webhook", async (req, res) => {
         );
       }
     } catch (error) {
+      console.error("Webhook provisioning error", {
+        paymentId,
+        orderId,
+        payerEmail,
+        purchaseId: String(purchase._id),
+        purchasePaymentId: String(purchase.paymentId),
+        error,
+      });
       logger.error("Webhook provisioning error:", error);
     }
-  } else if (purchase && status === "failed") {
+  } else if (status === "failed") {
+    console.log("WEBHOOK_MARK_FAILED_START", {
+      purchaseId: String(purchase._id),
+      paymentId,
+      currentStatus: purchase.status,
+    });
     purchase.status = "failed";
     await purchase.save();
+    console.log("WEBHOOK_MARK_FAILED_DONE", {
+      purchaseId: String(purchase._id),
+      paymentId,
+      newStatus: purchase.status,
+    });
+  } else {
+    console.log("WEBHOOK_IGNORED_STATUS", {
+      paymentId,
+      orderId,
+      payerEmail,
+      status,
+      purchaseId: String(purchase._id),
+    });
   }
 
   res.sendStatus(200);
