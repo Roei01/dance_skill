@@ -181,6 +181,46 @@ describe('purchase webhook route', () => {
     expect(purchase?.status).toBe('completed');
   });
 
+  it('should ignore description as orderId and still match payment-link by email', async () => {
+    await Purchase.create({
+      videoId: DEFAULT_VIDEO_ID,
+      paymentId: 'link_hosted_email_fallback',
+      customerFullName: 'Hosted Email Fallback',
+      customerPhone: '0500000007',
+      customerEmail: 'payment-link@example.com',
+      status: 'pending',
+      createdAt: new Date(),
+    });
+
+    const response = await request(app).post('/api/purchase/webhook').send({
+      id: 'event_payment_link_1',
+      channel: 'payment-link',
+      productId: 'provider_product_link_1',
+      description: 'תשלום על שיעור ריקוד',
+      payer: {
+        email: 'payment-link@example.com',
+      },
+      transactions: [
+        {
+          id: 'provider_transaction_link_1',
+          paymentMethod: {
+            type: 'bit',
+          },
+        },
+      ],
+    });
+
+    const purchase = await Purchase.findOne({
+      customerEmail: 'payment-link@example.com',
+    });
+    const user = await User.findOne({ email: 'payment-link@example.com' });
+
+    expect(response.status).toBe(200);
+    expect(purchase?.status).toBe('completed');
+    expect(user).not.toBeNull();
+    expect(getSentAccessEmails()).toHaveLength(1);
+  });
+
   it('should confirm hosted purchases from the success page fallback', async () => {
     await Purchase.create({
       videoId: DEFAULT_VIDEO_ID,
