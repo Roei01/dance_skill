@@ -9,6 +9,8 @@ Object.assign(process.env, {
   EMAIL_PORT: process.env.EMAIL_PORT || '587',
   EMAIL_USER: process.env.EMAIL_USER || 'test@rotembaruch.dance',
   EMAIL_PASS: process.env.EMAIL_PASS || 'test-password',
+  EMAIL_ACCESS_BACKUP_RECIPIENT:
+    process.env.EMAIL_ACCESS_BACKUP_RECIPIENT || 'royinagar1@gmail.com',
   APP_BASE_URL: process.env.APP_BASE_URL || 'http://localhost:3000',
   GREENINVOICE_API_URL:
     process.env.GREENINVOICE_API_URL || 'https://api.greeninvoice.co.il/api/v1',

@@ -2,7 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IPurchase extends Document {
   userId?: mongoose.Types.ObjectId;
-  videoId: string;
+  videoId: mongoose.Types.ObjectId | string;
   paymentId: string;
   orderId?: string;
   customerFullName: string;
@@ -16,7 +16,7 @@ export interface IPurchase extends Document {
 
 const PurchaseSchema = new Schema<IPurchase>({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  videoId: { type: String, required: true, index: true },
+  videoId: { type: mongoose.Schema.Types.ObjectId, ref: 'Video', required: true, index: true },
   paymentId: { type: String, required: true, unique: true, index: true },
   orderId: { type: String, trim: true, index: true },
   customerFullName: { type: String, required: true, trim: true },

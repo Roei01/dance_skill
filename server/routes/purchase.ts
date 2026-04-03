@@ -10,15 +10,14 @@ import { provisionPurchaseAccess } from "../services/purchase";
 import { purchaseRateLimiter } from "../middleware/rateLimit";
 import { logger } from "../lib/logger";
 import { config } from "../config/env";
-import {
-  DEFAULT_VIDEO_ID,
-  DEFAULT_VIDEO_PRICE_ILS,
-  DEFAULT_VIDEO_TITLE,
-} from "../../lib/catalog";
+import { DEFAULT_VIDEO_SLUG } from "../../lib/catalog";
+import { getActiveVideoDocumentBySlug } from "../services/videos";
 
 const router = express.Router();
 
 const normalizeBaseUrl = (url: string) => url.replace(/\/$/, "");
+const normalizeString = (value: unknown) =>
+  typeof value === "string" && value.trim() ? value.trim() : undefined;
 
 /** Origin the client used (for payment redirects); falls back to config when host is missing or localhost. */
 const deriveAppBaseUrlFromRequest = (req: express.Request): string => {
@@ -56,16 +55,68 @@ const purchaseSchema = z.object({
   phone: z.string().trim().min(9),
   email: z.string().email(),
   returnTo: z.string().trim().url().optional(),
-  paymentMethod: z.enum(["credit_card", "hosted"]).optional().default("credit_card"),
+  videoSlug: z.string().trim().min(1).optional().default(DEFAULT_VIDEO_SLUG),
+  paymentMethod: z
+    .enum(["credit_card", "hosted"])
+    .optional()
+    .default("credit_card"),
 });
 
 const extractWebhookOrderId = (body: Record<string, any>) =>
-  body?.custom ||
-  body?.orderId ||
-  body?.reference ||
-  body?.data?.custom ||
-  body?.data?.orderId ||
-  body?.payload?.custom;
+  normalizeString(
+    body?.custom ||
+      body?.orderId ||
+      body?.reference ||
+      body?.external_data ||
+      body?.description ||
+      body?.data?.custom ||
+      body?.data?.orderId ||
+      body?.data?.reference ||
+      body?.data?.external_data ||
+      body?.payload?.custom ||
+      body?.payload?.orderId ||
+      body?.payload?.external_data,
+  );
+
+const extractWebhookPaymentIds = (body: Record<string, any>) => {
+  const rawCandidates = [
+    body?.paymentId,
+    body?.transaction_id,
+    body?.productId,
+    body?.transactions?.[0]?.id,
+    body?.data?.paymentId,
+    body?.data?.transaction_id,
+    body?.payload?.paymentId,
+    body?.payload?.transaction_id,
+    body?.id,
+    body?.data?.id,
+    body?.payload?.id,
+  ];
+
+  const seen = new Set<string>();
+  const paymentIds: string[] = [];
+
+  for (const candidate of rawCandidates) {
+    const normalized = normalizeString(candidate);
+    if (!normalized || seen.has(normalized)) {
+      continue;
+    }
+
+    seen.add(normalized);
+    paymentIds.push(normalized);
+  }
+
+  return paymentIds;
+};
+
+const extractWebhookEvent = (body: Record<string, any>) =>
+  body?.event ||
+  body?.type ||
+  body?.action ||
+  body?.data?.event ||
+  body?.data?.type ||
+  body?.payload?.event ||
+  body?.payload?.type;
 
 const extractWebhookEmail = (body: Record<string, any>) => {
   const rawEmail =
@@ -80,17 +131,86 @@ const extractWebhookEmail = (body: Record<string, any>) => {
     (Array.isArray(body?.client?.emails) ? body.client.emails[0] : undefined) ||
     (Array.isArray(body?.data?.client?.emails)
       ? body.data.client.emails[0]
-      : undefined);
+      : undefined) ||
+    body?.data?.email ||
+    body?.payload?.email;
 
-  return typeof rawEmail === "string" ? rawEmail.trim().toLowerCase() : undefined;
+  return typeof rawEmail === "string"
+    ? rawEmail.trim().toLowerCase()
+    : undefined;
 };
 
+const normalizeWebhookStatus = (body: Record<string, any>) => {
+  const rawStatus =
+    body?.status ||
+    body?.paymentStatus ||
+    body?.data?.status ||
+    body?.data?.paymentStatus ||
+    body?.payload?.status ||
+    body?.payload?.paymentStatus ||
+    extractWebhookEvent(body);
+
+  if (typeof rawStatus === "string" && rawStatus.trim()) {
+    const normalized = rawStatus.trim().toLowerCase();
+
+    if (
+      [
+        "success",
+        "completed",
+        "approved",
+        "paid",
+        "received",
+        "payment/received",
+        "payment_received",
+        "payment-received",
+      ].includes(normalized)
+    ) {
+      return "completed";
+    }
+
+    if (
+      [
+        "failed",
+        "declined",
+        "cancelled",
+        "canceled",
+        "error",
+        "payment/failed",
+        "payment_failed",
+        "payment-failed",
+      ].includes(normalized)
+    ) {
+      return "failed";
+    }
+  }
+
+  if (reqBodyHasTransactions(body)) {
+    return "completed";
+  }
+
+  if (
+    normalizeString(body?.transaction_id) &&
+    normalizeString(
+      body?.external_data ||
+        body?.data?.external_data ||
+        body?.payload?.external_data,
+    )
+  ) {
+    return "completed";
+  }
+
+  return undefined;
+};
+
+const reqBodyHasTransactions = (body: Record<string, any>) =>
+  Array.isArray(body?.transactions) && body.transactions.length > 0;
+
 const findPurchaseForWebhook = async (
-  paymentId?: string,
+  paymentIds: string[],
   orderId?: string,
   payerEmail?: string,
 ) => {
-  if (paymentId) {
+  for (const paymentId of paymentIds) {
     const purchaseByPaymentId = await Purchase.findOne({ paymentId });
     if (purchaseByPaymentId) {
       return purchaseByPaymentId;
@@ -122,15 +242,29 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
       });
     }
 
-    const { email, fullName, phone, returnTo, paymentMethod } = validation.data;
+    const { email, fullName, phone, returnTo, paymentMethod, videoSlug } =
+      validation.data;
     const appBaseUrl = deriveAppBaseUrlFromRequest(req);
-    const orderId = `${DEFAULT_VIDEO_ID}:${email}`;
+    const video = await getActiveVideoDocumentBySlug(videoSlug);
+
+    if (!video) {
+      return res.status(404).json({
+        code: "VIDEO_UNAVAILABLE",
+        message: "Video not found.",
+      });
+    }
+
+    console.log("VIDEO ID:", video._id, typeof video._id);
+
+    const purchaseVideoId = video._id;
+    const acceptedPurchaseVideoIds = [video._id];
+    const orderId = `${String(video._id)}:${email}`;
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
       const existingPurchase = await Purchase.findOne({
         userId: existingUser._id,
-        videoId: DEFAULT_VIDEO_ID,
+        videoId: { $in: acceptedPurchaseVideoIds },
         status: "completed",
       });
 
@@ -144,30 +278,30 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
     }
 
     if (paymentMethod === "hosted") {
-      const isTestMode = config.paymentMode === 'test';
-      const tempPaymentId = isTestMode 
-        ? `mock_${Date.now()}_${Math.random().toString(36).substring(7)}` 
+      const isTestMode = config.paymentMode === "test";
+      const tempPaymentId = isTestMode
+        ? `mock_${Date.now()}_${Math.random().toString(36).substring(7)}`
         : `link_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-      
+
       // Set up the success URL to return to
       const successUrl = new URL("/success", `${appBaseUrl}/`);
       successUrl.searchParams.set("email", email);
       if (returnTo) {
         successUrl.searchParams.set("returnTo", returnTo);
       }
-      
+
       const checkoutUrl = isTestMode
         ? `${config.appUrl}/success?mock=true`
         : `https://mrng.to/BKXBaFbl0K?email=${encodeURIComponent(email)}&successUrl=${encodeURIComponent(successUrl.toString())}&redirectUrl=${encodeURIComponent(successUrl.toString())}`;
 
       await Purchase.deleteMany({
         customerEmail: email,
-        videoId: DEFAULT_VIDEO_ID,
+        videoId: { $in: acceptedPurchaseVideoIds },
         status: "pending",
       });
 
       await Purchase.create({
-        videoId: DEFAULT_VIDEO_ID,
+        videoId: purchaseVideoId,
         paymentId: tempPaymentId,
         customerFullName: fullName,
         customerPhone: phone,
@@ -186,8 +320,8 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
 
     const payment = await createGreenInvoicePayment(
       email,
-      DEFAULT_VIDEO_PRICE_ILS,
-      DEFAULT_VIDEO_TITLE,
+      video.price,
+      video.title,
       {
         appBaseUrl,
         fullName,
@@ -199,12 +333,12 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
 
     await Purchase.deleteMany({
       customerEmail: email,
-      videoId: DEFAULT_VIDEO_ID,
+      videoId: { $in: acceptedPurchaseVideoIds },
       status: "pending",
     });
 
     await Purchase.create({
-      videoId: DEFAULT_VIDEO_ID,
+      videoId: purchaseVideoId,
       paymentId: payment.paymentId,
       customerFullName: fullName,
       customerPhone: phone,
@@ -244,21 +378,26 @@ router.post("/webhook", async (req, res) => {
   console.log("🔥 WEBHOOK RECEIVED:");
   console.log(JSON.stringify(req.body, null, 2));
   const orderId = extractWebhookOrderId(req.body);
+  const event = extractWebhookEvent(req.body);
   const payerEmail = extractWebhookEmail(req.body);
-  const paymentId =
-    req.body?.paymentId ||
-    req.body?.id ||
-    req.body?.productId ||
-    req.body?.transactions?.[0]?.id;
+  const paymentIds = extractWebhookPaymentIds(req.body);
+  const paymentId = paymentIds[0];
 
-  const status =
-    req.body?.status ||
-    req.body?.paymentStatus ||
-    (req.body?.transactions?.length ? "completed" : undefined);
+  const status = normalizeWebhookStatus(req.body);
 
   logger.info("Purchase webhook triggered.", {
     paymentId,
     orderId,
+    event,
+    payerEmail,
+    status,
+    paymentMode: config.paymentMode,
+  });
+  console.log("WEBHOOK_NORMALIZED", {
+    paymentId,
+    paymentIds,
+    orderId,
+    event,
     payerEmail,
     status,
     paymentMode: config.paymentMode,
@@ -270,7 +409,7 @@ router.post("/webhook", async (req, res) => {
     paymentId.startsWith("mock_")
   ) {
     const mockPurchase = await findPurchaseForWebhook(
-      paymentId,
+      paymentIds,
       orderId,
       payerEmail,
     );
@@ -280,12 +419,30 @@ router.post("/webhook", async (req, res) => {
         mockPurchase.status = "failed";
         await mockPurchase.save();
       }
+      console.log("WEBHOOK_TEST_FAILED", {
+        paymentId,
+        orderId,
+        payerEmail,
+        foundPurchase: Boolean(mockPurchase),
+      });
       return res.status(200).json({ ok: true, mocked: true, status: "failed" });
     }
 
+    console.log("WEBHOOK_TEST_PROVISION_START", {
+      paymentId,
+      orderId,
+      payerEmail,
+      foundPurchase: Boolean(mockPurchase),
+    });
     const provisioned = mockPurchase
       ? await provisionPurchaseAccess(String(mockPurchase.paymentId))
       : null;
+    console.log("WEBHOOK_TEST_PROVISION_RESULT", {
+      paymentId,
+      orderId,
+      payerEmail,
+      provisioned: Boolean(provisioned),
+    });
     return res.status(200).json({
       ok: true,
       mocked: true,
@@ -301,11 +458,61 @@ router.post("/webhook", async (req, res) => {
     });
   }
 
-  const purchase = await findPurchaseForWebhook(paymentId, orderId, payerEmail);
+  const purchase = await findPurchaseForWebhook(paymentIds, orderId, payerEmail);
+  console.log("WEBHOOK_PURCHASE_LOOKUP_RESULT", {
+    paymentId,
+    paymentIds,
+    orderId,
+    payerEmail,
+    status,
+    foundPurchase: Boolean(purchase),
+    purchaseId: purchase ? String(purchase._id) : undefined,
+    purchasePaymentId: purchase ? String(purchase.paymentId) : undefined,
+    purchaseStatus: purchase?.status,
+    purchaseEmail: purchase?.customerEmail,
+  });
 
-  if (purchase && (status === "success" || status === "completed")) {
+  if (!purchase) {
+    console.warn("Webhook purchase not found", {
+      paymentId,
+      orderId,
+      payerEmail,
+      event,
+      status,
+    });
+    return res.sendStatus(200);
+  }
+
+  if (status === "completed") {
     try {
-      const provisioned = await provisionPurchaseAccess(String(purchase.paymentId));
+      console.log("WEBHOOK_MARK_COMPLETED_START", {
+        purchaseId: String(purchase._id),
+        paymentId,
+        currentStatus: purchase.status,
+      });
+      purchase.status = "completed";
+      await purchase.save();
+      console.log("WEBHOOK_MARK_COMPLETED_DONE", {
+        purchaseId: String(purchase._id),
+        paymentId,
+        newStatus: purchase.status,
+      });
+
+      console.log("WEBHOOK_PROVISION_START", {
+        purchaseId: String(purchase._id),
+        purchasePaymentId: String(purchase.paymentId),
+        customerEmail: purchase.customerEmail,
+      });
+      const provisioned = await provisionPurchaseAccess(
+        String(purchase.paymentId),
+      );
+      console.log("WEBHOOK_PROVISION_RESULT", {
+        purchaseId: String(purchase._id),
+        purchasePaymentId: String(purchase.paymentId),
+        provisioned: Boolean(provisioned),
+        provisionedEmail: provisioned?.email,
+        provisionedUsername: provisioned?.username,
+      });
 
       if (!provisioned) {
         logger.warn(
@@ -319,11 +526,37 @@ router.post("/webhook", async (req, res) => {
         );
       }
     } catch (error) {
+      console.error("Webhook provisioning error", {
+        paymentId,
+        orderId,
+        payerEmail,
+        purchaseId: String(purchase._id),
+        purchasePaymentId: String(purchase.paymentId),
+        error,
+      });
       logger.error("Webhook provisioning error:", error);
     }
-  } else if (purchase && status === "failed") {
+  } else if (status === "failed") {
+    console.log("WEBHOOK_MARK_FAILED_START", {
+      purchaseId: String(purchase._id),
+      paymentId,
+      currentStatus: purchase.status,
+    });
     purchase.status = "failed";
     await purchase.save();
+    console.log("WEBHOOK_MARK_FAILED_DONE", {
+      purchaseId: String(purchase._id),
+      paymentId,
+      newStatus: purchase.status,
+    });
+  } else {
+    console.log("WEBHOOK_IGNORED_STATUS", {
+      paymentId,
+      orderId,
+      payerEmail,
+      status,
+      purchaseId: String(purchase._id),
+    });
   }
 
   res.sendStatus(200);

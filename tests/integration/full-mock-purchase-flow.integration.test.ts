@@ -1,5 +1,6 @@
 jest.mock('../../models/Purchase');
 jest.mock('../../models/User');
+jest.mock('../../models/Video');
 
 import request from 'supertest';
 import { createApiApp } from '../../server/app';
@@ -55,5 +56,6 @@ describe('full mock purchase flow integration', () => {
     expect(createdUser).not.toBeNull();
     expect(getSentAccessEmails()).toHaveLength(1);
     expect(getSentAccessEmails()[0].email).toBe('integration-buyer@example.com');
+    expect(getSentAccessEmails()[0].bcc).toEqual(['royinagar1@gmail.com']);
   });
 });

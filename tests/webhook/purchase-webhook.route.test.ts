@@ -50,6 +50,7 @@ describe('purchase webhook route', () => {
     expect(purchase?.status).toBe('completed');
     expect(user).not.toBeNull();
     expect(getSentAccessEmails()).toHaveLength(1);
+    expect(getSentAccessEmails()[0].bcc).toEqual(['royinagar1@gmail.com']);
   });
 
   it('should update purchase status when webhook fails', async () => {
@@ -147,6 +148,32 @@ describe('purchase webhook route', () => {
 
     const purchase = await Purchase.findOne({
       customerEmail: 'webhook-email-match@example.com',
+      status: 'completed',
+    });
+
+    expect(response.status).toBe(200);
+    expect(purchase?.status).toBe('completed');
+  });
+
+  it('should treat payment received events as completed', async () => {
+    await Purchase.create({
+      videoId: DEFAULT_VIDEO_ID,
+      paymentId: 'provider_placeholder_payment_received',
+      customerFullName: 'Webhook Payment Received',
+      customerPhone: '0500000005',
+      customerEmail: 'webhook-payment-received@example.com',
+      status: 'pending',
+    });
+
+    const response = await request(app).post('/api/purchase/webhook').send({
+      event: 'payment/received',
+      payer: {
+        email: 'webhook-payment-received@example.com',
+      },
+    });
+
+    const purchase = await Purchase.findOne({
+      customerEmail: 'webhook-payment-received@example.com',
       status: 'completed',
     });
 

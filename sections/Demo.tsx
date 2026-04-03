@@ -91,7 +91,7 @@ const Demo = () => {
                 src="/api/video/preview"
                 controls
                 playsInline
-                preload="auto"
+                preload="metadata"
                 controlsList="nodownload noplaybackrate"
                 disablePictureInPicture
                 onContextMenu={(e) => e.preventDefault()}

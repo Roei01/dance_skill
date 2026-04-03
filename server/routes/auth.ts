@@ -16,8 +16,9 @@ import {
   authenticate,
   type AuthenticatedRequest,
 } from "../middleware/authenticate";
-import { DEFAULT_VIDEO_ID } from "../../lib/catalog";
+import { DEFAULT_VIDEO_SLUG } from "../../lib/catalog";
 import { authRateLimiter } from "../middleware/rateLimit";
+import { resolveOwnedVideoSlugs } from "../services/videos";
 
 const router = express.Router();
 
@@ -102,9 +103,13 @@ router.post("/login", authRateLimiter, async (req, res) => {
   const purchases = await Purchase.find({
     userId: user._id,
     status: "completed",
-  }).lean();
+  })
+    .sort({ createdAt: -1 })
+    .lean();
 
-  const ownedVideoIds = purchases.map((purchase) => String(purchase.videoId));
+  const ownedVideoIds = await resolveOwnedVideoSlugs(
+    purchases.map((purchase) => purchase.videoId),
+  );
 
   res.json({
     token,
@@ -115,8 +120,9 @@ router.post("/login", authRateLimiter, async (req, res) => {
     },
     sessionExpiresAt: user.activeSessionExpiresAt?.toISOString() ?? null,
     access: {
-      defaultVideo: ownedVideoIds.includes(DEFAULT_VIDEO_ID),
+      defaultVideo: ownedVideoIds.includes(DEFAULT_VIDEO_SLUG),
       videos: ownedVideoIds,
+      videoOrder: ownedVideoIds,
     },
   });
 });
@@ -134,9 +140,13 @@ router.get("/me", authenticate, async (req: AuthenticatedRequest, res) => {
   const purchases = await Purchase.find({
     userId: user._id,
     status: "completed",
-  }).lean();
+  })
+    .sort({ createdAt: -1 })
+    .lean();
 
-  const ownedVideoIds = purchases.map((purchase) => String(purchase.videoId));
+  const ownedVideoIds = await resolveOwnedVideoSlugs(
+    purchases.map((purchase) => purchase.videoId),
+  );
 
   return res.json({
     user: {
@@ -146,8 +156,9 @@ router.get("/me", authenticate, async (req: AuthenticatedRequest, res) => {
     },
     sessionExpiresAt: user.activeSessionExpiresAt?.toISOString() ?? null,
     access: {
-      defaultVideo: ownedVideoIds.includes(DEFAULT_VIDEO_ID),
+      defaultVideo: ownedVideoIds.includes(DEFAULT_VIDEO_SLUG),
       videos: ownedVideoIds,
+      videoOrder: ownedVideoIds,
     },
   });
 });

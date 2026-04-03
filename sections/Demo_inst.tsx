@@ -1,40 +1,64 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Instagram } from "lucide-react";
+import { PlayCircle } from "lucide-react";
 
-const INSTAGRAM_URL =
-  "https://www.instagram.com/reel/DVxwwKfiCgU/?igsh=aHJ0eDN3ZWswc28w";
 const DEMO_VIDEO_URL =
   "https://myrbdt.b-cdn.net/9F67D997-37AB-423E-9BB1-D12FB8D53455%202.mov";
-const ENABLE_DEMO_VIDEO_MOTION = true;
 
-const Demo_inst = () => {
+type DemoInstProps = {
+  previewUrl?: string;
+  title?: string;
+};
+
+const Demo_inst = ({
+  previewUrl = DEMO_VIDEO_URL,
+  title = "סרטון מלא של הריקוד",
+}: DemoInstProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [hasStarted, setHasStarted] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
 
-  useEffect(() => {
+  const handleOpenFullscreen = async () => {
     const video = videoRef.current;
 
-    if (!video || ENABLE_DEMO_VIDEO_MOTION) {
+    if (!video) {
       return;
     }
 
-    const freezeVideo = () => {
-      video.currentTime = 0.01;
-      video.pause();
-    };
+    try {
+      if (video.requestFullscreen) {
+        await video.requestFullscreen();
+        return;
+      }
 
-    if (video.readyState >= 2) {
-      freezeVideo();
+      (
+        video as HTMLVideoElement & {
+          webkitEnterFullscreen?: () => void;
+        }
+      ).webkitEnterFullscreen?.();
+    } catch {
+      // Ignore fullscreen failures and keep the inline player available.
+    }
+  };
+
+  const handleStartPlayback = async () => {
+    const video = videoRef.current;
+
+    if (!video) {
       return;
     }
 
-    video.addEventListener("loadeddata", freezeVideo, { once: true });
-
-    return () => {
-      video.removeEventListener("loadeddata", freezeVideo);
-    };
-  }, []);
+    try {
+      setIsStarting(true);
+      await video.play();
+      setHasStarted(true);
+    } catch {
+      // If autoplay-like play fails, keep native controls available.
+    } finally {
+      setIsStarting(false);
+    }
+  };
 
   return (
     <section
@@ -53,7 +77,7 @@ const Demo_inst = () => {
           className="relative z-10 text-center"
         >
           <h2 className="mx-auto max-w-xl text-[clamp(2rem,5vw,4.25rem)] font-black leading-[1.02] tracking-[-0.04em] text-slate-900">
-            <span className="block">סרטון מלא של הריקוד</span>
+            <span className="block">{title}</span>
           </h2>
         </motion.div>
 
@@ -63,31 +87,45 @@ const Demo_inst = () => {
           viewport={{ once: true }}
           className="relative mx-auto w-full max-w-md"
         >
-          <div className="relative aspect-[10/16] overflow-hidden rounded-[2rem] border border-white/80 bg-white px-2.5 pb-4 pt-2.5 shadow-[0_30px_80px_rgba(15,23,42,0.14)] transition-transform duration-500 hover:rotate-0 sm:p-2.5">
-            <div className="relative h-full w-full overflow-hidden rounded-[1.4rem] bg-slate-900">
+          <div className="relative aspect-[10/16] overflow-hidden rounded-[2rem] border border-white/80 bg-white px-2.5 pb-5 pt-2.5 shadow-[0_30px_80px_rgba(15,23,42,0.14)] transition-transform duration-500 hover:rotate-0 sm:p-2.5">
+            <div className="relative h-full w-full overflow-hidden rounded-[1.4rem] bg-slate-900 pb-1.4 sm:pb-0">
+              <button
+                type="button"
+                onClick={handleOpenFullscreen}
+                className="absolute left-3 top-3 z-10 rounded-full bg-black/55 px-3 py-1.5 text-[11px] font-bold text-white backdrop-blur transition hover:bg-black/70"
+              >
+                מסך מלא
+              </button>
               <video
                 ref={videoRef}
-                className="absolute inset-0 h-full w-full object-cover"
-                src={DEMO_VIDEO_URL}
-                autoPlay={ENABLE_DEMO_VIDEO_MOTION}
-                loop={ENABLE_DEMO_VIDEO_MOTION}
-                muted
+                className="h-full w-full bg-black object-cover"
+                src={previewUrl}
+                controls
                 playsInline
-                preload={ENABLE_DEMO_VIDEO_MOTION ? "metadata" : "auto"}
-                aria-hidden="true"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/40 to-slate-950/20" />
-              <div className="relative flex h-full w-full flex-col items-center justify-center px-6 py-8 text-center text-white">
-                <a
-                  href={INSTAGRAM_URL}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-8 inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-[#f9b3d1]"
+                preload="metadata"
+                controlsList="nodownload noplaybackrate"
+                disablePictureInPicture
+                onContextMenu={(e) => e.preventDefault()}
+                onPlay={() => setHasStarted(true)}
+              >
+                הדפדפן שלך לא תומך בניגון הווידאו.
+              </video>
+
+              {!hasStarted && (
+                <button
+                  type="button"
+                  onClick={handleStartPlayback}
+                  className="absolute inset-0 z-10 flex items-center justify-center bg-gradient-to-t from-black/55 via-black/15 to-black/35 transition hover:bg-black/35"
+                  aria-label="ניגון הסרטון"
                 >
-                  למעבר לאינסטגרם
-                  <Instagram className="h-4 w-4" />
-                </a>
-              </div>
+                  <div className="flex items-center gap-3 rounded-full border border-white/20 bg-black/45 px-4 py-3 text-white shadow-2xl backdrop-blur-md">
+                    <PlayCircle className="h-6 w-6" />
+                    <span className="text-sm font-bold">
+                      {isStarting ? "טוען..." : "לצפייה בסרטון"}
+                    </span>
+                  </div>
+                </button>
+              )}
             </div>
           </div>
 

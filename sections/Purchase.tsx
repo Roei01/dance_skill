@@ -16,7 +16,11 @@ import {
 } from "@/lib/api-client";
 import { PaymentErrorCard } from "@/components/errors/PaymentErrorCard";
 import { PurchaseFaq } from "@/components/purchase/PurchaseFaq";
-import { DEFAULT_VIDEO_PRICE_ILS } from "@/lib/catalog";
+import {
+  DEFAULT_VIDEO_PRICE_ILS,
+  DEFAULT_VIDEO_SLUG,
+  DEFAULT_VIDEO_TITLE,
+} from "@/lib/catalog";
 import {
   BUSINESS_ADDRESS,
   BUSINESS_CONTACT_EMAIL,
@@ -26,7 +30,17 @@ import {
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export const Purchase = () => {
+type PurchaseProps = {
+  videoSlug?: string;
+  price?: number;
+  title?: string;
+};
+
+export const Purchase = ({
+  videoSlug = DEFAULT_VIDEO_SLUG,
+  price = DEFAULT_VIDEO_PRICE_ILS,
+  title = DEFAULT_VIDEO_TITLE,
+}: PurchaseProps) => {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -71,6 +85,7 @@ export const Purchase = () => {
         fullName: fullName.trim(),
         phone: phone.trim(),
         email: email.trim(),
+        videoSlug,
         paymentMethod: method,
       });
 
@@ -170,9 +185,12 @@ export const Purchase = () => {
             </p>
             <div className="flex items-baseline justify-center gap-2">
               <span className="font-display text-5xl font-black tracking-tight text-slate-900 sm:text-6xl md:text-7xl md:tracking-tighter">
-                ₪{DEFAULT_VIDEO_PRICE_ILS}
+                ₪{price}
               </span>
             </div>
+            <p className="mt-2 text-sm font-medium text-slate-500 md:text-base">
+              {title}
+            </p>
           </div>
 
           <form onSubmit={handlePurchase} className="space-y-3">
@@ -283,18 +301,6 @@ export const Purchase = () => {
             ) : null}
 
             <button
-              disabled={loading || !acceptedTerms}
-              className="font-display relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-slate-900 py-4 text-base font-black text-white shadow-lg transition-all hover:-translate-y-1 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 md:py-5 md:text-lg"
-            >
-              <span className="relative z-10">
-                {loading ? "מכינים תשלום מאובטח..." : "להמשך רכישה"}
-              </span>
-              {loading && (
-                <Loader2 className="w-5 h-5 animate-spin relative z-10" />
-              )}
-            </button>
-
-            <button
               type="button"
               onClick={(e) => handlePurchase(e, "hosted")}
               disabled={loading || !acceptedTerms}
@@ -318,6 +324,18 @@ export const Purchase = () => {
                   className="h-9 w-auto object-contain"
                 />
               </div>
+            </button>
+
+            <button
+              disabled={loading || !acceptedTerms}
+              className="font-display relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-slate-900 py-4 text-base font-black text-white shadow-lg transition-all hover:-translate-y-1 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 md:py-5 md:text-lg"
+            >
+              <span className="relative z-10">
+                {loading ? "מכינים תשלום מאובטח..." : "להמשך רכישה"}
+              </span>
+              {loading && (
+                <Loader2 className="w-5 h-5 animate-spin relative z-10" />
+              )}
             </button>
           </form>
 

@@ -10,6 +10,7 @@
     "test": "jest --runInBand",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "migrate:video": "tsx scripts/migrate-videoId-to-objectId.ts",
     "load:public-pages": "node scripts/run-k6.mjs tests/load/public-pages-load.k6.js",
     "load:homepage-journey": "node scripts/run-k6.mjs tests/load/homepage-journey-load.k6.js",
     "load:login": "node scripts/run-k6.mjs tests/load/login-load.local-only.k6.js",

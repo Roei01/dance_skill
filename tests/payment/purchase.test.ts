@@ -13,6 +13,7 @@ jest.mock('../../server/services/email', () => {
   return {
     ...actual,
     sendAccessEmail: jest.fn(),
+    sendExistingUserPurchaseEmail: jest.fn(),
   };
 });
 
@@ -27,12 +28,17 @@ import {
   disconnectTestDatabase,
 } from '../helpers/mongodb-test-utils';
 import { createGreenInvoicePayment } from '../../server/services/greenInvoice';
-import { sendAccessEmail } from '../../server/services/email';
+import {
+  sendAccessEmail,
+  sendExistingUserPurchaseEmail,
+} from '../../server/services/email';
 
 const mockedCreateGreenInvoicePayment =
   createGreenInvoicePayment as jest.MockedFunction<typeof createGreenInvoicePayment>;
 const mockedSendAccessEmail =
   sendAccessEmail as jest.MockedFunction<typeof sendAccessEmail>;
+const mockedSendExistingUserPurchaseEmail =
+  sendExistingUserPurchaseEmail as jest.MockedFunction<typeof sendExistingUserPurchaseEmail>;
 
 describe('purchase integration flow', () => {
   const app = createApiApp();
@@ -47,6 +53,7 @@ describe('purchase integration flow', () => {
       paymentId: 'test_payment_123',
     });
     mockedSendAccessEmail.mockResolvedValue(undefined);
+    mockedSendExistingUserPurchaseEmail.mockResolvedValue(undefined);
   });
 
   afterEach(async () => {
@@ -141,10 +148,16 @@ describe('purchase integration flow', () => {
 
     expect(webhookResponse.status).toBe(200);
     expect(users).toHaveLength(1);
-    expect(updatedUser?.passwordHash).toBeTruthy();
-    expect(updatedUser?.passwordHash).not.toBe('old-password-hash');
+    expect(updatedUser?.passwordHash).toBe('old-password-hash');
     expect(purchase?.status).toBe('completed');
-    expect(mockedSendAccessEmail).toHaveBeenCalledTimes(1);
+    expect(mockedSendAccessEmail).not.toHaveBeenCalled();
+    expect(mockedSendExistingUserPurchaseEmail).toHaveBeenCalledTimes(1);
+    expect(mockedSendExistingUserPurchaseEmail).toHaveBeenCalledWith({
+      email: 'existing-user@example.com',
+      username: 'existing_user',
+      videoTitle: expect.any(String),
+      accessLink: expect.stringContaining('/login'),
+    });
   });
 
   it('marks purchase as failed and does not create user when payment fails', async () => {

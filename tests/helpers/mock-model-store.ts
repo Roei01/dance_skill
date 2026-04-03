@@ -6,7 +6,7 @@ type BaseRecord = {
 
 type PurchaseRecord = BaseRecord & {
   userId?: string;
-  videoId: string;
+  videoId: string | { toString: () => string };
   paymentId: string;
   orderId?: string;
   customerFullName: string;
@@ -28,8 +28,27 @@ type UserRecord = BaseRecord & {
   activeSessionDisconnectAt?: Date;
 };
 
+type VideoRecord = BaseRecord & {
+  videoId?: string;
+  slug: string;
+  title: string;
+  description: string;
+  watchDescription?: string;
+  classBreakdown?: Array<{
+    time: string;
+    label: string;
+  }>;
+  price: number;
+  level: string;
+  videoUrl: string;
+  previewUrl: string;
+  imageUrl?: string;
+  isActive: boolean;
+};
+
 const purchases: PurchaseRecord[] = [];
 const users: UserRecord[] = [];
+const videos: VideoRecord[] = [];
 
 let nextId = 1;
 
@@ -133,9 +152,24 @@ const attachUserSave = (record: Omit<UserRecord, 'save'>): UserRecord => {
   return user;
 };
 
+const attachVideoSave = (record: Omit<VideoRecord, 'save'>): VideoRecord => {
+  const video = record as VideoRecord;
+  video.save = async () => {
+    const index = videos.findIndex((entry) => entry._id === video._id);
+    if (index >= 0) {
+      videos[index] = video;
+    } else {
+      videos.push(video);
+    }
+    return video;
+  };
+  return video;
+};
+
 export const resetMockModelStore = () => {
   purchases.length = 0;
   users.length = 0;
+  videos.length = 0;
   nextId = 1;
 };
 
@@ -206,5 +240,71 @@ export const mockUserModel = {
     const remaining = users.filter((user) => !matchesQuery(user, query));
     users.splice(0, users.length, ...remaining);
     return { deletedCount: before - users.length };
+  },
+};
+
+export const mockVideoModel = {
+  findOne: (query: Record<string, any>) =>
+    createSingleQuery(() => videos.find((video) => matchesQuery(video, query)) ?? null),
+  find: (query: Record<string, any>) =>
+    createManyQuery(() => videos.filter((video) => matchesQuery(video, query))),
+  findOneAndUpdate: async (
+    query: Record<string, any>,
+    update: Record<string, any>,
+    options?: Record<string, any>
+  ) => {
+    const video = videos.find((entry) => matchesQuery(entry, query)) ?? null;
+
+    if (video) {
+      if (update.$set) {
+        Object.assign(video, update.$set);
+      }
+      if (update.$setOnInsert) {
+        Object.assign(video, update.$setOnInsert);
+      }
+      return video;
+    }
+
+    if (!options?.upsert) {
+      return null;
+    }
+
+    const nextVideo = attachVideoSave({
+      _id: buildId(),
+      createdAt: new Date(),
+      slug: query.slug ?? `video-${buildId()}`,
+      title: update.$set?.title ?? update.$setOnInsert?.title ?? 'Mock Video',
+      description:
+        update.$set?.description ??
+        update.$setOnInsert?.description ??
+        'Mock description',
+      watchDescription:
+        update.$set?.watchDescription ??
+        update.$setOnInsert?.watchDescription ??
+        'Mock watch description',
+      classBreakdown:
+        update.$set?.classBreakdown ??
+        update.$setOnInsert?.classBreakdown ??
+        [],
+      price: update.$set?.price ?? update.$setOnInsert?.price ?? 45,
+      level: update.$set?.level ?? update.$setOnInsert?.level ?? 'Mock level',
+      videoId: update.$set?.videoId ?? update.$setOnInsert?.videoId ?? query.videoId,
+      videoUrl:
+        update.$set?.videoUrl ??
+        update.$setOnInsert?.videoUrl ??
+        'https://example.com/video',
+      previewUrl:
+        update.$set?.previewUrl ??
+        update.$setOnInsert?.previewUrl ??
+        'https://example.com/preview',
+      imageUrl:
+        update.$set?.imageUrl ??
+        update.$setOnInsert?.imageUrl ??
+        'https://example.com/image',
+      isActive: update.$set?.isActive ?? update.$setOnInsert?.isActive ?? true,
+    });
+
+    videos.push(nextVideo);
+    return nextVideo;
   },
 };
