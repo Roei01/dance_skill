@@ -41,7 +41,7 @@ export function NewVideoPopup({ href }: NewVideoPopupProps) {
     <div className="fixed inset-x-0 bottom-0 z-50 px-4 pb-4 sm:pb-6">
       <div className="mx-auto max-w-xl">
         <div
-          className="absolute inset-x-0 bottom-0 h-70 bg-[radial-gradient(circle_at_center,rgba(15,23,42,0.24),rgba(15,23,42,0.10)_58%,transparent_100%)] backdrop-blur-[3px] sm:h-0"
+          className="absolute inset-x-0 bottom-0 h-65 bg-[radial-gradient(circle_at_center,rgba(15,23,42,0.24),rgba(15,23,42,0.10)_58%,transparent_100%)] backdrop-blur-[3px] sm:h-0"
           onClick={() => setOpen(false)}
         />
         <div className="relative w-full max-w-lg overflow-hidden rounded-[1.9rem] border border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.96)_0%,rgba(248,250,252,0.94)_55%,rgba(255,245,239,0.96)_100%)] p-4 text-center shadow-[0_24px_60px_rgba(15,23,42,0.14)] ring-1 ring-slate-200/70 backdrop-blur-md sm:p-5">
