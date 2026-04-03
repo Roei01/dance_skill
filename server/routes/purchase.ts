@@ -18,6 +18,10 @@ const router = express.Router();
 const normalizeBaseUrl = (url: string) => url.replace(/\/$/, "");
 const normalizeString = (value: unknown) =>
   typeof value === "string" && value.trim() ? value.trim() : undefined;
+const normalizeEmail = (value: unknown) =>
+  typeof value === "string" && value.trim()
+    ? value.trim().toLowerCase()
+    : undefined;
 
 /** Origin the client used (for payment redirects); falls back to config when host is missing or localhost. */
 const deriveAppBaseUrlFromRequest = (req: express.Request): string => {
@@ -72,14 +76,14 @@ const extractWebhookOrderId = (body: Record<string, any>) =>
       body?.orderId ||
       body?.reference ||
       body?.external_data ||
-      body?.description ||
       body?.data?.custom ||
       body?.data?.orderId ||
       body?.data?.reference ||
       body?.data?.external_data ||
       body?.payload?.custom ||
       body?.payload?.orderId ||
-      body?.payload?.external_data,
+      body?.payload?.external_data ||
+      body?.transactions?.[0]?.external_data,
   );
 
 const extractWebhookPaymentIds = (body: Record<string, any>) => {
@@ -139,9 +143,7 @@ const extractWebhookEmail = (body: Record<string, any>) => {
     body?.data?.email ||
     body?.payload?.email;
 
-  return typeof rawEmail === "string"
-    ? rawEmail.trim().toLowerCase()
-    : undefined;
+  return normalizeEmail(rawEmail);
 };
 
 const normalizeWebhookStatus = (body: Record<string, any>) => {
@@ -222,14 +224,21 @@ const findPurchaseForWebhook = async (
   }
 
   if (orderId) {
-    return Purchase.findOne({ orderId });
+    const purchaseByOrderId = await Purchase.findOne({ orderId });
+    if (purchaseByOrderId) {
+      return purchaseByOrderId;
+    }
   }
 
   if (payerEmail) {
-    return Purchase.findOne({
+    const purchaseByEmail = await Purchase.findOne({
       customerEmail: payerEmail,
       status: "pending",
     }).sort({ createdAt: -1 });
+
+    if (purchaseByEmail) {
+      return purchaseByEmail;
+    }
   }
 
   return null;
@@ -275,6 +284,7 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
 
     const { email, fullName, phone, returnTo, paymentMethod, videoSlug } =
       validation.data;
+    const normalizedEmail = email.trim().toLowerCase();
     const appBaseUrl = deriveAppBaseUrlFromRequest(req);
     const video = await getActiveVideoDocumentBySlug(videoSlug);
 
@@ -289,8 +299,8 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
 
     const purchaseVideoId = video._id;
     const acceptedPurchaseVideoIds = [video._id];
-    const orderId = `${String(video._id)}:${email}`;
-    const existingUser = await User.findOne({ email });
+    const orderId = `${String(video._id)}:${normalizedEmail}`;
+    const existingUser = await User.findOne({ email: normalizedEmail });
 
     if (existingUser) {
       const existingPurchase = await Purchase.findOne({
@@ -316,7 +326,7 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
 
       // Set up the success URL to return to
       const successUrl = new URL("/success", `${appBaseUrl}/`);
-      successUrl.searchParams.set("email", email);
+      successUrl.searchParams.set("email", normalizedEmail);
       successUrl.searchParams.set("method", "hosted");
       successUrl.searchParams.set("videoSlug", videoSlug);
       if (returnTo) {
@@ -325,10 +335,10 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
 
       const checkoutUrl = isTestMode
         ? `${config.appUrl}/success?mock=true`
-        : `https://mrng.to/BKXBaFbl0K?email=${encodeURIComponent(email)}&successUrl=${encodeURIComponent(successUrl.toString())}&redirectUrl=${encodeURIComponent(successUrl.toString())}`;
+        : `https://mrng.to/BKXBaFbl0K?email=${encodeURIComponent(normalizedEmail)}&successUrl=${encodeURIComponent(successUrl.toString())}&redirectUrl=${encodeURIComponent(successUrl.toString())}`;
 
       await Purchase.deleteMany({
-        customerEmail: email,
+        customerEmail: normalizedEmail,
         videoId: { $in: acceptedPurchaseVideoIds },
         status: "pending",
       });
@@ -338,7 +348,7 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
         paymentId: tempPaymentId,
         customerFullName: fullName,
         customerPhone: phone,
-        customerEmail: email,
+        customerEmail: normalizedEmail,
         orderId,
         status: "pending",
         appBaseUrl,
@@ -365,7 +375,7 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
     );
 
     await Purchase.deleteMany({
-      customerEmail: email,
+      customerEmail: normalizedEmail,
       videoId: { $in: acceptedPurchaseVideoIds },
       status: "pending",
     });
@@ -375,7 +385,7 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
       paymentId: payment.paymentId,
       customerFullName: fullName,
       customerPhone: phone,
-      customerEmail: email,
+      customerEmail: normalizedEmail,
       orderId,
       status: "pending",
       appBaseUrl,
@@ -551,7 +561,18 @@ router.post("/webhook", async (req, res) => {
     });
   }
 
-  const purchase = await findPurchaseForWebhook(paymentIds, orderId, payerEmail);
+  let purchase = await findPurchaseForWebhook(paymentIds, orderId, payerEmail);
+
+  if (!purchase && req.body?.channel === "payment-link" && payerEmail) {
+    purchase = await findLatestHostedPurchaseByEmail(payerEmail);
+    if (purchase) {
+      console.log("WEBHOOK_PAYMENT_LINK_EMAIL_FALLBACK_MATCH", {
+        payerEmail,
+        purchaseId: String(purchase._id),
+        purchasePaymentId: String(purchase.paymentId),
+      });
+    }
+  }
   console.log("WEBHOOK_PURCHASE_LOOKUP_RESULT", {
     paymentId,
     paymentIds,
