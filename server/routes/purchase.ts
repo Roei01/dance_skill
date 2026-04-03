@@ -62,6 +62,10 @@ const purchaseSchema = z.object({
     .default("credit_card"),
 });
 
+const hostedConfirmSchema = z.object({
+  email: z.string().trim().email(),
+});
+
 const extractWebhookOrderId = (body: Record<string, any>) =>
   normalizeString(
     body?.custom ||
@@ -231,6 +235,33 @@ const findPurchaseForWebhook = async (
   return null;
 };
 
+const HOSTED_CONFIRM_WINDOW_MS = 3 * 60 * 60 * 1000;
+
+const findLatestHostedPurchaseByEmail = async (email: string) => {
+  const normalizedEmail = email.trim().toLowerCase();
+  const minCreatedAt = Date.now() - HOSTED_CONFIRM_WINDOW_MS;
+  const purchases = await Purchase.find({
+    customerEmail: normalizedEmail,
+    status: { $in: ["pending", "completed"] },
+  });
+
+  return purchases
+    .filter((purchase) => {
+      const isHostedPayment =
+        purchase.paymentId.startsWith("link_") ||
+        (config.paymentMode === "test" && purchase.paymentId.startsWith("mock_"));
+
+      return (
+        isHostedPayment &&
+        new Date(purchase.createdAt).getTime() >= minCreatedAt
+      );
+    })
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    )[0] ?? null;
+};
+
 router.post("/create", purchaseRateLimiter, async (req, res) => {
   try {
     const validation = purchaseSchema.safeParse(req.body);
@@ -286,6 +317,8 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
       // Set up the success URL to return to
       const successUrl = new URL("/success", `${appBaseUrl}/`);
       successUrl.searchParams.set("email", email);
+      successUrl.searchParams.set("method", "hosted");
+      successUrl.searchParams.set("videoSlug", videoSlug);
       if (returnTo) {
         successUrl.searchParams.set("returnTo", returnTo);
       }
@@ -370,6 +403,66 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
     res.status(500).json({
       code: "INTERNAL_ERROR",
       message: "Unable to start payment. Please try again.",
+    });
+  }
+});
+
+router.post("/hosted/confirm", async (req, res) => {
+  const validation = hostedConfirmSchema.safeParse(req.body);
+
+  if (!validation.success) {
+    return res.status(400).json({
+      code: "VALIDATION_ERROR",
+      message: "A valid email is required.",
+    });
+  }
+
+  const email = validation.data.email.trim().toLowerCase();
+  const purchase = await findLatestHostedPurchaseByEmail(email);
+
+  if (!purchase) {
+    logger.warn("Hosted purchase confirmation could not find purchase.", {
+      email,
+    });
+    return res.status(404).json({
+      code: "PURCHASE_NOT_FOUND",
+      message: "No hosted purchase found for this email.",
+    });
+  }
+
+  if (purchase.status === "completed" && purchase.credentialsSentAt) {
+    logger.info("Hosted purchase already completed.", {
+      email,
+      paymentId: purchase.paymentId,
+    });
+    return res.status(200).json({
+      ok: true,
+      alreadyCompleted: true,
+      paymentId: purchase.paymentId,
+    });
+  }
+
+  try {
+    purchase.status = "completed";
+    await purchase.save();
+
+    const provisioned = await provisionPurchaseAccess(String(purchase.paymentId));
+    logger.info("Hosted purchase confirmation completed.", {
+      email,
+      paymentId: purchase.paymentId,
+      provisioned: Boolean(provisioned),
+    });
+
+    return res.status(200).json({
+      ok: true,
+      paymentId: purchase.paymentId,
+      provisioned: Boolean(provisioned),
+    });
+  } catch (error) {
+    logger.error("Hosted purchase confirmation error:", error);
+    return res.status(500).json({
+      code: "INTERNAL_ERROR",
+      message: "Unable to confirm hosted payment.",
     });
   }
 });

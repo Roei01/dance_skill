@@ -180,4 +180,35 @@ describe('purchase webhook route', () => {
     expect(response.status).toBe(200);
     expect(purchase?.status).toBe('completed');
   });
+
+  it('should confirm hosted purchases from the success page fallback', async () => {
+    await Purchase.create({
+      videoId: DEFAULT_VIDEO_ID,
+      paymentId: 'link_hosted_1001',
+      customerFullName: 'Hosted Payment User',
+      customerPhone: '0500000006',
+      customerEmail: 'hosted-confirm@example.com',
+      status: 'pending',
+      createdAt: new Date(),
+    });
+
+    const response = await request(app)
+      .post('/api/purchase/hosted/confirm')
+      .send({
+        email: 'hosted-confirm@example.com',
+      });
+
+    const purchase = await Purchase.findOne({ paymentId: 'link_hosted_1001' });
+    const user = await User.findOne({ email: 'hosted-confirm@example.com' });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      ok: true,
+      paymentId: 'link_hosted_1001',
+      provisioned: true,
+    });
+    expect(purchase?.status).toBe('completed');
+    expect(user).not.toBeNull();
+    expect(getSentAccessEmails()).toHaveLength(1);
+  });
 });

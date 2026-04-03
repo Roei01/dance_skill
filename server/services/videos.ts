@@ -75,13 +75,6 @@ const FULL_VIDEO_PROJECTION = {
 
 let ensureDefaultVideoPromise: Promise<void> | null = null;
 let initialized = false;
-const VIDEO_LIST_CACHE_TTL_MS = 60_000;
-let videoCardsCache:
-  | { value: VideoCardRecord[]; expiresAt: number }
-  | null = null;
-let videosCache:
-  | { value: VideoRecord[]; expiresAt: number }
-  | null = null;
 
 const serializeVideoCard = (video: VideoSource): VideoCardRecord => ({
   id: String(video._id),
@@ -329,20 +322,6 @@ export const getActiveVideoDocumentBySlug = async (slug: string) => {
     .lean<VideoSource | null>();
 };
 
-const getCachedValue = <T>(
-  cacheEntry: { value: T; expiresAt: number } | null,
-) => {
-  if (!cacheEntry) {
-    return null;
-  }
-
-  if (cacheEntry.expiresAt <= Date.now()) {
-    return null;
-  }
-
-  return cacheEntry.value;
-};
-
 const fetchActiveVideoCards = async () => {
   await ensureDefaultVideoExists();
 
@@ -354,19 +333,7 @@ const fetchActiveVideoCards = async () => {
   return videos.map(serializeVideoCard);
 };
 
-export const listActiveVideoCards = async () => {
-  const cachedValue = getCachedValue(videoCardsCache);
-  if (cachedValue) {
-    return cachedValue;
-  }
-
-  const value = await fetchActiveVideoCards();
-  videoCardsCache = {
-    value,
-    expiresAt: Date.now() + VIDEO_LIST_CACHE_TTL_MS,
-  };
-  return value;
-};
+export const listActiveVideoCards = async () => fetchActiveVideoCards();
 
 const fetchActiveVideos = async () => {
   await ensureDefaultVideoExists();
@@ -379,19 +346,7 @@ const fetchActiveVideos = async () => {
   return videos.map(serializeVideo);
 };
 
-export const listActiveVideos = async () => {
-  const cachedValue = getCachedValue(videosCache);
-  if (cachedValue) {
-    return cachedValue;
-  }
-
-  const value = await fetchActiveVideos();
-  videosCache = {
-    value,
-    expiresAt: Date.now() + VIDEO_LIST_CACHE_TTL_MS,
-  };
-  return value;
-};
+export const listActiveVideos = async () => fetchActiveVideos();
 
 export const getActiveVideoBySlug = async (slug: string) => {
   const video = await getActiveVideoDocumentBySlug(slug);
