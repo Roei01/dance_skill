@@ -88,7 +88,7 @@ export const Hero = () => {
                         el.getBoundingClientRect().top + window.scrollY + 290;
                       window.scrollTo({ top: y, behavior: "smooth" });
                     }}
-                    className="inline-flex items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#ffe7a3_0%,#ffd56b_52%,#ffc247_100%)] px-7 py-4 text-sm font-bold uppercase tracking-[0.14em] text-slate-950 shadow-[0_18px_40px_rgba(255,196,43,0.28)] ring-1 ring-white/35 transition hover:-translate-y-0.5 hover:shadow-[0_22px_45px_rgba(255,196,43,0.34)] hover:brightness-[1.02]"
+                    className="inline-flex items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#fff0ba_0%,#ffe186_52%,#ffd05f_100%)] px-7 py-4 text-sm font-bold uppercase tracking-[0.14em] text-slate-950 shadow-[0_18px_40px_rgba(255,210,95,0.26)] ring-1 ring-white/40 transition hover:-translate-y-0.5 hover:shadow-[0_22px_45px_rgba(255,210,95,0.32)] hover:brightness-[1.02]"
                   >
                     לצפייה בשיעורים
                   </button>

@@ -21,7 +21,7 @@ const requestedVideoSlug = getArgValue("videoSlug");
 async function run() {
   if (!email) {
     throw new Error(
-      "Missing --email argument. Example: npx tsx scripts/test-existing-user-email.ts --email=royinagar1@gmail.com",
+      "Missing --email argument. Example: npx tsx scripts/test-existing-user-email.ts --email=rotem@rbdt-online.local",
     );
   }
 
@@ -40,14 +40,18 @@ async function run() {
       status: "completed",
     }).lean();
 
-    const ownedVideoIds = new Set(completedPurchases.map((purchase) => String(purchase.videoId)));
+    const ownedVideoIds = new Set(
+      completedPurchases.map((purchase) => String(purchase.videoId)),
+    );
 
     const video = requestedVideoSlug
       ? await Video.findOne({ slug: requestedVideoSlug, isActive: true })
       : await Video.findOne({
           isActive: true,
           _id: {
-            $nin: Array.from(ownedVideoIds).map((id) => new mongoose.Types.ObjectId(id)),
+            $nin: Array.from(ownedVideoIds).map(
+              (id) => new mongoose.Types.ObjectId(id),
+            ),
           },
         }).sort({ createdAt: -1 });
 

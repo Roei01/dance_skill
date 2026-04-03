@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BUSINESS_CONTACT_EMAIL } from "@/lib/business-info";
+import { HostedPurchaseConfirmation } from "@/components/purchase/HostedPurchaseConfirmation";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,9 @@ export default function SuccessPage({ searchParams }: SuccessPageProps) {
   const email = Array.isArray(searchParams?.email)
     ? searchParams?.email[0]
     : searchParams?.email;
+  const method = Array.isArray(searchParams?.method)
+    ? searchParams?.method[0]
+    : searchParams?.method;
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_45%,#fff5ef_100%)] px-6 py-16">
@@ -33,6 +37,8 @@ export default function SuccessPage({ searchParams }: SuccessPageProps) {
             פרטי ההתחברות נשלחו לכתובת: {email}
           </div>
         ) : null}
+
+        <HostedPurchaseConfirmation email={email} method={method} />
 
         <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-medium text-slate-600">
           אם לא קיבלת מייל בתוך 5 דקות, כדאי לבדוק גם בספאם או ליצור קשר.

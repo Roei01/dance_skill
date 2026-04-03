@@ -12,7 +12,7 @@ router.get("/", async (req, res) => {
   const videos =
     view === "card" ? await listActiveVideoCards() : await listActiveVideos();
 
-  res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   return res.json(videos);
 });
 
@@ -26,7 +26,7 @@ router.get("/:slug", async (req, res) => {
     });
   }
 
-  res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   return res.json(video);
 });
 
