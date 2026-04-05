@@ -5,12 +5,17 @@ import { logger } from "../lib/logger";
 export type SentAccessEmailRecord = {
   email: string;
   bcc: string[];
-  username: string;
-  accessLink: string;
+  username?: string;
+  accessLink?: string;
   password?: string;
   subject: string;
-  template: "new_user" | "existing_user";
+  template:
+    | "new_user"
+    | "existing_user"
+    | "password_reset"
+    | "password_reset_backup";
   videoTitle?: string;
+  resetLink?: string;
   sentAt: Date;
   mocked: boolean;
 };
@@ -39,11 +44,11 @@ export const resetSentAccessEmails = () => {
   sentAccessEmails.length = 0;
 };
 
-const getEmailContext = (email: string, accessLink: string) => {
+const getEmailContext = (email?: string) => {
   const backupRecipient = config.email.accessBackupRecipient?.trim().toLowerCase();
-  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedEmail = email?.trim().toLowerCase();
   const bccRecipients =
-    backupRecipient && backupRecipient !== normalizedEmail
+    backupRecipient && normalizedEmail && backupRecipient !== normalizedEmail
       ? [backupRecipient]
       : [];
   const fromAddress = config.email.user
@@ -57,18 +62,27 @@ const getEmailContext = (email: string, accessLink: string) => {
 };
 
 type SendPurchaseEmailArgs = {
-  email: string;
-  username: string;
-  accessLink: string;
+  email?: string;
+  to?: string;
+  bcc?: string[];
+  username?: string;
+  accessLink?: string;
   password?: string;
   subject: string;
   html: string;
-  template: "new_user" | "existing_user";
+  template:
+    | "new_user"
+    | "existing_user"
+    | "password_reset"
+    | "password_reset_backup";
   videoTitle?: string;
+  resetLink?: string;
 };
 
 const sendPurchaseEmail = async ({
   email,
+  to,
+  bcc,
   username,
   accessLink,
   password,
@@ -76,26 +90,34 @@ const sendPurchaseEmail = async ({
   html,
   template,
   videoTitle,
+  resetLink,
 }: SendPurchaseEmailArgs) => {
-  const { bccRecipients, fromAddress } = getEmailContext(email, accessLink);
+  const recipient = to ?? email;
+  if (!recipient) {
+    throw new Error("Email recipient is required");
+  }
+
+  const { bccRecipients: defaultBccRecipients, fromAddress } = getEmailContext(email);
+  const finalBccRecipients = bcc ?? defaultBccRecipients;
 
   const mailOptions = {
     from: fromAddress,
-    to: email,
-    bcc: bccRecipients.length > 0 ? bccRecipients.join(", ") : undefined,
+    to: recipient,
+    bcc: finalBccRecipients.length > 0 ? finalBccRecipients.join(", ") : undefined,
     subject,
     html,
   };
 
   const emailRecord: SentAccessEmailRecord = {
-    email,
-    bcc: bccRecipients,
+    email: recipient,
+    bcc: finalBccRecipients,
     username,
     accessLink,
     password,
     subject,
     template,
     videoTitle,
+    resetLink,
     sentAt: new Date(),
     mocked: isMockEmailMode(),
   };
@@ -103,8 +125,8 @@ const sendPurchaseEmail = async ({
   try {
     if (isMockEmailMode()) {
       sentAccessEmails.push(emailRecord);
-      logger.info(`Mock access email recorded for ${email}`, {
-        bcc: bccRecipients,
+      logger.info(`Mock access email recorded for ${recipient}`, {
+        bcc: finalBccRecipients,
       });
       return;
     }
@@ -112,13 +134,13 @@ const sendPurchaseEmail = async ({
     const transporter = createTransporter();
     await transporter.sendMail(mailOptions);
     sentAccessEmails.push(emailRecord);
-    logger.info(`Access email sent to ${email}`, {
-      bcc: bccRecipients,
+    logger.info(`Access email sent to ${recipient}`, {
+      bcc: finalBccRecipients,
     });
 
     if (config.isProduction === false) {
       logger.info(
-        `🔑 DEV CREDENTIALS: Username: ${username}, Password: ${password || "(not changed)"}`,
+        `🔑 DEV CREDENTIALS: Username: ${username || "(n/a)"}, Password: ${password || "(not changed)"}`,
       );
     }
   } catch (error) {
@@ -189,6 +211,78 @@ export const sendExistingUserPurchaseEmail = async ({
         <p>קישור להתחברות:</p>
         <p><a href="${accessLink}" style="padding: 10px 20px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 5px; display: inline-block;">מעבר לדף ההתחברות</a></p>
         <p style="word-break: break-all; font-size: 0.9em; color: #2563eb;">${accessLink}</p>
+      </div>
+    `,
+  });
+};
+
+type SendPasswordResetEmailArgs = {
+  email: string;
+  username: string;
+  resetLink: string;
+};
+
+export const sendPasswordResetEmail = async ({
+  email,
+  username,
+  resetLink,
+}: SendPasswordResetEmailArgs) => {
+  await sendPurchaseEmail({
+    email,
+    username,
+    subject: "איפוס סיסמה",
+    template: "password_reset",
+    resetLink,
+    bcc: [],
+    html: `
+      <div dir="rtl" style="font-family: system-ui, sans-serif; line-height: 1.6;">
+        <h1 style="margin-bottom: 0.5em;">${brandName}</h1>
+        <p>התקבלה בקשה לאיפוס הסיסמה עבור החשבון שלך.</p>
+        <p><strong>שם המשתמש:</strong> ${username}</p>
+        <p>כדי ליצור סיסמה חדשה, יש ללחוץ על הכפתור הבא:</p>
+        <p><a href="${resetLink}" style="padding: 10px 20px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 5px; display: inline-block;">יצירת סיסמה חדשה</a></p>
+        <p style="font-size: 0.9em; color: #555;">אם הכפתור לא נפתח, אפשר להעתיק את הקישור הזה:</p>
+        <p style="word-break: break-all; font-size: 0.9em; color: #2563eb;">${resetLink}</p>
+        <p style="font-size: 0.9em; color: #555;">הקישור תקף לזמן מוגבל בלבד. אם לא ביקשת איפוס, אפשר להתעלם מהמייל.</p>
+      </div>
+    `,
+  });
+};
+
+type SendPasswordResetBackupEmailArgs = {
+  email: string;
+  username: string;
+  password: string;
+};
+
+export const sendPasswordResetBackupEmail = async ({
+  email,
+  username,
+  password,
+}: SendPasswordResetBackupEmailArgs) => {
+  const backupRecipient = config.email.accessBackupRecipient?.trim().toLowerCase();
+  if (!backupRecipient) {
+    throw new Error("Backup recipient is required for password reset notifications");
+  }
+
+  await sendPurchaseEmail({
+    email,
+    to: backupRecipient,
+    bcc: [],
+    username,
+    password,
+    subject: "גיבוי שינוי סיסמה",
+    template: "password_reset_backup",
+    html: `
+      <div dir="rtl" style="font-family: system-ui, sans-serif; line-height: 1.6;">
+        <h1 style="margin-bottom: 0.5em;">${brandName}</h1>
+        <p>הסיסמה של לקוח עודכנה בהצלחה.</p>
+        <ul style="padding-right: 1.25em;">
+          <li><strong>אימייל לקוח:</strong> ${email}</li>
+          <li><strong>שם משתמש:</strong> ${username}</li>
+          <li><strong>סיסמה חדשה:</strong> ${password}</li>
+        </ul>
+        <p style="font-size: 0.9em; color: #555;">מייל זה נשלח לגיבוי פנימי בלבד.</p>
       </div>
     `,
   });

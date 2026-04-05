@@ -6,6 +6,7 @@ import { User, type IUser } from "../../models/User";
 
 export const SESSION_DURATION_MS = 2 * 60 * 60 * 1000;
 export const SESSION_DISCONNECT_GRACE_MS = 15 * 1000;
+export const PASSWORD_RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
 
 export type AuthTokenPayload = {
   userId: string;
@@ -43,6 +44,20 @@ export const generateSessionId = (): string => {
   return crypto.randomUUID();
 };
 
+export const hashResetToken = (token: string): string => {
+  return crypto.createHash("sha256").update(token).digest("hex");
+};
+
+export const generatePasswordResetToken = () => {
+  const token = crypto.randomBytes(32).toString("hex");
+
+  return {
+    token,
+    tokenHash: hashResetToken(token),
+    expiresAt: new Date(Date.now() + PASSWORD_RESET_TOKEN_TTL_MS),
+  };
+};
+
 const getSessionExpiryDate = () => {
   return new Date(Date.now() + SESSION_DURATION_MS);
 };
@@ -56,6 +71,11 @@ const clearSessionFields = (user: IUser) => {
   user.activeSessionStartedAt = undefined;
   user.activeSessionExpiresAt = undefined;
   user.activeSessionDisconnectAt = undefined;
+};
+
+export const clearPasswordResetFields = (user: IUser) => {
+  user.resetPasswordTokenHash = undefined;
+  user.resetPasswordExpiresAt = undefined;
 };
 
 const clearExpiredSessionIfNeeded = async (user: IUser) => {
@@ -149,6 +169,16 @@ export const releaseActiveSession = async (
   }
 
   if (sessionId && user.activeSessionId !== sessionId) {
+    return;
+  }
+
+  clearSessionFields(user);
+  await user.save();
+};
+
+export const clearAllUserSessions = async (userId: string) => {
+  const user = await User.findById(userId);
+  if (!user) {
     return;
   }
 

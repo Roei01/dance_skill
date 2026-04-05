@@ -64,6 +64,8 @@ const publicPathnames = new Set([
   "/cancel",
   "/checkout",
   "/login",
+  "/forgot-password",
+  "/reset-password",
 ]);
 
 const isPublicPathname = (pathname: string) => {

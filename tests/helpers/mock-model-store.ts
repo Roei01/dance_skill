@@ -20,6 +20,8 @@ type UserRecord = BaseRecord & {
   email: string;
   username: string;
   passwordHash: string;
+  resetPasswordTokenHash?: string;
+  resetPasswordExpiresAt?: Date;
   ipAddress?: string;
   allowedIps: string[];
   activeSessionId?: string;
@@ -95,6 +97,7 @@ const createSingleQuery = <T>(resolver: () => T | null) => {
   const run = () => resolver();
 
   return {
+    lean: async () => run(),
     sort: async () => run(),
     then: <TResult1 = T | null, TResult2 = never>(
       onfulfilled?: ((value: T | null) => TResult1 | PromiseLike<TResult1>) | null,
@@ -111,8 +114,9 @@ const createManyQuery = <T>(resolver: () => T[]) => {
   const run = () => resolver();
 
   return {
-    select: async () => run(),
-    sort: async () => run(),
+    select: () => createManyQuery(run),
+    sort: () => createManyQuery(run),
+    lean: async () => run(),
     then: <TResult1 = T[], TResult2 = never>(
       onfulfilled?: ((value: T[]) => TResult1 | PromiseLike<TResult1>) | null,
       onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null,
@@ -225,6 +229,8 @@ export const mockUserModel = {
       email: data.email ?? 'mock@example.com',
       username: data.username ?? `mock_user_${buildId()}`,
       passwordHash: data.passwordHash ?? 'hashed-password',
+      resetPasswordTokenHash: data.resetPasswordTokenHash,
+      resetPasswordExpiresAt: data.resetPasswordExpiresAt,
       ipAddress: data.ipAddress,
       allowedIps: data.allowedIps ?? [],
       activeSessionId: data.activeSessionId,

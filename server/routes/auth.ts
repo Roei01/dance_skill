@@ -2,9 +2,14 @@ import express from "express";
 import { User } from "../../models/User";
 import { Purchase } from "../../models/Purchase";
 import {
+  clearAllUserSessions,
+  clearPasswordResetFields,
   comparePassword,
+  generatePasswordResetToken,
   generateToken,
   getActiveSessionRemainingSeconds,
+  hashPassword,
+  hashResetToken,
   hasConflictingActiveSession,
   markSessionDisconnecting,
   releaseActiveSession,
@@ -19,8 +24,18 @@ import {
 import { DEFAULT_VIDEO_SLUG } from "../../lib/catalog";
 import { authRateLimiter } from "../middleware/rateLimit";
 import { resolveOwnedVideoSlugs } from "../services/videos";
+import {
+  sendPasswordResetBackupEmail,
+  sendPasswordResetEmail,
+} from "../services/email";
+import { config } from "../config/env";
 
 const router = express.Router();
+
+const forgotPasswordSuccessPayload = {
+  ok: true,
+  message: "אם קיים משתמש עבור המייל הזה, נשלח קישור לאיפוס סיסמה.",
+};
 
 router.post("/login", authRateLimiter, async (req, res) => {
   const { username, password } = req.body as {
@@ -124,6 +139,112 @@ router.post("/login", authRateLimiter, async (req, res) => {
       videos: ownedVideoIds,
       videoOrder: ownedVideoIds,
     },
+  });
+});
+
+router.post("/forgot-password", authRateLimiter, async (req, res) => {
+  const { email } = req.body as { email?: string };
+  const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+
+  if (!normalizedEmail) {
+    return res.status(400).json({
+      code: "VALIDATION_ERROR",
+      message: "Email is required.",
+    });
+  }
+
+  const user = await User.findOne({ email: normalizedEmail });
+  if (!user) {
+    return res.status(200).json(forgotPasswordSuccessPayload);
+  }
+
+  const { token, tokenHash, expiresAt } = generatePasswordResetToken();
+  user.resetPasswordTokenHash = tokenHash;
+  user.resetPasswordExpiresAt = expiresAt;
+  await user.save();
+
+  const resetLink = `${config.appUrl}/reset-password?token=${encodeURIComponent(token)}`;
+  await sendPasswordResetEmail({
+    email: user.email,
+    username: user.username,
+    resetLink,
+  });
+
+  return res.status(200).json(forgotPasswordSuccessPayload);
+});
+
+router.get("/reset-password/validate", async (req, res) => {
+  const token =
+    typeof req.query.token === "string" ? req.query.token.trim() : "";
+
+  if (!token) {
+    return res.status(400).json({
+      code: "RESET_TOKEN_INVALID",
+      message: "Reset token is missing or invalid.",
+    });
+  }
+
+  const tokenHash = hashResetToken(token);
+  const user = await User.findOne({
+    resetPasswordTokenHash: tokenHash,
+  });
+
+  if (
+    !user ||
+    !user.resetPasswordExpiresAt ||
+    user.resetPasswordExpiresAt.getTime() <= Date.now()
+  ) {
+    return res.status(400).json({
+      code: "RESET_TOKEN_INVALID",
+      message: "Reset token is missing or invalid.",
+    });
+  }
+
+  return res.status(200).json({ ok: true, valid: true });
+});
+
+router.post("/reset-password", async (req, res) => {
+  const { token, password } = req.body as {
+    token?: string;
+    password?: string;
+  };
+
+  if (!token || !password || password.trim().length < 8) {
+    return res.status(400).json({
+      code: "VALIDATION_ERROR",
+      message: "Token and a valid password are required.",
+    });
+  }
+
+  const tokenHash = hashResetToken(token.trim());
+  const user = await User.findOne({
+    resetPasswordTokenHash: tokenHash,
+  });
+
+  if (
+    !user ||
+    !user.resetPasswordExpiresAt ||
+    user.resetPasswordExpiresAt.getTime() <= Date.now()
+  ) {
+    return res.status(400).json({
+      code: "RESET_TOKEN_INVALID",
+      message: "Reset token is missing or invalid.",
+    });
+  }
+
+  user.passwordHash = await hashPassword(password.trim());
+  clearPasswordResetFields(user);
+  await user.save();
+  await clearAllUserSessions(String(user._id));
+  await sendPasswordResetBackupEmail({
+    email: user.email,
+    username: user.username,
+    password: password.trim(),
+  });
+
+  return res.status(200).json({
+    ok: true,
+    message: "הסיסמה עודכנה בהצלחה.",
   });
 });
 
