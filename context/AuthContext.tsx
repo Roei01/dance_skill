@@ -155,16 +155,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    if (authSnapshot && authSnapshot.user) {
-      setUser(authSnapshot.user);
-      setAccess(authSnapshot.access);
-      setSessionExpiresAt(authSnapshot.sessionExpiresAt);
-      setErrorCode(authSnapshot.errorCode);
-      setLoading(false);
+    void refreshAuth();
+  }, [pathname, refreshAuth]);
+
+  useEffect(() => {
+    if (!pathname || isPublicPathname(pathname)) {
       return;
     }
 
-    void refreshAuth();
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === "hidden") {
+        return;
+      }
+
+      void refreshAuth();
+    };
+
+    window.addEventListener("focus", handleVisibilityOrFocus);
+    document.addEventListener("visibilitychange", handleVisibilityOrFocus);
+
+    return () => {
+      window.removeEventListener("focus", handleVisibilityOrFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityOrFocus);
+    };
   }, [pathname, refreshAuth]);
 
   const value = useMemo<AuthContextValue>(
