@@ -114,11 +114,11 @@ export default function VideoPage({ params }: VideoPageProps) {
 
                 <h1 className="max-w-3xl text-[clamp(2rem,6vw,4.5rem)] font-black leading-[1.02] tracking-[-0.04em] text-slate-900">
                   <span className="block"> {headlineDescription}</span>
-                  <span className="mt-2 block text-[0.82em] leading-[1.08] text-slate-700">
+                  {/* <span className="mt-2 block text-[0.82em] leading-[1.08] text-slate-700">
                     {video.level}
-                  </span>
+                  </span> */}
                   {videoDuration ? (
-                    <span className="mt-2 block text-[0.62em] leading-[1.08] text-slate-500">
+                    <span className="mt-2 block text-[0.62em] leading-[1.08] text-slate-600">
                       {videoDuration}
                     </span>
                   ) : null}
