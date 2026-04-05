@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { api, getApiErrorCode, getApiErrorMessage } from "@/lib/api-client";
 
@@ -15,6 +15,8 @@ export default function ResetPasswordPage() {
   const token = useMemo(() => searchParams?.get("token")?.trim() ?? "", [searchParams]);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [validating, setValidating] = useState(true);
   const [validToken, setValidToken] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -133,28 +135,58 @@ export default function ResetPasswordPage() {
                 <label className="mr-1 block text-[11px] font-bold uppercase tracking-wider text-slate-500">
                   סיסמה חדשה
                 </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400 focus:outline-none md:px-5 md:py-3.5"
-                  placeholder="לפחות 8 תווים"
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 pl-12 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400 focus:outline-none md:px-5 md:py-3.5 md:pl-14"
+                    placeholder="לפחות 8 תווים"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((current) => !current)}
+                    className="absolute inset-y-0 left-3 flex items-center text-slate-400 transition hover:text-slate-700"
+                    aria-label={showPassword ? "הסתרת סיסמה" : "הצגת סיסמה"}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-2 text-right">
                 <label className="mr-1 block text-[11px] font-bold uppercase tracking-wider text-slate-500">
                   אימות סיסמה
                 </label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400 focus:outline-none md:px-5 md:py-3.5"
-                  placeholder="הקלדה חוזרת"
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 pl-12 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400 focus:outline-none md:px-5 md:py-3.5 md:pl-14"
+                    placeholder="הקלדה חוזרת"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((current) => !current)}
+                    className="absolute inset-y-0 left-3 flex items-center text-slate-400 transition hover:text-slate-700"
+                    aria-label={
+                      showConfirmPassword ? "הסתרת אימות סיסמה" : "הצגת אימות סיסמה"
+                    }
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
 
