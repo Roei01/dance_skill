@@ -87,18 +87,7 @@ router.post("/login", authRateLimiter, async (req, res) => {
   );
 
   if (hasActiveSession) {
-    const retryAfterSeconds = await getActiveSessionRemainingSeconds(
-      String(user._id),
-    );
-
-    return res.status(409).json({
-      code: "SESSION_ALREADY_ACTIVE",
-      message:
-        retryAfterSeconds > 0
-          ? `יש כבר משתמש מחובר לחשבון הזה. אם המכשיר הקודם נסגר, נסו שוב.`
-          : "יש כבר משתמש מחובר לחשבון הזה.",
-      retryAfterSeconds,
-    });
+    await releaseActiveSession(String(user._id));
   }
 
   const sessionId = await startExclusiveSession(String(user._id));
