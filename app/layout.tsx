@@ -15,9 +15,35 @@ const heebo = Heebo({
   variable: "--font-body",
 });
 
+const siteUrl = process.env.APP_BASE_URL || "https://rbdt-online.onrender.com";
+const ogImageUrl = `${siteUrl}/opengraph-image`;
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "ROTEM BARUCH dance tutorials",
   description: "מודרני פיוז׳ן אונליין עם רותם ברוך בואו לרקוד איתי בכל מקום בכל זמן :)",
+  openGraph: {
+    title: "ROTEM BARUCH dance tutorials",
+    description:
+      "מודרני פיוז׳ן אונליין עם רותם ברוך בואו לרקוד איתי בכל מקום בכל זמן :)",
+    type: "website",
+    url: siteUrl,
+    images: [
+      {
+        url: ogImageUrl,
+        width: 1200,
+        height: 630,
+        alt: "ROTEM BARUCH dance tutorials",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ROTEM BARUCH dance tutorials",
+    description:
+      "מודרני פיוז׳ן אונליין עם רותם ברוך בואו לרקוד איתי בכל מקום בכל זמן :)",
+    images: [ogImageUrl],
+  },
 };
 
 export default function RootLayout({
