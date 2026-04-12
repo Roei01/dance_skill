@@ -1,10 +1,13 @@
+import mongoose from "mongoose";
 import { Purchase } from "../../models/Purchase";
 import { User } from "../../models/User";
+import { DiscountCode } from "../../models/DiscountCode";
 import { sendAccessEmail, sendExistingUserPurchaseEmail } from "./email";
 import { generateTempPassword, hashPassword } from "./auth";
 import { config } from "../config/env";
 import { logger } from "../lib/logger";
 import { getActiveVideoDocumentBySlug, resolveOwnedVideoSlug } from "./videos";
+import { getActiveOfferBySlug } from "./offers";
 
 const normalizeBaseUrl = (url: string) => url.replace(/\/$/, "");
 
@@ -42,6 +45,26 @@ const resolveSiteBaseUrl = (purchaseBaseUrl?: string) => {
   }
 
   return normalizeBaseUrl(config.appUrl);
+};
+
+export const getGrantedPurchaseVideoReferences = (purchase: {
+  videoId: mongoose.Types.ObjectId | string | null | undefined;
+  grantedVideoIds?: Array<mongoose.Types.ObjectId | string | null | undefined>;
+}) => {
+  if (Array.isArray(purchase.grantedVideoIds) && purchase.grantedVideoIds.length > 0) {
+    return purchase.grantedVideoIds.filter(
+      (
+        value,
+      ): value is mongoose.Types.ObjectId | string =>
+        value instanceof mongoose.Types.ObjectId || typeof value === "string",
+    );
+  }
+
+  if (purchase.videoId instanceof mongoose.Types.ObjectId || typeof purchase.videoId === "string") {
+    return [purchase.videoId];
+  }
+
+  return [];
 };
 
 export const provisionPurchaseAccess = async (paymentId: string) => {
@@ -93,7 +116,9 @@ export const provisionPurchaseAccess = async (paymentId: string) => {
   // stays correct even if the final notification step fails.
   await purchase.save();
 
-  const ownedVideoSlug = await resolveOwnedVideoSlug(purchase.videoId);
+  const ownedVideoSlug = await resolveOwnedVideoSlug(
+    getGrantedPurchaseVideoReferences(purchase)[0],
+  );
 
   if (purchase.credentialsSentAt) {
     logger.info("הגישה לרכישה כבר נפתחה בעבר, מחזירים את פרטי הגישה הקיימים.", {
@@ -108,12 +133,31 @@ export const provisionPurchaseAccess = async (paymentId: string) => {
     };
   }
 
+  if (purchase.appliedDiscountCode) {
+    const discountCode = await DiscountCode.findOne({
+      code: purchase.appliedDiscountCode,
+      offerSlug: purchase.offerSlug,
+      isActive: true,
+    });
+
+    if (discountCode && !discountCode.usedAt && !discountCode.usedByPurchaseId) {
+      discountCode.usedAt = new Date();
+      discountCode.usedByPurchaseId = purchase._id;
+      discountCode.usedByEmail = user.email;
+      discountCode.isActive = false;
+      await discountCode.save();
+    }
+  }
+
   const loginLink = buildLoginLink(resolveSiteBaseUrl(purchase.appBaseUrl));
   if (isExistingUser) {
-    const ownedVideo = ownedVideoSlug
+    const offer = purchase.offerSlug
+      ? await getActiveOfferBySlug(purchase.offerSlug)
+      : null;
+    const ownedVideo = !offer && ownedVideoSlug
       ? await getActiveVideoDocumentBySlug(ownedVideoSlug)
       : null;
-    const videoTitle = ownedVideo?.title ?? "השיעור החדש שלך";
+    const videoTitle = offer?.title ?? ownedVideo?.title ?? "השיעור החדש שלך";
 
     await sendExistingUserPurchaseEmail({
       email: user.email,

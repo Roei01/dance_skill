@@ -29,6 +29,7 @@ import {
   sendPasswordResetEmail,
 } from "../services/email";
 import { config } from "../config/env";
+import { getGrantedPurchaseVideoReferences } from "../services/purchase";
 
 const router = express.Router();
 
@@ -112,7 +113,7 @@ router.post("/login", authRateLimiter, async (req, res) => {
     .lean();
 
   const ownedVideoIds = await resolveOwnedVideoSlugs(
-    purchases.map((purchase) => purchase.videoId),
+    purchases.flatMap((purchase) => getGrantedPurchaseVideoReferences(purchase)),
   );
 
   res.json({
@@ -255,7 +256,7 @@ router.get("/me", authenticate, async (req: AuthenticatedRequest, res) => {
     .lean();
 
   const ownedVideoIds = await resolveOwnedVideoSlugs(
-    purchases.map((purchase) => purchase.videoId),
+    purchases.flatMap((purchase) => getGrantedPurchaseVideoReferences(purchase)),
   );
 
   return res.json({

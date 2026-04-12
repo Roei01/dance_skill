@@ -6,12 +6,16 @@ import {
   createGreenInvoicePayment,
   GreenInvoiceError,
 } from "../services/greenInvoice";
-import { provisionPurchaseAccess } from "../services/purchase";
+import { getGrantedPurchaseVideoReferences, provisionPurchaseAccess } from "../services/purchase";
 import { purchaseRateLimiter } from "../middleware/rateLimit";
 import { logger } from "../lib/logger";
 import { config } from "../config/env";
 import { DEFAULT_VIDEO_SLUG } from "../../lib/catalog";
-import { getActiveVideoDocumentBySlug } from "../services/videos";
+import { getActiveVideoDocumentBySlug, resolveOwnedVideoSlugs } from "../services/videos";
+import {
+  quoteOfferPurchase,
+  resolveOfferVideoDocuments,
+} from "../services/offers";
 
 const router = express.Router();
 
@@ -59,7 +63,9 @@ const purchaseSchema = z.object({
   phone: z.string().trim().min(9),
   email: z.string().email(),
   returnTo: z.string().trim().url().optional(),
-  videoSlug: z.string().trim().min(1).optional().default(DEFAULT_VIDEO_SLUG),
+  videoSlug: z.string().trim().min(1).optional(),
+  offerSlug: z.string().trim().min(1).optional(),
+  discountCode: z.string().trim().min(1).optional(),
   paymentMethod: z
     .enum(["credit_card", "hosted"])
     .optional()
@@ -271,6 +277,25 @@ const findLatestHostedPurchaseByEmail = async (email: string) => {
     )[0] ?? null;
 };
 
+const resolveCustomerOwnedVideoSlugs = async ({
+  existingUserId,
+  email,
+}: {
+  existingUserId?: string;
+  email: string;
+}) => {
+  const purchases = await Purchase.find({
+    status: "completed",
+    $or: existingUserId
+      ? [{ userId: existingUserId }, { customerEmail: email }]
+      : [{ customerEmail: email }],
+  }).lean();
+
+  return resolveOwnedVideoSlugs(
+    purchases.flatMap((purchase) => getGrantedPurchaseVideoReferences(purchase)),
+  );
+};
+
 router.post("/create", purchaseRateLimiter, async (req, res) => {
   try {
     const validation = purchaseSchema.safeParse(req.body);
@@ -282,39 +307,126 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
       });
     }
 
-    const { email, fullName, phone, returnTo, paymentMethod, videoSlug } =
-      validation.data;
+    const {
+      email,
+      fullName,
+      phone,
+      returnTo,
+      paymentMethod,
+      videoSlug,
+      offerSlug,
+      discountCode,
+    } = validation.data;
     const normalizedEmail = email.trim().toLowerCase();
     const appBaseUrl = deriveAppBaseUrlFromRequest(req);
-    const video = await getActiveVideoDocumentBySlug(videoSlug);
-
-    if (!video) {
-      return res.status(404).json({
-        code: "VIDEO_UNAVAILABLE",
-        message: "Video not found.",
-      });
-    }
-
-    console.log("VIDEO ID:", video._id, typeof video._id);
-
-    const purchaseVideoId = video._id;
-    const acceptedPurchaseVideoIds = [video._id];
-    const orderId = `${String(video._id)}:${normalizedEmail}`;
     const existingUser = await User.findOne({ email: normalizedEmail });
+    const productVideoSlug = videoSlug || DEFAULT_VIDEO_SLUG;
 
-    if (existingUser) {
-      const existingPurchase = await Purchase.findOne({
-        userId: existingUser._id,
-        videoId: { $in: acceptedPurchaseVideoIds },
-        status: "completed",
+    let purchaseVideoId: any;
+    let grantedVideoIds: any[] = [];
+    let orderId = "";
+    let description = "";
+    let originalPrice = 0;
+    let finalPrice = 0;
+    let purchaseType: "video" | "offer" = "video";
+    let appliedDiscountCode: string | undefined;
+    let normalizedOfferSlug: string | undefined;
+    let hostedPaymentUrl: string | undefined;
+
+    if (offerSlug) {
+      const resolvedOffer = await resolveOfferVideoDocuments(offerSlug);
+      if (!resolvedOffer || resolvedOffer.videos.length === 0) {
+        return res.status(404).json({
+          code: "OFFER_UNAVAILABLE",
+          message: "Offer not found.",
+        });
+      }
+
+      if (paymentMethod === "hosted") {
+        return res.status(400).json({
+          code: "VALIDATION_ERROR",
+          message: "Hosted payment is not available for this offer yet.",
+        });
+      }
+
+      const ownedSlugs = await resolveCustomerOwnedVideoSlugs({
+        existingUserId: existingUser ? String(existingUser._id) : undefined,
+        email: normalizedEmail,
       });
+      const missingVideos = resolvedOffer.videos.filter(
+        (video) => !ownedSlugs.includes(video.slug),
+      );
 
-      if (existingPurchase) {
+      if (missingVideos.length === 0) {
         return res.status(409).json({
           code: "ALREADY_OWNED",
-          message:
-            "You already own this tutorial. Check your email for access.",
+          message: "You already own all videos in this offer.",
         });
+      }
+
+      const quote = await quoteOfferPurchase({
+        offerSlug: resolvedOffer.offer.slug,
+        email: normalizedEmail,
+        discountCode,
+      });
+
+      if (!quote) {
+        return res.status(404).json({
+          code: "OFFER_UNAVAILABLE",
+          message: "Offer not found.",
+        });
+      }
+
+      if (discountCode?.trim() && !quote.appliedCode) {
+        return res.status(400).json({
+          code: "INVALID_DISCOUNT_CODE",
+          message: quote.message || "קוד ההנחה לא תקין או שכבר נוצל.",
+        });
+      }
+
+      purchaseType = "offer";
+      normalizedOfferSlug = resolvedOffer.offer.slug;
+      hostedPaymentUrl = resolvedOffer.offer.hostedPaymentUrl;
+      grantedVideoIds = missingVideos.map((video) => video._id);
+      purchaseVideoId = grantedVideoIds[0];
+      orderId = `${resolvedOffer.offer.slug}:${normalizedEmail}`;
+      description = resolvedOffer.offer.title;
+      originalPrice = quote.originalPrice;
+      finalPrice = quote.finalPrice;
+      appliedDiscountCode = quote.appliedCode;
+    } else {
+      const video = await getActiveVideoDocumentBySlug(productVideoSlug);
+
+      if (!video) {
+        return res.status(404).json({
+          code: "VIDEO_UNAVAILABLE",
+          message: "Video not found.",
+        });
+      }
+
+      console.log("VIDEO ID:", video._id, typeof video._id);
+
+      purchaseVideoId = video._id;
+      grantedVideoIds = [video._id];
+      orderId = `${String(video._id)}:${normalizedEmail}`;
+      description = video.title;
+      originalPrice = video.price;
+      finalPrice = video.price;
+
+      if (existingUser) {
+        const existingPurchase = await Purchase.findOne({
+          userId: existingUser._id,
+          videoId: { $in: [video._id] },
+          status: "completed",
+        });
+
+        if (existingPurchase) {
+          return res.status(409).json({
+            code: "ALREADY_OWNED",
+            message:
+              "You already own this tutorial. Check your email for access.",
+          });
+        }
       }
     }
 
@@ -328,23 +440,37 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
       const successUrl = new URL("/success", `${appBaseUrl}/`);
       successUrl.searchParams.set("email", normalizedEmail);
       successUrl.searchParams.set("method", "hosted");
-      successUrl.searchParams.set("videoSlug", videoSlug);
+      successUrl.searchParams.set("videoSlug", productVideoSlug);
       if (returnTo) {
         successUrl.searchParams.set("returnTo", returnTo);
       }
 
       const checkoutUrl = isTestMode
         ? `${config.appUrl}/success?mock=true`
-        : `https://mrng.to/BKXBaFbl0K?email=${encodeURIComponent(normalizedEmail)}&successUrl=${encodeURIComponent(successUrl.toString())}&redirectUrl=${encodeURIComponent(successUrl.toString())}`;
+        : (() => {
+            const baseHostedUrl =
+              purchaseType === "offer" && hostedPaymentUrl
+                ? hostedPaymentUrl
+                : "https://mrng.to/BKXBaFbl0K";
+            const hostedUrl = new URL(baseHostedUrl);
+            hostedUrl.searchParams.set("email", normalizedEmail);
+            hostedUrl.searchParams.set("successUrl", successUrl.toString());
+            hostedUrl.searchParams.set("redirectUrl", successUrl.toString());
+            return hostedUrl.toString();
+          })();
 
       await Purchase.deleteMany({
         customerEmail: normalizedEmail,
-        videoId: { $in: acceptedPurchaseVideoIds },
+        videoId: purchaseVideoId,
+        offerSlug: normalizedOfferSlug,
         status: "pending",
       });
 
       await Purchase.create({
         videoId: purchaseVideoId,
+        grantedVideoIds,
+        purchaseType,
+        offerSlug: normalizedOfferSlug,
         paymentId: tempPaymentId,
         customerFullName: fullName,
         customerPhone: phone,
@@ -352,6 +478,9 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
         orderId,
         status: "pending",
         appBaseUrl,
+        originalPrice,
+        finalPrice,
+        appliedDiscountCode,
       });
 
       return res.json({
@@ -363,8 +492,8 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
 
     const payment = await createGreenInvoicePayment(
       email,
-      video.price,
-      video.title,
+      finalPrice,
+      description,
       {
         appBaseUrl,
         fullName,
@@ -376,12 +505,16 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
 
     await Purchase.deleteMany({
       customerEmail: normalizedEmail,
-      videoId: { $in: acceptedPurchaseVideoIds },
+      videoId: purchaseVideoId,
+      offerSlug: normalizedOfferSlug,
       status: "pending",
     });
 
     await Purchase.create({
       videoId: purchaseVideoId,
+      grantedVideoIds,
+      purchaseType,
+      offerSlug: normalizedOfferSlug,
       paymentId: payment.paymentId,
       customerFullName: fullName,
       customerPhone: phone,
@@ -389,6 +522,9 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
       orderId,
       status: "pending",
       appBaseUrl,
+      originalPrice,
+      finalPrice,
+      appliedDiscountCode,
     });
 
     res.json({

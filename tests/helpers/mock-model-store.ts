@@ -7,11 +7,17 @@ type BaseRecord = {
 type PurchaseRecord = BaseRecord & {
   userId?: string;
   videoId: string | { toString: () => string };
+  grantedVideoIds?: Array<string | { toString: () => string }>;
+  purchaseType?: 'video' | 'offer';
+  offerSlug?: string;
   paymentId: string;
   orderId?: string;
   customerFullName: string;
   customerPhone: string;
   customerEmail: string;
+  originalPrice?: number;
+  finalPrice?: number;
+  appliedDiscountCode?: string;
   status: 'pending' | 'completed' | 'failed';
   credentialsSentAt?: Date;
 };
@@ -48,9 +54,33 @@ type VideoRecord = BaseRecord & {
   isActive: boolean;
 };
 
+type OfferRecord = BaseRecord & {
+  slug: string;
+  title: string;
+  description: string;
+  price: number;
+  compareAtPrice?: number;
+  includedVideoSlugs: string[];
+  isActive: boolean;
+};
+
+type DiscountCodeRecord = BaseRecord & {
+  code: string;
+  offerSlug: string;
+  email?: string;
+  discountAmount: number;
+  isActive: boolean;
+  usedAt?: Date;
+  usedByPurchaseId?: string;
+  usedByEmail?: string;
+  expiresAt?: Date;
+};
+
 const purchases: PurchaseRecord[] = [];
 const users: UserRecord[] = [];
 const videos: VideoRecord[] = [];
+const offers: OfferRecord[] = [];
+const discountCodes: DiscountCodeRecord[] = [];
 
 let nextId = 1;
 
@@ -97,6 +127,7 @@ const createSingleQuery = <T>(resolver: () => T | null) => {
   const run = () => resolver();
 
   return {
+    select: () => createSingleQuery(run),
     lean: async () => run(),
     sort: async () => run(),
     then: <TResult1 = T | null, TResult2 = never>(
@@ -170,10 +201,42 @@ const attachVideoSave = (record: Omit<VideoRecord, 'save'>): VideoRecord => {
   return video;
 };
 
+const attachOfferSave = (record: Omit<OfferRecord, 'save'>): OfferRecord => {
+  const offer = record as OfferRecord;
+  offer.save = async () => {
+    const index = offers.findIndex((entry) => entry._id === offer._id);
+    if (index >= 0) {
+      offers[index] = offer;
+    } else {
+      offers.push(offer);
+    }
+    return offer;
+  };
+  return offer;
+};
+
+const attachDiscountCodeSave = (
+  record: Omit<DiscountCodeRecord, 'save'>,
+): DiscountCodeRecord => {
+  const discountCode = record as DiscountCodeRecord;
+  discountCode.save = async () => {
+    const index = discountCodes.findIndex((entry) => entry._id === discountCode._id);
+    if (index >= 0) {
+      discountCodes[index] = discountCode;
+    } else {
+      discountCodes.push(discountCode);
+    }
+    return discountCode;
+  };
+  return discountCode;
+};
+
 export const resetMockModelStore = () => {
   purchases.length = 0;
   users.length = 0;
   videos.length = 0;
+  offers.length = 0;
+  discountCodes.length = 0;
   nextId = 1;
 };
 
@@ -188,11 +251,17 @@ export const mockPurchaseModel = {
       createdAt: data.createdAt ?? new Date(),
       userId: data.userId,
       videoId: data.videoId ?? 'video_001',
+      grantedVideoIds: data.grantedVideoIds ?? [],
+      purchaseType: data.purchaseType ?? 'video',
+      offerSlug: data.offerSlug,
       paymentId: data.paymentId ?? buildId(),
       orderId: data.orderId,
       customerFullName: data.customerFullName ?? 'Mock Purchase',
       customerPhone: data.customerPhone ?? '0500000000',
       customerEmail: data.customerEmail ?? 'mock@example.com',
+      originalPrice: data.originalPrice,
+      finalPrice: data.finalPrice,
+      appliedDiscountCode: data.appliedDiscountCode,
       status: data.status ?? 'pending',
       credentialsSentAt: data.credentialsSentAt,
     });
@@ -254,6 +323,13 @@ export const mockVideoModel = {
     createSingleQuery(() => videos.find((video) => matchesQuery(video, query)) ?? null),
   find: (query: Record<string, any>) =>
     createManyQuery(() => videos.filter((video) => matchesQuery(video, query))),
+  updateOne: async (
+    query: Record<string, any>,
+    update: Record<string, any>,
+    options?: Record<string, any>
+  ) => {
+    return mockVideoModel.findOneAndUpdate(query, update, options);
+  },
   findOneAndUpdate: async (
     query: Record<string, any>,
     update: Record<string, any>,
@@ -312,5 +388,93 @@ export const mockVideoModel = {
 
     videos.push(nextVideo);
     return nextVideo;
+  },
+};
+
+export const mockOfferModel = {
+  findOne: (query: Record<string, any>) =>
+    createSingleQuery(() => offers.find((offer) => matchesQuery(offer, query)) ?? null),
+  find: (query: Record<string, any>) =>
+    createManyQuery(() => offers.filter((offer) => matchesQuery(offer, query))),
+  create: async (data: Partial<OfferRecord>) => {
+    const offer = attachOfferSave({
+      _id: buildId(),
+      createdAt: data.createdAt ?? new Date(),
+      slug: data.slug ?? `offer-${buildId()}`,
+      title: data.title ?? 'Mock Offer',
+      description: data.description ?? 'Mock offer description',
+      price: data.price ?? 99,
+      compareAtPrice: data.compareAtPrice,
+      includedVideoSlugs: data.includedVideoSlugs ?? [],
+      isActive: data.isActive ?? true,
+    });
+    offers.push(offer);
+    return offer;
+  },
+  updateOne: async (query: Record<string, any>, update: Record<string, any>, options?: Record<string, any>) => {
+    const offer = offers.find((entry) => matchesQuery(entry, query)) ?? null;
+    if (offer) {
+      if (update.$set) {
+        Object.assign(offer, update.$set);
+      }
+      if (update.$setOnInsert) {
+        Object.assign(offer, update.$setOnInsert);
+      }
+      return offer;
+    }
+
+    if (!options?.upsert) {
+      return null;
+    }
+
+    const nextOffer = attachOfferSave({
+      _id: buildId(),
+      createdAt: new Date(),
+      slug: query.slug ?? `offer-${buildId()}`,
+      title: update.$set?.title ?? update.$setOnInsert?.title ?? 'Mock Offer',
+      description:
+        update.$set?.description ??
+        update.$setOnInsert?.description ??
+        'Mock offer description',
+      price: update.$set?.price ?? update.$setOnInsert?.price ?? 99,
+      compareAtPrice:
+        update.$set?.compareAtPrice ?? update.$setOnInsert?.compareAtPrice,
+      includedVideoSlugs:
+        update.$set?.includedVideoSlugs ??
+        update.$setOnInsert?.includedVideoSlugs ??
+        [],
+      isActive: update.$set?.isActive ?? update.$setOnInsert?.isActive ?? true,
+    });
+
+    offers.push(nextOffer);
+    return nextOffer;
+  },
+};
+
+export const mockDiscountCodeModel = {
+  findOne: (query: Record<string, any>) =>
+    createSingleQuery(
+      () => discountCodes.find((discountCode) => matchesQuery(discountCode, query)) ?? null,
+    ),
+  find: (query: Record<string, any>) =>
+    createManyQuery(() =>
+      discountCodes.filter((discountCode) => matchesQuery(discountCode, query)),
+    ),
+  create: async (data: Partial<DiscountCodeRecord>) => {
+    const discountCode = attachDiscountCodeSave({
+      _id: buildId(),
+      createdAt: data.createdAt ?? new Date(),
+      code: data.code ?? `CODE${buildId()}`.toUpperCase(),
+      offerSlug: data.offerSlug ?? 'all-access-bundle',
+      email: data.email,
+      discountAmount: data.discountAmount ?? 45,
+      isActive: data.isActive ?? true,
+      usedAt: data.usedAt,
+      usedByPurchaseId: data.usedByPurchaseId,
+      usedByEmail: data.usedByEmail,
+      expiresAt: data.expiresAt,
+    });
+    discountCodes.push(discountCode);
+    return discountCode;
   },
 };
