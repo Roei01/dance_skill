@@ -147,14 +147,11 @@ export default function OfferPage({ params }: OfferPageProps) {
                                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/72 via-slate-950/10 to-transparent" />
                                 <div className="absolute inset-x-0 bottom-0 p-4 text-right">
                                   <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#f2cf88]">
-                                    preview available
+                                    שיעור מלא זמין
                                   </p>
-                                  <h2 className="mt-1 text-lg font-black tracking-tight text-white">
+                                  <h2 className="mt-1 text-2xl font-black tracking-tight text-white md:text-[1.6rem]">
                                     {video.title}
                                   </h2>
-                                  <p className="mt-2 text-sm leading-6 text-white/80">
-                                    התקציר זמין בעמוד השיעור לפני הרכישה.
-                                  </p>
                                 </div>
                               </div>
                               <div className="space-y-1.5 p-4 text-right">

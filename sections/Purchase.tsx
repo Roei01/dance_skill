@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
+  ArrowUpRight,
   Loader2,
   ShieldCheck,
   Smartphone,
@@ -175,11 +176,35 @@ export const Purchase = ({
           initial={{ opacity: 0, x: 50 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
-          className="relative z-10 overflow-hidden rounded-[2rem] border border-white/70 bg-white/90 p-6 text-center shadow-[0_30px_80px_rgba(15,23,42,0.12)] backdrop-blur-xl md:p-10"
+          className="relative z-10"
         >
-          <div className="pointer-events-none absolute right-0 top-0 h-32 w-32 bg-orange-200 blur-[100px] opacity-70" />
+          <div className="mb-4 md:mb-5">
+            <Link
+              href="/bundle"
+              className="group block overflow-hidden rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,rgba(255,247,221,0.95),rgba(255,255,255,0.96),rgba(239,246,255,0.92))] p-5 text-right shadow-[0_20px_60px_rgba(15,23,42,0.08)] transition hover:-translate-y-1 hover:shadow-[0_26px_70px_rgba(15,23,42,0.12)] md:p-6"
+            >
+              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                <div className="space-y-2">
+                  <p className="text-xs font-bold uppercase tracking-[0.24em] text-amber-700">
+                    הצעה מיוחדת באתר
+                  </p>
+                  <h3 className="text-2xl font-black tracking-tight text-slate-900 md:text-3xl">
+                    כל 3 הסרטונים ב-99 ש"ח
+                  </h3>
+                </div>
 
-          <div className="mb-6 md:mb-8">
+                <div className="inline-flex items-center gap-2 self-start rounded-full border border-slate-900/10 bg-white/90 px-4 py-2 text-sm font-bold text-slate-900 shadow-sm">
+                  <span>לצפייה בחבילה</span>
+                  <ArrowUpRight className="h-4 w-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                </div>
+              </div>
+            </Link>
+          </div>
+
+          <div className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/90 p-6 text-center shadow-[0_30px_80px_rgba(15,23,42,0.12)] backdrop-blur-xl md:p-10">
+            <div className="pointer-events-none absolute right-0 top-0 h-32 w-32 bg-orange-200 blur-[100px] opacity-70" />
+
+            <div className="mb-6 md:mb-8">
             <p className="font-display mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400 md:text-xs md:tracking-widest">
               תשלום חד־פעמי
             </p>
@@ -191,9 +216,9 @@ export const Purchase = ({
             <p className="mt-2 text-sm font-medium text-slate-500 md:text-base">
               {title}
             </p>
-          </div>
+            </div>
 
-          <form onSubmit={handlePurchase} className="space-y-3">
+            <form onSubmit={handlePurchase} className="space-y-3">
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-right text-sm font-medium text-slate-600">
               לפני המעבר לתשלום יש למלא פרטי לקוח ולאשר את התנאים והתקנון.
             </div>
@@ -337,12 +362,13 @@ export const Purchase = ({
                 <Loader2 className="w-5 h-5 animate-spin relative z-10" />
               )}
             </button>
-          </form>
+            </form>
 
-          <div className="mt-6 flex justify-center gap-4 transition-all duration-300">
-            <span className="font-display text-xs font-bold uppercase tracking-wider text-slate-400">
-              תשלום מאובטח דרך GreenInvoice
-            </span>
+            <div className="mt-6 flex justify-center gap-4 transition-all duration-300">
+              <span className="font-display text-xs font-bold uppercase tracking-wider text-slate-400">
+                תשלום מאובטח דרך GreenInvoice
+              </span>
+            </div>
           </div>
         </motion.div>
       </div>
