@@ -12,7 +12,7 @@ import { NewVideoPopup } from "@/components/home/NewVideoPopup";
 export default function Home() {
   return (
     <>
-      <NewVideoPopup href="/video/modern-dance2" />
+      <NewVideoPopup href="/offers/all-access-bundle" />
       <main
         id="main-content"
         tabIndex={-1}
