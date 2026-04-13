@@ -28,6 +28,7 @@ type CreateGreenInvoicePaymentOptions = {
   fullName?: string;
   phone?: string;
   orderId?: string;
+  externalId?: string;
   returnTo?: string;
 };
 
@@ -324,6 +325,12 @@ export const createGreenInvoicePayment = async (
       ],
       remarks: normalizedDescription,
       custom: options?.orderId || email,
+      ...(options?.externalId
+        ? {
+            external_data: options.externalId,
+            externalData: options.externalId,
+          }
+        : {}),
       ...callbackUrls,
     };
 

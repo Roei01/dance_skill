@@ -130,6 +130,58 @@ describe('purchase webhook route', () => {
     expect(purchase?.status).toBe('completed');
   });
 
+  it('should prefer externalId lookup when webhook sends purchase id', async () => {
+    const purchase = await Purchase.create({
+      videoId: DEFAULT_VIDEO_ID,
+      paymentId: 'provider_generated_external',
+      orderId: `${DEFAULT_VIDEO_ID}:external-id@example.com`,
+      externalId: 'purchase_mock_1',
+      customerFullName: 'Webhook External Id',
+      customerPhone: '0500000010',
+      customerEmail: 'external-id@example.com',
+      status: 'pending',
+    });
+
+    const response = await request(app).post('/api/purchase/webhook').send({
+      productId: 'different_provider_id',
+      status: 'success',
+      external_data: purchase.externalId,
+      custom: 'some-other-legacy-value@example.com',
+    });
+
+    const updatedPurchase = await Purchase.findOne({
+      externalId: 'purchase_mock_1',
+    });
+
+    expect(response.status).toBe(200);
+    expect(updatedPurchase?.status).toBe('completed');
+  });
+
+  it('should treat legacy external_data value as orderId fallback', async () => {
+    await Purchase.create({
+      videoId: DEFAULT_VIDEO_ID,
+      paymentId: 'provider_generated_legacy_external',
+      orderId: `${DEFAULT_VIDEO_ID}:legacy-external@example.com`,
+      customerFullName: 'Webhook Legacy External',
+      customerPhone: '0500000011',
+      customerEmail: 'legacy-external@example.com',
+      status: 'pending',
+    });
+
+    const response = await request(app).post('/api/purchase/webhook').send({
+      productId: 'different_provider_id',
+      status: 'success',
+      external_data: `${DEFAULT_VIDEO_ID}:legacy-external@example.com`,
+    });
+
+    const purchase = await Purchase.findOne({
+      orderId: `${DEFAULT_VIDEO_ID}:legacy-external@example.com`,
+    });
+
+    expect(response.status).toBe(200);
+    expect(purchase?.status).toBe('completed');
+  });
+
   it('should match webhook by payer email when ids do not match', async () => {
     await Purchase.create({
       videoId: DEFAULT_VIDEO_ID,

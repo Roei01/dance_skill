@@ -92,20 +92,29 @@ const successConfirmSchema = z.object({
 
 type PurchaseVideoId = mongoose.Types.ObjectId;
 
+const extractWebhookExternalId = (body: Record<string, any>) =>
+  normalizeString(
+    body?.external_data ||
+      body?.externalData ||
+      body?.data?.external_data ||
+      body?.data?.externalData ||
+      body?.payload?.external_data ||
+      body?.payload?.externalData ||
+      body?.transactions?.[0]?.external_data ||
+      body?.transactions?.[0]?.externalData,
+  );
+
 const extractWebhookOrderId = (body: Record<string, any>) =>
   normalizeString(
     body?.custom ||
       body?.orderId ||
       body?.reference ||
-      body?.external_data ||
       body?.data?.custom ||
       body?.data?.orderId ||
       body?.data?.reference ||
-      body?.data?.external_data ||
       body?.payload?.custom ||
       body?.payload?.orderId ||
-      body?.payload?.external_data ||
-      body?.transactions?.[0]?.external_data,
+      body?.payload?.reference,
   );
 
 const extractWebhookPaymentIds = (body: Record<string, any>) => {
@@ -233,11 +242,22 @@ const normalizeWebhookStatus = (body: Record<string, any>) => {
 const reqBodyHasTransactions = (body: Record<string, any>) =>
   Array.isArray(body?.transactions) && body.transactions.length > 0;
 
+const toLegacyWebhookOrderId = (externalId?: string) =>
+  externalId && externalId.includes(":") ? externalId : undefined;
+
 const findPurchaseForWebhook = async (
+  externalId: string | undefined,
   paymentIds: string[],
   orderId?: string,
   payerEmail?: string,
 ) => {
+  if (externalId && !externalId.includes(":")) {
+    const purchaseByExternalId = await Purchase.findOne({ externalId });
+    if (purchaseByExternalId) {
+      return purchaseByExternalId;
+    }
+  }
+
   for (const paymentId of paymentIds) {
     const purchaseByPaymentId = await Purchase.findOne({ paymentId });
     if (purchaseByPaymentId) {
@@ -245,8 +265,10 @@ const findPurchaseForWebhook = async (
     }
   }
 
-  if (orderId) {
-    const purchaseByOrderId = await Purchase.findOne({ orderId });
+  const legacyOrderId = orderId || toLegacyWebhookOrderId(externalId);
+
+  if (legacyOrderId) {
+    const purchaseByOrderId = await Purchase.findOne({ orderId: legacyOrderId });
     if (purchaseByOrderId) {
       return purchaseByOrderId;
     }
@@ -454,11 +476,44 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
       }
     }
 
+    const pendingPurchaseQuery = normalizedOfferSlug
+      ? {
+          customerEmail: normalizedEmail,
+          offerSlug: normalizedOfferSlug,
+          status: "pending" as const,
+        }
+      : {
+          customerEmail: normalizedEmail,
+          videoId: purchaseVideoId,
+          status: "pending" as const,
+        };
+
+    await Purchase.deleteMany(pendingPurchaseQuery);
+
     if (paymentMethod === "hosted") {
       const isTestMode = config.paymentMode === "test";
       const tempPaymentId = isTestMode
         ? `mock_${Date.now()}_${Math.random().toString(36).substring(7)}`
         : `link_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+
+      const purchase = await Purchase.create({
+        videoId: purchaseVideoId,
+        grantedVideoIds,
+        purchaseType,
+        offerSlug: normalizedOfferSlug,
+        paymentId: tempPaymentId,
+        customerFullName: fullName,
+        customerPhone: phone,
+        customerEmail: normalizedEmail,
+        orderId,
+        status: "pending",
+        appBaseUrl,
+        originalPrice,
+        finalPrice,
+        appliedDiscountCode,
+      });
+      purchase.externalId = String(purchase._id);
+      await purchase.save();
 
       // Set up the success URL to return to
       const successUrl = new URL("/success", `${appBaseUrl}/`);
@@ -480,39 +535,12 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
             hostedUrl.searchParams.set("email", normalizedEmail);
             hostedUrl.searchParams.set("successUrl", successUrl.toString());
             hostedUrl.searchParams.set("redirectUrl", successUrl.toString());
+            hostedUrl.searchParams.set(
+              "externalId",
+              purchase.externalId || String(purchase._id),
+            );
             return hostedUrl.toString();
           })();
-
-      const pendingPurchaseQuery = normalizedOfferSlug
-        ? {
-            customerEmail: normalizedEmail,
-            offerSlug: normalizedOfferSlug,
-            status: "pending" as const,
-          }
-        : {
-            customerEmail: normalizedEmail,
-            videoId: purchaseVideoId,
-            status: "pending" as const,
-          };
-
-      await Purchase.deleteMany(pendingPurchaseQuery);
-
-      await Purchase.create({
-        videoId: purchaseVideoId,
-        grantedVideoIds,
-        purchaseType,
-        offerSlug: normalizedOfferSlug,
-        paymentId: tempPaymentId,
-        customerFullName: fullName,
-        customerPhone: phone,
-        customerEmail: normalizedEmail,
-        orderId,
-        status: "pending",
-        appBaseUrl,
-        originalPrice,
-        finalPrice,
-        appliedDiscountCode,
-      });
 
       return res.json({
         url: checkoutUrl,
@@ -521,39 +549,12 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
       });
     }
 
-    const payment = await createGreenInvoicePayment(
-      email,
-      finalPrice,
-      description,
-      {
-        appBaseUrl,
-        fullName,
-        phone,
-        orderId,
-        returnTo,
-      },
-    );
-
-    const pendingPurchaseQuery = normalizedOfferSlug
-      ? {
-          customerEmail: normalizedEmail,
-          offerSlug: normalizedOfferSlug,
-          status: "pending" as const,
-        }
-      : {
-          customerEmail: normalizedEmail,
-          videoId: purchaseVideoId,
-          status: "pending" as const,
-        };
-
-    await Purchase.deleteMany(pendingPurchaseQuery);
-
-    await Purchase.create({
+    const purchase = await Purchase.create({
       videoId: purchaseVideoId,
       grantedVideoIds,
       purchaseType,
       offerSlug: normalizedOfferSlug,
-      paymentId: payment.paymentId,
+      paymentId: `pending_${new mongoose.Types.ObjectId().toString()}`,
       customerFullName: fullName,
       customerPhone: phone,
       customerEmail: normalizedEmail,
@@ -564,11 +565,35 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
       finalPrice,
       appliedDiscountCode,
     });
+    purchase.externalId = String(purchase._id);
+    await purchase.save();
 
-    res.json({
-      checkoutUrl: payment.checkoutUrl,
-      paymentId: payment.paymentId,
-    });
+    try {
+      const payment = await createGreenInvoicePayment(
+        email,
+        finalPrice,
+        description,
+        {
+          appBaseUrl,
+          fullName,
+          phone,
+          orderId,
+          externalId: purchase.externalId,
+          returnTo,
+        },
+      );
+
+      purchase.paymentId = payment.paymentId;
+      await purchase.save();
+
+      return res.json({
+        checkoutUrl: payment.checkoutUrl,
+        paymentId: payment.paymentId,
+      });
+    } catch (paymentError) {
+      await Purchase.deleteMany({ _id: purchase._id });
+      throw paymentError;
+    }
   } catch (error) {
     if (error instanceof GreenInvoiceError) {
       logger.error("Purchase error:", {
@@ -734,7 +759,9 @@ router.post("/success/confirm", async (req, res) => {
 router.post("/webhook", async (req, res) => {
   console.log("🔥 WEBHOOK RECEIVED:");
   console.log(JSON.stringify(req.body, null, 2));
+  const externalId = extractWebhookExternalId(req.body);
   const orderId = extractWebhookOrderId(req.body);
+  const legacyOrderId = orderId || toLegacyWebhookOrderId(externalId);
   const event = extractWebhookEvent(req.body);
   const payerEmail = extractWebhookEmail(req.body);
   const paymentIds = extractWebhookPaymentIds(req.body);
@@ -743,17 +770,19 @@ router.post("/webhook", async (req, res) => {
   const status = normalizeWebhookStatus(req.body);
 
   logger.info("Purchase webhook triggered.", {
+    externalId,
     paymentId,
-    orderId,
+    orderId: legacyOrderId,
     event,
     payerEmail,
     status,
     paymentMode: config.paymentMode,
   });
   console.log("WEBHOOK_NORMALIZED", {
+    externalId,
     paymentId,
     paymentIds,
-    orderId,
+    orderId: legacyOrderId,
     event,
     payerEmail,
     status,
@@ -766,8 +795,9 @@ router.post("/webhook", async (req, res) => {
     paymentId.startsWith("mock_")
   ) {
     const mockPurchase = await findPurchaseForWebhook(
+      externalId,
       paymentIds,
-      orderId,
+      legacyOrderId,
       payerEmail,
     );
 
@@ -777,8 +807,9 @@ router.post("/webhook", async (req, res) => {
         await mockPurchase.save();
       }
       console.log("WEBHOOK_TEST_FAILED", {
+        externalId,
         paymentId,
-        orderId,
+        orderId: legacyOrderId,
         payerEmail,
         foundPurchase: Boolean(mockPurchase),
       });
@@ -786,8 +817,9 @@ router.post("/webhook", async (req, res) => {
     }
 
     console.log("WEBHOOK_TEST_PROVISION_START", {
+      externalId,
       paymentId,
-      orderId,
+      orderId: legacyOrderId,
       payerEmail,
       foundPurchase: Boolean(mockPurchase),
     });
@@ -795,8 +827,9 @@ router.post("/webhook", async (req, res) => {
       ? await provisionPurchaseAccess(String(mockPurchase.paymentId))
       : null;
     console.log("WEBHOOK_TEST_PROVISION_RESULT", {
+      externalId,
       paymentId,
-      orderId,
+      orderId: legacyOrderId,
       payerEmail,
       provisioned: Boolean(provisioned),
     });
@@ -815,7 +848,12 @@ router.post("/webhook", async (req, res) => {
     });
   }
 
-  let purchase = await findPurchaseForWebhook(paymentIds, orderId, payerEmail);
+  let purchase = await findPurchaseForWebhook(
+    externalId,
+    paymentIds,
+    legacyOrderId,
+    payerEmail,
+  );
 
   if (!purchase && req.body?.channel === "payment-link" && payerEmail) {
     purchase = await findLatestHostedPurchaseByEmail(payerEmail);
@@ -828,9 +866,10 @@ router.post("/webhook", async (req, res) => {
     }
   }
   console.log("WEBHOOK_PURCHASE_LOOKUP_RESULT", {
+    externalId,
     paymentId,
     paymentIds,
-    orderId,
+    orderId: legacyOrderId,
     payerEmail,
     status,
     foundPurchase: Boolean(purchase),
@@ -842,8 +881,9 @@ router.post("/webhook", async (req, res) => {
 
   if (!purchase) {
     console.warn("Webhook purchase not found", {
+      externalId,
       paymentId,
-      orderId,
+      orderId: legacyOrderId,
       payerEmail,
       event,
       status,
@@ -886,8 +926,9 @@ router.post("/webhook", async (req, res) => {
         logger.warn(
           "Webhook completed but no matching purchase could be provisioned",
           {
+            externalId,
             paymentId,
-            orderId,
+            orderId: legacyOrderId,
             payerEmail,
             body: req.body,
           },
@@ -895,8 +936,9 @@ router.post("/webhook", async (req, res) => {
       }
     } catch (error) {
       console.error("Webhook provisioning error", {
+        externalId,
         paymentId,
-        orderId,
+        orderId: legacyOrderId,
         payerEmail,
         purchaseId: String(purchase._id),
         purchasePaymentId: String(purchase.paymentId),
@@ -919,8 +961,9 @@ router.post("/webhook", async (req, res) => {
     });
   } else {
     console.log("WEBHOOK_IGNORED_STATUS", {
+      externalId,
       paymentId,
-      orderId,
+      orderId: legacyOrderId,
       payerEmail,
       status,
       purchaseId: String(purchase._id),

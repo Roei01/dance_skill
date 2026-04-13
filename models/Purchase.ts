@@ -4,6 +4,7 @@ export interface IPurchase extends Document {
   userId?: mongoose.Types.ObjectId;
   videoId: mongoose.Types.ObjectId | string;
   grantedVideoIds?: mongoose.Types.ObjectId[];
+  externalId?: string;
   purchaseType?: 'video' | 'offer';
   offerSlug?: string;
   paymentId: string;
@@ -24,6 +25,7 @@ const PurchaseSchema = new Schema<IPurchase>({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   videoId: { type: mongoose.Schema.Types.ObjectId, ref: 'Video', required: true, index: true },
   grantedVideoIds: { type: [mongoose.Schema.Types.ObjectId], ref: 'Video', default: [] },
+  externalId: { type: String, trim: true, unique: true, sparse: true, index: true },
   purchaseType: { type: String, enum: ['video', 'offer'], default: 'video', index: true },
   offerSlug: { type: String, trim: true, index: true },
   paymentId: { type: String, required: true, unique: true, index: true },

@@ -55,6 +55,7 @@ describe('createGreenInvoicePayment', () => {
         fullName: 'Buyer Example',
         phone: '0500000000',
         orderId: 'video_001:buyer@example.com',
+        externalId: '660000000000000000000001',
         returnTo: 'https://www.example.com/#purchase',
       },
     );
@@ -67,10 +68,14 @@ describe('createGreenInvoicePayment', () => {
     const paymentPayload = mockedAxios.post.mock.calls[1]?.[1] as {
       successUrl?: string;
       notifyUrl?: string;
+      external_data?: string;
+      externalData?: string;
     };
     expect(paymentPayload).toMatchObject({
       successUrl: expect.stringContaining('method=credit_card'),
       notifyUrl: 'https://www.example.com/api/purchase/webhook',
+      external_data: '660000000000000000000001',
+      externalData: '660000000000000000000001',
     });
     expect(paymentPayload.successUrl).toContain(
       encodeURIComponent('video_001:buyer@example.com'),

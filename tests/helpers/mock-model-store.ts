@@ -8,6 +8,7 @@ type PurchaseRecord = BaseRecord & {
   userId?: string;
   videoId: string | { toString: () => string };
   grantedVideoIds?: Array<string | { toString: () => string }>;
+  externalId?: string;
   purchaseType?: 'video' | 'offer';
   offerSlug?: string;
   paymentId: string;
@@ -252,6 +253,7 @@ export const mockPurchaseModel = {
       userId: data.userId,
       videoId: data.videoId ?? 'video_001',
       grantedVideoIds: data.grantedVideoIds ?? [],
+      externalId: data.externalId,
       purchaseType: data.purchaseType ?? 'video',
       offerSlug: data.offerSlug,
       paymentId: data.paymentId ?? buildId(),
