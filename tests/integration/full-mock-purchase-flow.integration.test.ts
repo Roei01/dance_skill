@@ -185,6 +185,11 @@ describe('full mock purchase flow integration', () => {
       paymentId: createResponse.body.paymentId,
     });
     const discountCode = await DiscountCode.findOne({ code: 'BUNDLE45' });
+    const videoTwo = await Video.findOne({ slug: 'video-two' });
+    const videoThree = await Video.findOne({ slug: 'video-three' });
+    const grantedVideoIds = (completedPurchase?.grantedVideoIds ?? []).map((value: unknown) =>
+      String(value),
+    );
     const reusedQuoteResponse = await request(app)
       .post(`/api/offers/${DEFAULT_BUNDLE_OFFER_SLUG}/quote`)
       .send({
@@ -195,6 +200,10 @@ describe('full mock purchase flow integration', () => {
     expect(completedPurchase?.status).toBe('completed');
     expect(discountCode?.isActive).toBe(false);
     expect(discountCode?.usedByEmail).toBe('bundle-owner@example.com');
+    expect(grantedVideoIds).toHaveLength(2);
+    expect(grantedVideoIds).toEqual(
+      expect.arrayContaining([String(videoThree?._id), String(videoTwo?._id)]),
+    );
     expect(reusedQuoteResponse.status).toBe(400);
     expect(reusedQuoteResponse.body.code).toBe('INVALID_DISCOUNT_CODE');
     expect(getSentAccessEmails()).toHaveLength(1);

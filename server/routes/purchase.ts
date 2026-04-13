@@ -7,6 +7,7 @@ import {
   GreenInvoiceError,
 } from "../services/greenInvoice";
 import { getGrantedPurchaseVideoReferences, provisionPurchaseAccess } from "../services/purchase";
+import { isValidPurchaseConfirmationToken } from "../services/purchase-confirmation";
 import { purchaseRateLimiter } from "../middleware/rateLimit";
 import { logger } from "../lib/logger";
 import { config } from "../config/env";
@@ -74,6 +75,12 @@ const purchaseSchema = z.object({
 
 const hostedConfirmSchema = z.object({
   email: z.string().trim().email(),
+});
+
+const successConfirmSchema = z.object({
+  email: z.string().trim().email(),
+  orderId: z.string().trim().min(1),
+  token: z.string().trim().min(1),
 });
 
 const extractWebhookOrderId = (body: Record<string, any>) =>
@@ -609,6 +616,82 @@ router.post("/hosted/confirm", async (req, res) => {
     return res.status(500).json({
       code: "INTERNAL_ERROR",
       message: "Unable to confirm hosted payment.",
+    });
+  }
+});
+
+router.post("/success/confirm", async (req, res) => {
+  const validation = successConfirmSchema.safeParse(req.body);
+
+  if (!validation.success) {
+    return res.status(400).json({
+      code: "VALIDATION_ERROR",
+      message: "A valid email, order id and token are required.",
+    });
+  }
+
+  const email = validation.data.email.trim().toLowerCase();
+  const orderId = validation.data.orderId.trim();
+  const token = validation.data.token.trim();
+
+  if (!isValidPurchaseConfirmationToken({ email, orderId, token })) {
+    return res.status(401).json({
+      code: "UNAUTHORIZED",
+      message: "Invalid purchase confirmation token.",
+    });
+  }
+
+  const purchase = await Purchase.findOne({
+    orderId,
+    customerEmail: email,
+  }).sort({ createdAt: -1 });
+
+  if (!purchase) {
+    logger.warn("Success confirmation could not find purchase.", {
+      email,
+      orderId,
+    });
+    return res.status(404).json({
+      code: "PURCHASE_NOT_FOUND",
+      message: "No matching purchase found for this confirmation.",
+    });
+  }
+
+  if (purchase.status === "completed" && purchase.credentialsSentAt) {
+    logger.info("Success confirmation found an already completed purchase.", {
+      email,
+      orderId,
+      paymentId: purchase.paymentId,
+    });
+    return res.status(200).json({
+      ok: true,
+      alreadyCompleted: true,
+      paymentId: purchase.paymentId,
+    });
+  }
+
+  try {
+    purchase.status = "completed";
+    await purchase.save();
+
+    const provisioned = await provisionPurchaseAccess(String(purchase.paymentId));
+    logger.info("Success confirmation completed.", {
+      email,
+      orderId,
+      paymentId: purchase.paymentId,
+      provisioned: Boolean(provisioned),
+    });
+
+    return res.status(200).json({
+      ok: true,
+      paymentId: purchase.paymentId,
+      provisioned: Boolean(provisioned),
+    });
+  } catch (error) {
+    logger.error("Success confirmation error:", error);
+    return res.status(500).json({
+      code: "INTERNAL_ERROR",
+      message: "Unable to confirm purchase success.",
     });
   }
 });

@@ -6,23 +6,41 @@ import { api } from "@/lib/api-client";
 type HostedPurchaseConfirmationProps = {
   email?: string;
   method?: string;
+  orderId?: string;
+  confirmToken?: string;
 };
 
 export function HostedPurchaseConfirmation({
   email,
   method,
+  orderId,
+  confirmToken,
 }: HostedPurchaseConfirmationProps) {
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!email || method !== "hosted") {
+    if (!email) {
       return;
     }
 
     let cancelled = false;
 
-    void api
-      .post("/purchase/hosted/confirm", { email })
+    const request =
+      method === "hosted"
+        ? api.post("/purchase/hosted/confirm", { email })
+        : orderId && confirmToken
+          ? api.post("/purchase/success/confirm", {
+              email,
+              orderId,
+              token: confirmToken,
+            })
+          : null;
+
+    if (!request) {
+      return;
+    }
+
+    void request
       .then((response) => {
         if (cancelled) {
           return;
@@ -44,7 +62,7 @@ export function HostedPurchaseConfirmation({
     return () => {
       cancelled = true;
     };
-  }, [email, method]);
+  }, [confirmToken, email, method, orderId]);
 
   if (!message) {
     return null;

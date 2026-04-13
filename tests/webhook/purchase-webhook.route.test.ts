@@ -11,6 +11,7 @@ import {
   getSentAccessEmails,
   resetSentAccessEmails,
 } from '../../server/services/email';
+import { createPurchaseConfirmationToken } from '../../server/services/purchase-confirmation';
 import { resetMockModelStore } from '../helpers/mock-model-store';
 
 describe('purchase webhook route', () => {
@@ -250,5 +251,75 @@ describe('purchase webhook route', () => {
     expect(purchase?.status).toBe('completed');
     expect(user).not.toBeNull();
     expect(getSentAccessEmails()).toHaveLength(1);
+  });
+
+  it('should confirm credit card purchases from the success page fallback', async () => {
+    const orderId = `${DEFAULT_VIDEO_ID}:success-confirm@example.com`;
+
+    await Purchase.create({
+      videoId: DEFAULT_VIDEO_ID,
+      paymentId: 'credit_card_1001',
+      orderId,
+      customerFullName: 'Success Confirm User',
+      customerPhone: '0500000008',
+      customerEmail: 'success-confirm@example.com',
+      status: 'pending',
+      createdAt: new Date(),
+    });
+
+    const response = await request(app)
+      .post('/api/purchase/success/confirm')
+      .send({
+        email: 'success-confirm@example.com',
+        orderId,
+        token: createPurchaseConfirmationToken({
+          email: 'success-confirm@example.com',
+          orderId,
+        }),
+      });
+
+    const purchase = await Purchase.findOne({ paymentId: 'credit_card_1001' });
+    const user = await User.findOne({ email: 'success-confirm@example.com' });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      ok: true,
+      paymentId: 'credit_card_1001',
+      provisioned: true,
+    });
+    expect(purchase?.status).toBe('completed');
+    expect(user).not.toBeNull();
+    expect(getSentAccessEmails()).toHaveLength(1);
+  });
+
+  it('should reject success page confirmation with an invalid token', async () => {
+    const orderId = `${DEFAULT_VIDEO_ID}:invalid-confirm@example.com`;
+
+    await Purchase.create({
+      videoId: DEFAULT_VIDEO_ID,
+      paymentId: 'credit_card_1002',
+      orderId,
+      customerFullName: 'Invalid Confirm User',
+      customerPhone: '0500000009',
+      customerEmail: 'invalid-confirm@example.com',
+      status: 'pending',
+      createdAt: new Date(),
+    });
+
+    const response = await request(app)
+      .post('/api/purchase/success/confirm')
+      .send({
+        email: 'invalid-confirm@example.com',
+        orderId,
+        token: 'deadbeef',
+      });
+
+    const purchase = await Purchase.findOne({ paymentId: 'credit_card_1002' });
+    const user = await User.findOne({ email: 'invalid-confirm@example.com' });
+
+    expect(response.status).toBe(401);
+    expect(response.body.code).toBe('UNAUTHORIZED');
+    expect(purchase?.status).toBe('pending');
+    expect(user).toBeNull();
   });
 });

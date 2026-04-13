@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { config } from '../../server/config/env';
 import { createGreenInvoicePayment } from '../../server/services/greenInvoice';
+import { createPurchaseConfirmationToken } from '../../server/services/purchase-confirmation';
 
 jest.mock('axios');
 
@@ -63,5 +64,52 @@ describe('createGreenInvoicePayment', () => {
       paymentId: 'gi_real_123',
     });
     expect(mockedAxios.post).toHaveBeenCalledTimes(2);
+    const paymentPayload = mockedAxios.post.mock.calls[1]?.[1] as {
+      successUrl?: string;
+      notifyUrl?: string;
+    };
+    expect(paymentPayload).toMatchObject({
+      successUrl: expect.stringContaining('method=credit_card'),
+      notifyUrl: 'https://www.example.com/api/purchase/webhook',
+    });
+    expect(paymentPayload.successUrl).toContain(
+      encodeURIComponent('video_001:buyer@example.com'),
+    );
+    expect(paymentPayload.successUrl).toContain(
+      createPurchaseConfirmationToken({
+        email: 'buyer@example.com',
+        orderId: 'video_001:buyer@example.com',
+      }),
+    );
+  });
+
+  it('should send a fallback line description when the given description is blank', async () => {
+    config.paymentMode = 'production';
+
+    mockedAxios.post
+      .mockResolvedValueOnce({
+        data: {
+          token: 'real-token',
+        },
+      } as never)
+      .mockResolvedValueOnce({
+        data: {
+          url: 'https://pay.example.com/checkout',
+          id: 'gi_real_456',
+        },
+      } as never);
+
+    await createGreenInvoicePayment('buyer@example.com', 54, '   ');
+
+    expect(mockedAxios.post).toHaveBeenCalledTimes(2);
+    expect(mockedAxios.post.mock.calls[1]?.[1]).toMatchObject({
+      description: 'רכישת גישה לשיעורים',
+      remarks: 'רכישת גישה לשיעורים',
+      income: [
+        expect.objectContaining({
+          description: 'רכישת גישה לשיעורים',
+        }),
+      ],
+    });
   });
 });
