@@ -124,7 +124,7 @@ export default function OfferPage({ params }: OfferPageProps) {
                           </h2>
                           <p className="max-w-none text-[0.98rem] leading-8 text-slate-600 md:text-[1rem]">
                             אפשר לעבור בין שלושת השיעורים, לראות את התקציר של כל
-                            אחד מהם, ואז לבחור אם להמשיך לרכישת החבילה כולה.
+                            אחד מהם, ואז לחזור לרכישת החבילה כולה.
                           </p>
                         </div>
                       </div>
