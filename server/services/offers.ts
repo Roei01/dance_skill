@@ -86,7 +86,7 @@ export const ensureDefaultBundleOfferExists = async () => {
       {
         $setOnInsert: {
           slug: DEFAULT_BUNDLE_OFFER_SLUG,
-          title: 'כל 3 הסרטונים ב-99 ש"ח',
+          title: 'כל 3 השיעורים ב-99 ש"ח',
           description:
             "חבילת צפייה מלאה לשלושת הסרטונים שנבחרו באתר, במחיר מיוחד ונוח.",
           price: 99,
@@ -110,7 +110,7 @@ export const ensureDefaultBundleOfferExists = async () => {
       },
       {
         $set: {
-          title: 'כל 3 הסרטונים ב-99 ש"ח',
+          title: 'כל 3 השיעורים ב-99 ש"ח',
           description:
             "חבילת צפייה מלאה לשלושת הסרטונים שנבחרו באתר, במחיר מיוחד ונוח.",
           price: 99,

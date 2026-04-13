@@ -60,7 +60,7 @@ export function NewVideoPopup({ href }: NewVideoPopupProps) {
 
           <div className="relative z-10">
             <h2 className="mt-3 text-[1.65rem] font-black tracking-tight text-slate-900 sm:text-[1.8rem]">
-              השם ירחם - 25 דק'
+              כולם גנבים - 30 דק'
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
               שיעור חדש עלה עכשיו לאתר ואפשר לעבור אליו ישירות מכאן.

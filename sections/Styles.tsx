@@ -79,7 +79,7 @@ export const Styles = () => {
                   הצעה מיוחדת באתר
                 </p>
                 <h3 className="text-2xl font-black tracking-tight text-slate-900 md:text-4xl">
-                  כל 3 הסרטונים ב-99 ש"ח
+                  כל 3 השיעורים ב-99 ש"ח
                 </h3>
               </div>
 
