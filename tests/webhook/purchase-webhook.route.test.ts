@@ -1,5 +1,6 @@
 jest.mock('../../models/Purchase');
 jest.mock('../../models/User');
+jest.mock('../../models/Video');
 
 import request from 'supertest';
 import { createApiApp } from '../../server/app';

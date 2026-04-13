@@ -6,7 +6,7 @@ import { sendAccessEmail, sendExistingUserPurchaseEmail } from "./email";
 import { generateTempPassword, hashPassword } from "./auth";
 import { config } from "../config/env";
 import { logger } from "../lib/logger";
-import { getActiveVideoDocumentBySlug, resolveOwnedVideoSlug } from "./videos";
+import { getActiveVideoDocumentById } from "./videos";
 import { getActiveOfferBySlug } from "./offers";
 
 const normalizeBaseUrl = (url: string) => url.replace(/\/$/, "");
@@ -51,20 +51,17 @@ export const getGrantedPurchaseVideoReferences = (purchase: {
   videoId: mongoose.Types.ObjectId | string | null | undefined;
   grantedVideoIds?: Array<mongoose.Types.ObjectId | string | null | undefined>;
 }) => {
-  if (Array.isArray(purchase.grantedVideoIds) && purchase.grantedVideoIds.length > 0) {
-    return purchase.grantedVideoIds.filter(
-      (
-        value,
-      ): value is mongoose.Types.ObjectId | string =>
-        value instanceof mongoose.Types.ObjectId || typeof value === "string",
-    );
-  }
+  const references =
+    Array.isArray(purchase.grantedVideoIds) && purchase.grantedVideoIds.length > 0
+      ? purchase.grantedVideoIds
+      : [purchase.videoId];
 
-  if (purchase.videoId instanceof mongoose.Types.ObjectId || typeof purchase.videoId === "string") {
-    return [purchase.videoId];
-  }
-
-  return [];
+  return references.filter(
+    (
+      value,
+    ): value is mongoose.Types.ObjectId | string =>
+      value instanceof mongoose.Types.ObjectId || typeof value === "string",
+  );
 };
 
 export const provisionPurchaseAccess = async (paymentId: string) => {
@@ -116,9 +113,10 @@ export const provisionPurchaseAccess = async (paymentId: string) => {
   // stays correct even if the final notification step fails.
   await purchase.save();
 
-  const ownedVideoSlug = await resolveOwnedVideoSlug(
-    getGrantedPurchaseVideoReferences(purchase)[0],
-  );
+  const [ownedVideoId] = getGrantedPurchaseVideoReferences(purchase);
+  const ownedVideo = ownedVideoId
+    ? await getActiveVideoDocumentById(ownedVideoId)
+    : null;
 
   if (purchase.credentialsSentAt) {
     logger.info("הגישה לרכישה כבר נפתחה בעבר, מחזירים את פרטי הגישה הקיימים.", {
@@ -129,7 +127,7 @@ export const provisionPurchaseAccess = async (paymentId: string) => {
     return {
       email: user.email,
       username: user.username,
-      videoId: ownedVideoSlug ?? "",
+      videoId: ownedVideo ? String(ownedVideo._id) : "",
     };
   }
 
@@ -153,9 +151,6 @@ export const provisionPurchaseAccess = async (paymentId: string) => {
   if (isExistingUser) {
     const offer = purchase.offerSlug
       ? await getActiveOfferBySlug(purchase.offerSlug)
-      : null;
-    const ownedVideo = !offer && ownedVideoSlug
-      ? await getActiveVideoDocumentBySlug(ownedVideoSlug)
       : null;
     const videoTitle = offer?.title ?? ownedVideo?.title ?? "השיעור החדש שלך";
 
@@ -184,6 +179,6 @@ export const provisionPurchaseAccess = async (paymentId: string) => {
   return {
     email: user.email,
     username: user.username,
-    videoId: ownedVideoSlug ?? "",
+    videoId: ownedVideo ? String(ownedVideo._id) : "",
   };
 };

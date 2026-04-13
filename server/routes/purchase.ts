@@ -1,4 +1,5 @@
 import express from "express";
+import mongoose from "mongoose";
 import { z } from "zod";
 import { Purchase } from "../../models/Purchase";
 import { User } from "../../models/User";
@@ -6,13 +7,19 @@ import {
   createGreenInvoicePayment,
   GreenInvoiceError,
 } from "../services/greenInvoice";
-import { getGrantedPurchaseVideoReferences, provisionPurchaseAccess } from "../services/purchase";
+import {
+  getGrantedPurchaseVideoReferences,
+  provisionPurchaseAccess,
+} from "../services/purchase";
 import { isValidPurchaseConfirmationToken } from "../services/purchase-confirmation";
 import { purchaseRateLimiter } from "../middleware/rateLimit";
 import { logger } from "../lib/logger";
 import { config } from "../config/env";
 import { DEFAULT_VIDEO_SLUG } from "../../lib/catalog";
-import { getActiveVideoDocumentBySlug, resolveOwnedVideoSlugs } from "../services/videos";
+import {
+  getActiveVideoDocumentBySlug,
+  resolveOwnedVideoSlugs,
+} from "../services/videos";
 import {
   quoteOfferPurchase,
   resolveOfferVideoDocuments,
@@ -82,6 +89,8 @@ const successConfirmSchema = z.object({
   orderId: z.string().trim().min(1),
   token: z.string().trim().min(1),
 });
+
+type PurchaseVideoId = mongoose.Types.ObjectId;
 
 const extractWebhookOrderId = (body: Record<string, any>) =>
   normalizeString(
@@ -267,21 +276,24 @@ const findLatestHostedPurchaseByEmail = async (email: string) => {
     status: { $in: ["pending", "completed"] },
   });
 
-  return purchases
-    .filter((purchase) => {
-      const isHostedPayment =
-        purchase.paymentId.startsWith("link_") ||
-        (config.paymentMode === "test" && purchase.paymentId.startsWith("mock_"));
+  return (
+    purchases
+      .filter((purchase) => {
+        const isHostedPayment =
+          purchase.paymentId.startsWith("link_") ||
+          (config.paymentMode === "test" &&
+            purchase.paymentId.startsWith("mock_"));
 
-      return (
-        isHostedPayment &&
-        new Date(purchase.createdAt).getTime() >= minCreatedAt
-      );
-    })
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    )[0] ?? null;
+        return (
+          isHostedPayment &&
+          new Date(purchase.createdAt).getTime() >= minCreatedAt
+        );
+      })
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      )[0] ?? null
+  );
 };
 
 const resolveCustomerOwnedVideoSlugs = async ({
@@ -299,7 +311,9 @@ const resolveCustomerOwnedVideoSlugs = async ({
   }).lean();
 
   return resolveOwnedVideoSlugs(
-    purchases.flatMap((purchase) => getGrantedPurchaseVideoReferences(purchase)),
+    purchases.flatMap((purchase) =>
+      getGrantedPurchaseVideoReferences(purchase),
+    ),
   );
 };
 
@@ -329,8 +343,8 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
     const existingUser = await User.findOne({ email: normalizedEmail });
     const productVideoSlug = videoSlug || DEFAULT_VIDEO_SLUG;
 
-    let purchaseVideoId: any;
-    let grantedVideoIds: any[] = [];
+    let purchaseVideoId!: PurchaseVideoId;
+    let grantedVideoIds: PurchaseVideoId[] = [];
     let orderId = "";
     let description = "";
     let originalPrice = 0;
@@ -394,7 +408,7 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
       purchaseType = "offer";
       normalizedOfferSlug = resolvedOffer.offer.slug;
       hostedPaymentUrl = resolvedOffer.offer.hostedPaymentUrl;
-      grantedVideoIds = missingVideos.map((video) => video._id);
+      grantedVideoIds = missingVideos.map((video) => video._id as PurchaseVideoId);
       purchaseVideoId = grantedVideoIds[0];
       orderId = `${resolvedOffer.offer.slug}:${normalizedEmail}`;
       description = resolvedOffer.offer.title;
@@ -413,8 +427,8 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
 
       console.log("VIDEO ID:", video._id, typeof video._id);
 
-      purchaseVideoId = video._id;
-      grantedVideoIds = [video._id];
+      purchaseVideoId = video._id as PurchaseVideoId;
+      grantedVideoIds = [purchaseVideoId];
       orderId = `${String(video._id)}:${normalizedEmail}`;
       description = video.title;
       originalPrice = video.price;
@@ -423,7 +437,10 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
       if (existingUser) {
         const existingPurchase = await Purchase.findOne({
           userId: existingUser._id,
-          videoId: { $in: [video._id] },
+          $or: [
+            { videoId: video._id },
+            { grantedVideoIds: { $in: [video._id] } },
+          ],
           status: "completed",
         });
 
@@ -466,12 +483,19 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
             return hostedUrl.toString();
           })();
 
-      await Purchase.deleteMany({
-        customerEmail: normalizedEmail,
-        videoId: purchaseVideoId,
-        offerSlug: normalizedOfferSlug,
-        status: "pending",
-      });
+      const pendingPurchaseQuery = normalizedOfferSlug
+        ? {
+            customerEmail: normalizedEmail,
+            offerSlug: normalizedOfferSlug,
+            status: "pending" as const,
+          }
+        : {
+            customerEmail: normalizedEmail,
+            videoId: purchaseVideoId,
+            status: "pending" as const,
+          };
+
+      await Purchase.deleteMany(pendingPurchaseQuery);
 
       await Purchase.create({
         videoId: purchaseVideoId,
@@ -510,12 +534,19 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
       },
     );
 
-    await Purchase.deleteMany({
-      customerEmail: normalizedEmail,
-      videoId: purchaseVideoId,
-      offerSlug: normalizedOfferSlug,
-      status: "pending",
-    });
+    const pendingPurchaseQuery = normalizedOfferSlug
+      ? {
+          customerEmail: normalizedEmail,
+          offerSlug: normalizedOfferSlug,
+          status: "pending" as const,
+        }
+      : {
+          customerEmail: normalizedEmail,
+          videoId: purchaseVideoId,
+          status: "pending" as const,
+        };
+
+    await Purchase.deleteMany(pendingPurchaseQuery);
 
     await Purchase.create({
       videoId: purchaseVideoId,
@@ -599,7 +630,9 @@ router.post("/hosted/confirm", async (req, res) => {
     purchase.status = "completed";
     await purchase.save();
 
-    const provisioned = await provisionPurchaseAccess(String(purchase.paymentId));
+    const provisioned = await provisionPurchaseAccess(
+      String(purchase.paymentId),
+    );
     logger.info("Hosted purchase confirmation completed.", {
       email,
       paymentId: purchase.paymentId,
@@ -674,7 +707,9 @@ router.post("/success/confirm", async (req, res) => {
     purchase.status = "completed";
     await purchase.save();
 
-    const provisioned = await provisionPurchaseAccess(String(purchase.paymentId));
+    const provisioned = await provisionPurchaseAccess(
+      String(purchase.paymentId),
+    );
     logger.info("Success confirmation completed.", {
       email,
       orderId,
