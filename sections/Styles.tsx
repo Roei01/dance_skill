@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { ArrowUpRight, Clock3 } from "lucide-react";
+import { BundleOfferBanner } from "@/components/shared/BundleOfferBanner";
 import { type VideoCardRecord } from "@/lib/video-types";
 import { getCachedVideoCards } from "@/lib/client-video-cache";
 
@@ -69,26 +70,7 @@ export const Styles = () => {
           viewport={{ once: true }}
           className="mx-auto mb-6 max-w-6xl md:mb-8"
         >
-          <Link
-            href="/bundle"
-            className="group block overflow-hidden rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,rgba(255,247,221,0.95),rgba(255,255,255,0.96),rgba(239,246,255,0.92))] p-6 text-right shadow-[0_20px_60px_rgba(15,23,42,0.08)] transition hover:-translate-y-1 hover:shadow-[0_26px_70px_rgba(15,23,42,0.12)] md:p-8"
-          >
-            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-              <div className="space-y-2">
-                <p className="text-xs font-bold uppercase tracking-[0.24em] text-amber-700">
-                  הצעה מיוחדת באתר
-                </p>
-                <h3 className="text-2xl font-black tracking-tight text-slate-900 md:text-4xl">
-                  כל 3 השיעורים ב-99 ש"ח
-                </h3>
-              </div>
-
-              <div className="inline-flex items-center gap-2 self-start rounded-full border border-slate-900/10 bg-white/90 px-4 py-2 text-sm font-bold text-slate-900 shadow-sm">
-                <span>לצפייה בחבילה</span>
-                <ArrowUpRight className="h-4 w-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-              </div>
-            </div>
-          </Link>
+          <BundleOfferBanner />
         </motion.div>
 
         <div className="mx-auto grid max-w-6xl gap-4 md:grid-cols-2 md:gap-6">

@@ -178,39 +178,56 @@ export function BundlePurchase({ offer }: BundlePurchaseProps) {
   return (
     <section
       id="bundle-purchase"
-      className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/92 p-6 text-center shadow-[0_30px_80px_rgba(15,23,42,0.10)] backdrop-blur-xl md:p-8"
+      className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/90 p-6 text-center shadow-[0_30px_80px_rgba(15,23,42,0.12)] backdrop-blur-xl md:p-10"
     >
-      <div className="mb-6 space-y-3 text-center">
+      <div className="pointer-events-none absolute right-0 top-0 h-32 w-32 bg-orange-200 blur-[100px] opacity-70" />
+
+      <div className="relative z-10 mb-6 md:mb-8">
+        <p className="font-display mb-2 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400 md:text-xs md:tracking-widest">
+          <Sparkles className="h-3.5 w-3.5" />
+          תשלום חד-פעמי לחבילה
+        </p>
         <h2 className="text-3xl font-black tracking-tight text-slate-900 md:text-[2.2rem]">
           {offer.title}
         </h2>
-        <p className="mx-auto max-w-xl text-sm leading-6 text-slate-600">
+        <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600 md:text-base">
           {offer.description}
         </p>
       </div>
 
-      <div className="mb-5 rounded-[1.6rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.9),rgba(255,255,255,0.95))] p-5">
-        <div className="flex items-end justify-center gap-3">
+      <div className="relative z-10 mb-6 rounded-[2rem] border border-slate-200 bg-white/80 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)] md:mb-8 md:p-6">
+        <p className="font-display mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400 md:text-xs md:tracking-widest">
+          גישה מלאה לכל השיעורים
+        </p>
+        <div className="flex items-baseline justify-center gap-2">
           {summary.originalPrice > summary.finalPrice ? (
             <span className="text-lg font-bold text-slate-400 line-through decoration-1">
               ₪{summary.originalPrice}
             </span>
           ) : null}
-          <span className="text-5xl font-black tracking-tight text-slate-900 md:text-6xl">
+          <span className="font-display text-5xl font-black tracking-tight text-slate-900 md:text-6xl">
             ₪{summary.finalPrice}
           </span>
         </div>
-        <p className="mt-2 text-sm text-slate-500">
+        <p className="mt-2 text-sm font-medium text-slate-500 md:text-base">
           {summary.discountAmount > 0
             ? `כולל הנחה של ₪${summary.discountAmount}`
             : "תשלום חד-פעמי עבור כל הסרטונים שבחבילה"}
         </p>
       </div>
 
-      <form onSubmit={handlePurchase} className="space-y-3.5 text-right">
+      <form
+        onSubmit={handlePurchase}
+        className="relative z-10 space-y-3 text-right"
+      >
+        <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-right text-sm font-medium text-slate-600">
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+          <span>לפני המעבר לתשלום יש למלא פרטי לקוח כאן.</span>
+        </div>
+
         <div className="grid gap-3 md:grid-cols-2">
-          <div className="space-y-1.5">
-            <label className="block text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
+          <div className="space-y-0.5 text-right">
+            <label className="mr-1 block text-[11px] font-bold uppercase tracking-wider text-slate-500">
               שם מלא
             </label>
             <input
@@ -219,11 +236,11 @@ export function BundlePurchase({ offer }: BundlePurchaseProps) {
               required
               value={fullName}
               onChange={(event) => setFullName(event.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400 md:px-5 md:py-3.5"
             />
           </div>
-          <div className="space-y-1.5">
-            <label className="block text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
+          <div className="space-y-0.5 text-right">
+            <label className="mr-1 block text-[11px] font-bold uppercase tracking-wider text-slate-500">
               טלפון
             </label>
             <input
@@ -232,13 +249,13 @@ export function BundlePurchase({ offer }: BundlePurchaseProps) {
               required
               value={phone}
               onChange={(event) => setPhone(event.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400 md:px-5 md:py-3.5"
             />
           </div>
         </div>
 
-        <div className="space-y-1.5">
-          <label className="block text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
+        <div className="space-y-0.5 text-right">
+          <label className="mr-1 block text-[11px] font-bold uppercase tracking-wider text-slate-500">
             אימייל
           </label>
           <input
@@ -247,13 +264,13 @@ export function BundlePurchase({ offer }: BundlePurchaseProps) {
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400"
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400 md:px-5 md:py-3.5"
           />
         </div>
 
-        <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-3.5">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3.5">
           <div className="mb-2 text-right">
-            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
+            <p className="mr-1 text-[11px] font-bold uppercase tracking-wider text-slate-500">
               קוד קופון
             </p>
           </div>
@@ -267,14 +284,14 @@ export function BundlePurchase({ offer }: BundlePurchaseProps) {
                 onChange={(event) =>
                   setDiscountCode(event.target.value.toUpperCase())
                 }
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 pl-11 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400"
+                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 pl-11 font-medium text-slate-900 placeholder-slate-400 transition-colors focus:border-blue-400 md:px-5 md:py-3.5"
               />
             </div>
             <button
               type="button"
               onClick={handleApplyDiscount}
               disabled={quoteLoading}
-              className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-70"
+              className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 disabled:opacity-70"
             >
               {quoteLoading ? "בודקים..." : "הפעלת קופון"}
             </button>
@@ -317,7 +334,9 @@ export function BundlePurchase({ offer }: BundlePurchaseProps) {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-center text-sm font-semibold text-emerald-700"
+            className="font-display rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-center text-[11px] font-bold uppercase tracking-wide text-emerald-600 md:text-xs"
+            role="status"
+            aria-live="polite"
           >
             {statusMessage}
           </motion.div>
@@ -329,7 +348,7 @@ export function BundlePurchase({ offer }: BundlePurchaseProps) {
           disabled={loading || !acceptedTerms}
           className="font-display relative flex w-full flex-wrap items-center justify-center gap-2.5 overflow-hidden rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-base font-black text-slate-900 shadow-sm transition-all hover:-translate-y-1 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 md:py-3.5 md:text-lg"
         >
-          <span className="relative z-10 pt-1">תשלום מהיר לחבילה ב-</span>
+          <span className="relative z-10 pt-1">תשלום מהיר ב-</span>
           <div className="flex items-center justify-center gap-3">
             <img
               src="/assets/bit.svg"
@@ -349,12 +368,6 @@ export function BundlePurchase({ offer }: BundlePurchaseProps) {
           </div>
         </button>
 
-        <p className="text-center text-xs font-medium leading-5 text-slate-500">
-          {quote?.appliedCode
-            ? "התשלום המהיר יעבור ללינק הייעודי של קופון ההנחה הפעיל."
-            : "התשלום המהיר יעבור ללינק הרגיל של רכישת 3 השיעורים."}
-        </p>
-
         <button
           type="submit"
           disabled={loading || !acceptedTerms}
@@ -367,6 +380,13 @@ export function BundlePurchase({ offer }: BundlePurchaseProps) {
             <Loader2 className="relative z-10 h-5 w-5 animate-spin" />
           ) : null}
         </button>
+
+        <div className="mt-6 flex items-center justify-center gap-2 text-slate-400 transition-all duration-300">
+          <ShieldCheck className="h-4 w-4" />
+          <span className="font-display text-xs font-bold uppercase tracking-wider">
+            תשלום מאובטח דרך GreenInvoice
+          </span>
+        </div>
       </form>
     </section>
   );
