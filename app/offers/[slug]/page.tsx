@@ -148,7 +148,7 @@ export default function OfferPage({ params }: OfferPageProps) {
             <span>חזרה לעמוד הבית</span>
           </Link>
 
-          <div className="mt-0 grid gap-10 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] xl:items-start">
+          <div className="mt-0 grid gap-2 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] xl:items-start xl:gap-8">
             <div className="min-w-0 space-y-6">
               <div className="relative px-2 pb-6 pt-1 md:px-8 md:pb-8 md:pt-1">
                 <div className="pointer-events-none absolute left-0 top-0 h-40 w-40 rounded-full bg-amber-100/50 blur-3xl" />
@@ -173,9 +173,6 @@ export default function OfferPage({ params }: OfferPageProps) {
                         <h2 className="max-w-none text-[clamp(2rem,6vw,4.5rem)] font-black leading-[1.02] tracking-[-0.04em] text-slate-900">
                           <span className="block">
                             כל שיעור זמין לצפייה בתקציר
-                          </span>
-                          <span className="mt-2 block text-[0.62em] leading-[1.08] text-slate-600">
-                            לפני הרכישה
                           </span>
                         </h2>
                         <p className="mr-0 max-w-xl text-lg font-medium leading-6 text-slate-600">

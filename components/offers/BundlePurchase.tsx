@@ -184,8 +184,8 @@ export function BundlePurchase({ offer }: BundlePurchaseProps) {
 
       <div className="relative z-10 mb-6 md:mb-8">
         <p className="font-display mb-2 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400 md:text-xs md:tracking-widest">
-          <Sparkles className="h-3.5 w-3.5" />
           תשלום חד-פעמי לחבילה
+          <Sparkles className="h-3.5 w-3.5" />
         </p>
         <h2 className="text-3xl font-black tracking-tight text-slate-900 md:text-[2.2rem]">
           {offer.title}
