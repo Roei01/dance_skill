@@ -1,5 +1,6 @@
 import express from 'express';
 import purchaseRoutes from './purchase';
+import offersRoutes from './offers';
 import videoRoutes from './video';
 import videosRoutes from './videos';
 import authRoutes from './auth';
@@ -9,6 +10,7 @@ import testRoutes from './test';
 const router = express.Router();
 
 router.use('/purchase', purchaseRoutes);
+router.use('/offers', offersRoutes);
 router.use('/video', videoRoutes);
 router.use('/videos', videosRoutes);
 router.use('/auth', authRoutes);

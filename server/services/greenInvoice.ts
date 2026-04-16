@@ -1,6 +1,7 @@
 import axios, { AxiosError } from "axios";
 import { config } from "../config/env";
 import { logger } from "../lib/logger";
+import { createPurchaseConfirmationToken } from "./purchase-confirmation";
 
 type GreenInvoiceTokenResponse = {
   token: string;
@@ -27,6 +28,7 @@ type CreateGreenInvoicePaymentOptions = {
   fullName?: string;
   phone?: string;
   orderId?: string;
+  externalId?: string;
   returnTo?: string;
 };
 
@@ -247,15 +249,31 @@ export const createGreenInvoicePayment = async (
     }
 
     const { token, baseUrl } = await getGreenInvoiceAccessToken();
+    const normalizedDescription =
+      typeof description === "string" && description.trim()
+        ? description.trim()
+        : "רכישת גישה לשיעורים";
 
     const callbackBase = resolveCallbackBaseUrl(options?.appBaseUrl);
     const callbackUrls = callbackBase
       ? (() => {
           const successUrl = new URL("/success", `${callbackBase}/`);
           successUrl.searchParams.set("email", email);
+          successUrl.searchParams.set("method", "credit_card");
 
           const failureUrl = new URL("/cancel", `${callbackBase}/`);
           const notifyUrl = `${callbackBase}/api/purchase/webhook`;
+
+          if (options?.orderId) {
+            successUrl.searchParams.set("orderId", options.orderId);
+            successUrl.searchParams.set(
+              "confirmToken",
+              createPurchaseConfirmationToken({
+                email,
+                orderId: options.orderId,
+              }),
+            );
+          }
 
           if (options?.returnTo) {
             successUrl.searchParams.set("returnTo", options.returnTo);
@@ -272,7 +290,7 @@ export const createGreenInvoicePayment = async (
 
     const normalizedPhone = options?.phone?.trim();
     const payload = {
-      description,
+      description: normalizedDescription,
       type: 320,
       lang: "he",
       currency: "ILS",
@@ -298,15 +316,21 @@ export const createGreenInvoicePayment = async (
       },
       income: [
         {
-          description,
+          description: normalizedDescription,
           quantity: 1,
           price: amount,
           currency: "ILS",
           vatType: 1,
         },
       ],
-      remarks: description,
+      remarks: normalizedDescription,
       custom: options?.orderId || email,
+      ...(options?.externalId
+        ? {
+            external_data: options.externalId,
+            externalData: options.externalId,
+          }
+        : {}),
       ...callbackUrls,
     };
 

@@ -1,5 +1,6 @@
 jest.mock('../../models/Purchase');
 jest.mock('../../models/User');
+jest.mock('../../models/Video');
 
 import { Purchase } from '../../models/Purchase';
 import { User } from '../../models/User';

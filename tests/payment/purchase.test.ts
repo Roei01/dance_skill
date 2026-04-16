@@ -83,10 +83,20 @@ describe('purchase integration flow', () => {
     expect(purchase).toMatchObject({
       videoId: DEFAULT_VIDEO_ID,
       paymentId: 'test_payment_123',
+      externalId: expect.any(String),
       orderId: `${DEFAULT_VIDEO_ID}:buyer@example.com`,
       customerEmail: 'buyer@example.com',
       status: 'pending',
     });
+    expect(mockedCreateGreenInvoicePayment).toHaveBeenCalledWith(
+      'buyer@example.com',
+      expect.any(Number),
+      expect.any(String),
+      expect.objectContaining({
+        orderId: `${DEFAULT_VIDEO_ID}:buyer@example.com`,
+        externalId: purchase?.externalId,
+      }),
+    );
   });
 
   it('completes purchase, creates user, generates password, and sends email after success webhook', async () => {

@@ -1,4 +1,5 @@
 import express from "express";
+import mongoose from "mongoose";
 import { z } from "zod";
 import { Purchase } from "../../models/Purchase";
 import { User } from "../../models/User";
@@ -6,12 +7,28 @@ import {
   createGreenInvoicePayment,
   GreenInvoiceError,
 } from "../services/greenInvoice";
-import { provisionPurchaseAccess } from "../services/purchase";
+import {
+  getGrantedPurchaseVideoReferences,
+  provisionPurchaseAccess,
+} from "../services/purchase";
+import { isValidPurchaseConfirmationToken } from "../services/purchase-confirmation";
 import { purchaseRateLimiter } from "../middleware/rateLimit";
 import { logger } from "../lib/logger";
 import { config } from "../config/env";
 import { DEFAULT_VIDEO_SLUG } from "../../lib/catalog";
-import { getActiveVideoDocumentBySlug } from "../services/videos";
+import {
+  DEFAULT_BUNDLE_DISCOUNT_HOSTED_PAYMENT_URL,
+  DEFAULT_BUNDLE_HOSTED_PAYMENT_URL,
+  DEFAULT_BUNDLE_OFFER_SLUG,
+} from "../../lib/offers";
+import {
+  getActiveVideoDocumentBySlug,
+  resolveOwnedVideoSlugs,
+} from "../services/videos";
+import {
+  quoteOfferPurchase,
+  resolveOfferVideoDocuments,
+} from "../services/offers";
 
 const router = express.Router();
 
@@ -59,7 +76,9 @@ const purchaseSchema = z.object({
   phone: z.string().trim().min(9),
   email: z.string().email(),
   returnTo: z.string().trim().url().optional(),
-  videoSlug: z.string().trim().min(1).optional().default(DEFAULT_VIDEO_SLUG),
+  videoSlug: z.string().trim().min(1).optional(),
+  offerSlug: z.string().trim().min(1).optional(),
+  discountCode: z.string().trim().min(1).optional(),
   paymentMethod: z
     .enum(["credit_card", "hosted"])
     .optional()
@@ -70,20 +89,37 @@ const hostedConfirmSchema = z.object({
   email: z.string().trim().email(),
 });
 
+const successConfirmSchema = z.object({
+  email: z.string().trim().email(),
+  orderId: z.string().trim().min(1),
+  token: z.string().trim().min(1),
+});
+
+type PurchaseVideoId = mongoose.Types.ObjectId;
+
+const extractWebhookExternalId = (body: Record<string, any>) =>
+  normalizeString(
+    body?.external_data ||
+      body?.externalData ||
+      body?.data?.external_data ||
+      body?.data?.externalData ||
+      body?.payload?.external_data ||
+      body?.payload?.externalData ||
+      body?.transactions?.[0]?.external_data ||
+      body?.transactions?.[0]?.externalData,
+  );
+
 const extractWebhookOrderId = (body: Record<string, any>) =>
   normalizeString(
     body?.custom ||
       body?.orderId ||
       body?.reference ||
-      body?.external_data ||
       body?.data?.custom ||
       body?.data?.orderId ||
       body?.data?.reference ||
-      body?.data?.external_data ||
       body?.payload?.custom ||
       body?.payload?.orderId ||
-      body?.payload?.external_data ||
-      body?.transactions?.[0]?.external_data,
+      body?.payload?.reference,
   );
 
 const extractWebhookPaymentIds = (body: Record<string, any>) => {
@@ -211,11 +247,22 @@ const normalizeWebhookStatus = (body: Record<string, any>) => {
 const reqBodyHasTransactions = (body: Record<string, any>) =>
   Array.isArray(body?.transactions) && body.transactions.length > 0;
 
+const toLegacyWebhookOrderId = (externalId?: string) =>
+  externalId && externalId.includes(":") ? externalId : undefined;
+
 const findPurchaseForWebhook = async (
+  externalId: string | undefined,
   paymentIds: string[],
   orderId?: string,
   payerEmail?: string,
 ) => {
+  if (externalId && !externalId.includes(":")) {
+    const purchaseByExternalId = await Purchase.findOne({ externalId });
+    if (purchaseByExternalId) {
+      return purchaseByExternalId;
+    }
+  }
+
   for (const paymentId of paymentIds) {
     const purchaseByPaymentId = await Purchase.findOne({ paymentId });
     if (purchaseByPaymentId) {
@@ -223,8 +270,10 @@ const findPurchaseForWebhook = async (
     }
   }
 
-  if (orderId) {
-    const purchaseByOrderId = await Purchase.findOne({ orderId });
+  const legacyOrderId = orderId || toLegacyWebhookOrderId(externalId);
+
+  if (legacyOrderId) {
+    const purchaseByOrderId = await Purchase.findOne({ orderId: legacyOrderId });
     if (purchaseByOrderId) {
       return purchaseByOrderId;
     }
@@ -254,21 +303,45 @@ const findLatestHostedPurchaseByEmail = async (email: string) => {
     status: { $in: ["pending", "completed"] },
   });
 
-  return purchases
-    .filter((purchase) => {
-      const isHostedPayment =
-        purchase.paymentId.startsWith("link_") ||
-        (config.paymentMode === "test" && purchase.paymentId.startsWith("mock_"));
+  return (
+    purchases
+      .filter((purchase) => {
+        const isHostedPayment =
+          purchase.paymentId.startsWith("link_") ||
+          (config.paymentMode === "test" &&
+            purchase.paymentId.startsWith("mock_"));
 
-      return (
-        isHostedPayment &&
-        new Date(purchase.createdAt).getTime() >= minCreatedAt
-      );
-    })
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    )[0] ?? null;
+        return (
+          isHostedPayment &&
+          new Date(purchase.createdAt).getTime() >= minCreatedAt
+        );
+      })
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      )[0] ?? null
+  );
+};
+
+const resolveCustomerOwnedVideoSlugs = async ({
+  existingUserId,
+  email,
+}: {
+  existingUserId?: string;
+  email: string;
+}) => {
+  const purchases = await Purchase.find({
+    status: "completed",
+    $or: existingUserId
+      ? [{ userId: existingUserId }, { customerEmail: email }]
+      : [{ customerEmail: email }],
+  }).lean();
+
+  return resolveOwnedVideoSlugs(
+    purchases.flatMap((purchase) =>
+      getGrantedPurchaseVideoReferences(purchase),
+    ),
+  );
 };
 
 router.post("/create", purchaseRateLimiter, async (req, res) => {
@@ -282,41 +355,143 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
       });
     }
 
-    const { email, fullName, phone, returnTo, paymentMethod, videoSlug } =
-      validation.data;
+    const {
+      email,
+      fullName,
+      phone,
+      returnTo,
+      paymentMethod,
+      videoSlug,
+      offerSlug,
+      discountCode,
+    } = validation.data;
     const normalizedEmail = email.trim().toLowerCase();
     const appBaseUrl = deriveAppBaseUrlFromRequest(req);
-    const video = await getActiveVideoDocumentBySlug(videoSlug);
-
-    if (!video) {
-      return res.status(404).json({
-        code: "VIDEO_UNAVAILABLE",
-        message: "Video not found.",
-      });
-    }
-
-    console.log("VIDEO ID:", video._id, typeof video._id);
-
-    const purchaseVideoId = video._id;
-    const acceptedPurchaseVideoIds = [video._id];
-    const orderId = `${String(video._id)}:${normalizedEmail}`;
     const existingUser = await User.findOne({ email: normalizedEmail });
+    const productVideoSlug = videoSlug || DEFAULT_VIDEO_SLUG;
 
-    if (existingUser) {
-      const existingPurchase = await Purchase.findOne({
-        userId: existingUser._id,
-        videoId: { $in: acceptedPurchaseVideoIds },
-        status: "completed",
-      });
+    let purchaseVideoId!: PurchaseVideoId;
+    let grantedVideoIds: PurchaseVideoId[] = [];
+    let orderId = "";
+    let description = "";
+    let originalPrice = 0;
+    let finalPrice = 0;
+    let purchaseType: "video" | "offer" = "video";
+    let appliedDiscountCode: string | undefined;
+    let normalizedOfferSlug: string | undefined;
+    let hostedPaymentUrl: string | undefined;
 
-      if (existingPurchase) {
-        return res.status(409).json({
-          code: "ALREADY_OWNED",
-          message:
-            "You already own this tutorial. Check your email for access.",
+    if (offerSlug) {
+      const resolvedOffer = await resolveOfferVideoDocuments(offerSlug);
+      if (!resolvedOffer || resolvedOffer.videos.length === 0) {
+        return res.status(404).json({
+          code: "OFFER_UNAVAILABLE",
+          message: "Offer not found.",
         });
       }
+
+      const ownedSlugs = await resolveCustomerOwnedVideoSlugs({
+        existingUserId: existingUser ? String(existingUser._id) : undefined,
+        email: normalizedEmail,
+      });
+      const missingVideos = resolvedOffer.videos.filter(
+        (video) => !ownedSlugs.includes(video.slug),
+      );
+
+      if (missingVideos.length === 0) {
+        return res.status(409).json({
+          code: "ALREADY_OWNED",
+          message: "You already own all videos in this offer.",
+        });
+      }
+
+      const quote = await quoteOfferPurchase({
+        offerSlug: resolvedOffer.offer.slug,
+        email: normalizedEmail,
+        discountCode,
+      });
+
+      if (!quote) {
+        return res.status(404).json({
+          code: "OFFER_UNAVAILABLE",
+          message: "Offer not found.",
+        });
+      }
+
+      if (discountCode?.trim() && !quote.appliedCode) {
+        return res.status(400).json({
+          code: "INVALID_DISCOUNT_CODE",
+          message: quote.message || "קוד ההנחה לא תקין או שכבר נוצל.",
+        });
+      }
+
+      purchaseType = "offer";
+      normalizedOfferSlug = resolvedOffer.offer.slug;
+      hostedPaymentUrl =
+        resolvedOffer.offer.slug === DEFAULT_BUNDLE_OFFER_SLUG
+          ? quote.appliedCode
+            ? DEFAULT_BUNDLE_DISCOUNT_HOSTED_PAYMENT_URL
+            : DEFAULT_BUNDLE_HOSTED_PAYMENT_URL
+          : resolvedOffer.offer.hostedPaymentUrl;
+      grantedVideoIds = missingVideos.map((video) => video._id as PurchaseVideoId);
+      purchaseVideoId = grantedVideoIds[0];
+      orderId = `${resolvedOffer.offer.slug}:${normalizedEmail}`;
+      description = resolvedOffer.offer.title;
+      originalPrice = quote.originalPrice;
+      finalPrice = quote.finalPrice;
+      appliedDiscountCode = quote.appliedCode;
+    } else {
+      const video = await getActiveVideoDocumentBySlug(productVideoSlug);
+
+      if (!video) {
+        return res.status(404).json({
+          code: "VIDEO_UNAVAILABLE",
+          message: "Video not found.",
+        });
+      }
+
+      console.log("VIDEO ID:", video._id, typeof video._id);
+
+      purchaseVideoId = video._id as PurchaseVideoId;
+      grantedVideoIds = [purchaseVideoId];
+      orderId = `${String(video._id)}:${normalizedEmail}`;
+      description = video.title;
+      originalPrice = video.price;
+      finalPrice = video.price;
+
+      if (existingUser) {
+        const existingPurchase = await Purchase.findOne({
+          userId: existingUser._id,
+          $or: [
+            { videoId: video._id },
+            { grantedVideoIds: { $in: [video._id] } },
+          ],
+          status: "completed",
+        });
+
+        if (existingPurchase) {
+          return res.status(409).json({
+            code: "ALREADY_OWNED",
+            message:
+              "You already own this tutorial. Check your email for access.",
+          });
+        }
+      }
     }
+
+    const pendingPurchaseQuery = normalizedOfferSlug
+      ? {
+          customerEmail: normalizedEmail,
+          offerSlug: normalizedOfferSlug,
+          status: "pending" as const,
+        }
+      : {
+          customerEmail: normalizedEmail,
+          videoId: purchaseVideoId,
+          status: "pending" as const,
+        };
+
+    await Purchase.deleteMany(pendingPurchaseQuery);
 
     if (paymentMethod === "hosted") {
       const isTestMode = config.paymentMode === "test";
@@ -324,27 +499,11 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
         ? `mock_${Date.now()}_${Math.random().toString(36).substring(7)}`
         : `link_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
-      // Set up the success URL to return to
-      const successUrl = new URL("/success", `${appBaseUrl}/`);
-      successUrl.searchParams.set("email", normalizedEmail);
-      successUrl.searchParams.set("method", "hosted");
-      successUrl.searchParams.set("videoSlug", videoSlug);
-      if (returnTo) {
-        successUrl.searchParams.set("returnTo", returnTo);
-      }
-
-      const checkoutUrl = isTestMode
-        ? `${config.appUrl}/success?mock=true`
-        : `https://mrng.to/BKXBaFbl0K?email=${encodeURIComponent(normalizedEmail)}&successUrl=${encodeURIComponent(successUrl.toString())}&redirectUrl=${encodeURIComponent(successUrl.toString())}`;
-
-      await Purchase.deleteMany({
-        customerEmail: normalizedEmail,
-        videoId: { $in: acceptedPurchaseVideoIds },
-        status: "pending",
-      });
-
-      await Purchase.create({
+      const purchase = await Purchase.create({
         videoId: purchaseVideoId,
+        grantedVideoIds,
+        purchaseType,
+        offerSlug: normalizedOfferSlug,
         paymentId: tempPaymentId,
         customerFullName: fullName,
         customerPhone: phone,
@@ -352,7 +511,39 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
         orderId,
         status: "pending",
         appBaseUrl,
+        originalPrice,
+        finalPrice,
+        appliedDiscountCode,
       });
+      purchase.externalId = String(purchase._id);
+      await purchase.save();
+
+      // Set up the success URL to return to
+      const successUrl = new URL("/success", `${appBaseUrl}/`);
+      successUrl.searchParams.set("email", normalizedEmail);
+      successUrl.searchParams.set("method", "hosted");
+      successUrl.searchParams.set("videoSlug", productVideoSlug);
+      if (returnTo) {
+        successUrl.searchParams.set("returnTo", returnTo);
+      }
+
+      const checkoutUrl = isTestMode
+        ? `${config.appUrl}/success?mock=true`
+        : (() => {
+            const baseHostedUrl =
+              purchaseType === "offer" && hostedPaymentUrl
+                ? hostedPaymentUrl
+                : "https://mrng.to/BKXBaFbl0K";
+            const hostedUrl = new URL(baseHostedUrl);
+            hostedUrl.searchParams.set("email", normalizedEmail);
+            hostedUrl.searchParams.set("successUrl", successUrl.toString());
+            hostedUrl.searchParams.set("redirectUrl", successUrl.toString());
+            hostedUrl.searchParams.set(
+              "externalId",
+              purchase.externalId || String(purchase._id),
+            );
+            return hostedUrl.toString();
+          })();
 
       return res.json({
         url: checkoutUrl,
@@ -361,40 +552,51 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
       });
     }
 
-    const payment = await createGreenInvoicePayment(
-      email,
-      video.price,
-      video.title,
-      {
-        appBaseUrl,
-        fullName,
-        phone,
-        orderId,
-        returnTo,
-      },
-    );
-
-    await Purchase.deleteMany({
-      customerEmail: normalizedEmail,
-      videoId: { $in: acceptedPurchaseVideoIds },
-      status: "pending",
-    });
-
-    await Purchase.create({
+    const purchase = await Purchase.create({
       videoId: purchaseVideoId,
-      paymentId: payment.paymentId,
+      grantedVideoIds,
+      purchaseType,
+      offerSlug: normalizedOfferSlug,
+      paymentId: `pending_${new mongoose.Types.ObjectId().toString()}`,
       customerFullName: fullName,
       customerPhone: phone,
       customerEmail: normalizedEmail,
       orderId,
       status: "pending",
       appBaseUrl,
+      originalPrice,
+      finalPrice,
+      appliedDiscountCode,
     });
+    purchase.externalId = String(purchase._id);
+    await purchase.save();
 
-    res.json({
-      checkoutUrl: payment.checkoutUrl,
-      paymentId: payment.paymentId,
-    });
+    try {
+      const payment = await createGreenInvoicePayment(
+        email,
+        finalPrice,
+        description,
+        {
+          appBaseUrl,
+          fullName,
+          phone,
+          orderId,
+          externalId: purchase.externalId,
+          returnTo,
+        },
+      );
+
+      purchase.paymentId = payment.paymentId;
+      await purchase.save();
+
+      return res.json({
+        checkoutUrl: payment.checkoutUrl,
+        paymentId: payment.paymentId,
+      });
+    } catch (paymentError) {
+      await Purchase.deleteMany({ _id: purchase._id });
+      throw paymentError;
+    }
   } catch (error) {
     if (error instanceof GreenInvoiceError) {
       logger.error("Purchase error:", {
@@ -456,7 +658,9 @@ router.post("/hosted/confirm", async (req, res) => {
     purchase.status = "completed";
     await purchase.save();
 
-    const provisioned = await provisionPurchaseAccess(String(purchase.paymentId));
+    const provisioned = await provisionPurchaseAccess(
+      String(purchase.paymentId),
+    );
     logger.info("Hosted purchase confirmation completed.", {
       email,
       paymentId: purchase.paymentId,
@@ -477,10 +681,90 @@ router.post("/hosted/confirm", async (req, res) => {
   }
 });
 
+router.post("/success/confirm", async (req, res) => {
+  const validation = successConfirmSchema.safeParse(req.body);
+
+  if (!validation.success) {
+    return res.status(400).json({
+      code: "VALIDATION_ERROR",
+      message: "A valid email, order id and token are required.",
+    });
+  }
+
+  const email = validation.data.email.trim().toLowerCase();
+  const orderId = validation.data.orderId.trim();
+  const token = validation.data.token.trim();
+
+  if (!isValidPurchaseConfirmationToken({ email, orderId, token })) {
+    return res.status(401).json({
+      code: "UNAUTHORIZED",
+      message: "Invalid purchase confirmation token.",
+    });
+  }
+
+  const purchase = await Purchase.findOne({
+    orderId,
+    customerEmail: email,
+  }).sort({ createdAt: -1 });
+
+  if (!purchase) {
+    logger.warn("Success confirmation could not find purchase.", {
+      email,
+      orderId,
+    });
+    return res.status(404).json({
+      code: "PURCHASE_NOT_FOUND",
+      message: "No matching purchase found for this confirmation.",
+    });
+  }
+
+  if (purchase.status === "completed" && purchase.credentialsSentAt) {
+    logger.info("Success confirmation found an already completed purchase.", {
+      email,
+      orderId,
+      paymentId: purchase.paymentId,
+    });
+    return res.status(200).json({
+      ok: true,
+      alreadyCompleted: true,
+      paymentId: purchase.paymentId,
+    });
+  }
+
+  try {
+    purchase.status = "completed";
+    await purchase.save();
+
+    const provisioned = await provisionPurchaseAccess(
+      String(purchase.paymentId),
+    );
+    logger.info("Success confirmation completed.", {
+      email,
+      orderId,
+      paymentId: purchase.paymentId,
+      provisioned: Boolean(provisioned),
+    });
+
+    return res.status(200).json({
+      ok: true,
+      paymentId: purchase.paymentId,
+      provisioned: Boolean(provisioned),
+    });
+  } catch (error) {
+    logger.error("Success confirmation error:", error);
+    return res.status(500).json({
+      code: "INTERNAL_ERROR",
+      message: "Unable to confirm purchase success.",
+    });
+  }
+});
+
 router.post("/webhook", async (req, res) => {
   console.log("🔥 WEBHOOK RECEIVED:");
   console.log(JSON.stringify(req.body, null, 2));
+  const externalId = extractWebhookExternalId(req.body);
   const orderId = extractWebhookOrderId(req.body);
+  const legacyOrderId = orderId || toLegacyWebhookOrderId(externalId);
   const event = extractWebhookEvent(req.body);
   const payerEmail = extractWebhookEmail(req.body);
   const paymentIds = extractWebhookPaymentIds(req.body);
@@ -489,17 +773,19 @@ router.post("/webhook", async (req, res) => {
   const status = normalizeWebhookStatus(req.body);
 
   logger.info("Purchase webhook triggered.", {
+    externalId,
     paymentId,
-    orderId,
+    orderId: legacyOrderId,
     event,
     payerEmail,
     status,
     paymentMode: config.paymentMode,
   });
   console.log("WEBHOOK_NORMALIZED", {
+    externalId,
     paymentId,
     paymentIds,
-    orderId,
+    orderId: legacyOrderId,
     event,
     payerEmail,
     status,
@@ -512,8 +798,9 @@ router.post("/webhook", async (req, res) => {
     paymentId.startsWith("mock_")
   ) {
     const mockPurchase = await findPurchaseForWebhook(
+      externalId,
       paymentIds,
-      orderId,
+      legacyOrderId,
       payerEmail,
     );
 
@@ -523,8 +810,9 @@ router.post("/webhook", async (req, res) => {
         await mockPurchase.save();
       }
       console.log("WEBHOOK_TEST_FAILED", {
+        externalId,
         paymentId,
-        orderId,
+        orderId: legacyOrderId,
         payerEmail,
         foundPurchase: Boolean(mockPurchase),
       });
@@ -532,8 +820,9 @@ router.post("/webhook", async (req, res) => {
     }
 
     console.log("WEBHOOK_TEST_PROVISION_START", {
+      externalId,
       paymentId,
-      orderId,
+      orderId: legacyOrderId,
       payerEmail,
       foundPurchase: Boolean(mockPurchase),
     });
@@ -541,8 +830,9 @@ router.post("/webhook", async (req, res) => {
       ? await provisionPurchaseAccess(String(mockPurchase.paymentId))
       : null;
     console.log("WEBHOOK_TEST_PROVISION_RESULT", {
+      externalId,
       paymentId,
-      orderId,
+      orderId: legacyOrderId,
       payerEmail,
       provisioned: Boolean(provisioned),
     });
@@ -561,7 +851,12 @@ router.post("/webhook", async (req, res) => {
     });
   }
 
-  let purchase = await findPurchaseForWebhook(paymentIds, orderId, payerEmail);
+  let purchase = await findPurchaseForWebhook(
+    externalId,
+    paymentIds,
+    legacyOrderId,
+    payerEmail,
+  );
 
   if (!purchase && req.body?.channel === "payment-link" && payerEmail) {
     purchase = await findLatestHostedPurchaseByEmail(payerEmail);
@@ -574,9 +869,10 @@ router.post("/webhook", async (req, res) => {
     }
   }
   console.log("WEBHOOK_PURCHASE_LOOKUP_RESULT", {
+    externalId,
     paymentId,
     paymentIds,
-    orderId,
+    orderId: legacyOrderId,
     payerEmail,
     status,
     foundPurchase: Boolean(purchase),
@@ -588,8 +884,9 @@ router.post("/webhook", async (req, res) => {
 
   if (!purchase) {
     console.warn("Webhook purchase not found", {
+      externalId,
       paymentId,
-      orderId,
+      orderId: legacyOrderId,
       payerEmail,
       event,
       status,
@@ -632,8 +929,9 @@ router.post("/webhook", async (req, res) => {
         logger.warn(
           "Webhook completed but no matching purchase could be provisioned",
           {
+            externalId,
             paymentId,
-            orderId,
+            orderId: legacyOrderId,
             payerEmail,
             body: req.body,
           },
@@ -641,8 +939,9 @@ router.post("/webhook", async (req, res) => {
       }
     } catch (error) {
       console.error("Webhook provisioning error", {
+        externalId,
         paymentId,
-        orderId,
+        orderId: legacyOrderId,
         payerEmail,
         purchaseId: String(purchase._id),
         purchasePaymentId: String(purchase.paymentId),
@@ -665,8 +964,9 @@ router.post("/webhook", async (req, res) => {
     });
   } else {
     console.log("WEBHOOK_IGNORED_STATUS", {
+      externalId,
       paymentId,
-      orderId,
+      orderId: legacyOrderId,
       payerEmail,
       status,
       purchaseId: String(purchase._id),

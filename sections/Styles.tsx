@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { ArrowUpRight, Clock3 } from "lucide-react";
+import { BundleOfferBanner } from "@/components/shared/BundleOfferBanner";
 import { type VideoCardRecord } from "@/lib/video-types";
 import { getCachedVideoCards } from "@/lib/client-video-cache";
 
@@ -61,6 +62,15 @@ export const Styles = () => {
             בכל מקום ובכל זמן.
             <span className="block">בשם השם נעשה ונצליח. 🙏🏻</span>
           </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mx-auto mb-6 max-w-6xl md:mb-8"
+        >
+          <BundleOfferBanner />
         </motion.div>
 
         <div className="mx-auto grid max-w-6xl gap-4 md:grid-cols-2 md:gap-6">

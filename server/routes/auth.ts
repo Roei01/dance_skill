@@ -29,6 +29,7 @@ import {
   sendPasswordResetEmail,
 } from "../services/email";
 import { config } from "../config/env";
+import { getGrantedPurchaseVideoReferences } from "../services/purchase";
 
 const router = express.Router();
 
@@ -37,20 +38,26 @@ const forgotPasswordSuccessPayload = {
   message: "אם קיים משתמש עבור המייל הזה, נשלח קישור לאיפוס סיסמה.",
 };
 
+const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 router.post("/login", authRateLimiter, async (req, res) => {
   const { username, password } = req.body as {
     username?: string;
     password?: string;
   };
+  const normalizedUsername =
+    typeof username === "string" ? username.trim() : "";
 
-  if (!username || !password) {
+  if (!normalizedUsername || !password) {
     return res.status(400).json({
       code: "VALIDATION_ERROR",
       message: "Username and password are required.",
     });
   }
 
-  const user = await User.findOne({ username });
+  const user = await User.findOne({
+    username: new RegExp(`^${escapeRegex(normalizedUsername)}$`, "i"),
+  });
   if (!user) {
     return res.status(401).json({
       code: "INVALID_CREDENTIALS",
@@ -112,7 +119,7 @@ router.post("/login", authRateLimiter, async (req, res) => {
     .lean();
 
   const ownedVideoIds = await resolveOwnedVideoSlugs(
-    purchases.map((purchase) => purchase.videoId),
+    purchases.flatMap((purchase) => getGrantedPurchaseVideoReferences(purchase)),
   );
 
   res.json({
@@ -255,7 +262,7 @@ router.get("/me", authenticate, async (req: AuthenticatedRequest, res) => {
     .lean();
 
   const ownedVideoIds = await resolveOwnedVideoSlugs(
-    purchases.map((purchase) => purchase.videoId),
+    purchases.flatMap((purchase) => getGrantedPurchaseVideoReferences(purchase)),
   );
 
   return res.json({

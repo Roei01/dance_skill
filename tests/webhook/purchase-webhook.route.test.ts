@@ -1,5 +1,6 @@
 jest.mock('../../models/Purchase');
 jest.mock('../../models/User');
+jest.mock('../../models/Video');
 
 import request from 'supertest';
 import { createApiApp } from '../../server/app';
@@ -11,6 +12,7 @@ import {
   getSentAccessEmails,
   resetSentAccessEmails,
 } from '../../server/services/email';
+import { createPurchaseConfirmationToken } from '../../server/services/purchase-confirmation';
 import { resetMockModelStore } from '../helpers/mock-model-store';
 
 describe('purchase webhook route', () => {
@@ -122,6 +124,58 @@ describe('purchase webhook route', () => {
 
     const purchase = await Purchase.findOne({
       orderId: `${DEFAULT_VIDEO_ID}:webhook-order@example.com`,
+    });
+
+    expect(response.status).toBe(200);
+    expect(purchase?.status).toBe('completed');
+  });
+
+  it('should prefer externalId lookup when webhook sends purchase id', async () => {
+    const purchase = await Purchase.create({
+      videoId: DEFAULT_VIDEO_ID,
+      paymentId: 'provider_generated_external',
+      orderId: `${DEFAULT_VIDEO_ID}:external-id@example.com`,
+      externalId: 'purchase_mock_1',
+      customerFullName: 'Webhook External Id',
+      customerPhone: '0500000010',
+      customerEmail: 'external-id@example.com',
+      status: 'pending',
+    });
+
+    const response = await request(app).post('/api/purchase/webhook').send({
+      productId: 'different_provider_id',
+      status: 'success',
+      external_data: purchase.externalId,
+      custom: 'some-other-legacy-value@example.com',
+    });
+
+    const updatedPurchase = await Purchase.findOne({
+      externalId: 'purchase_mock_1',
+    });
+
+    expect(response.status).toBe(200);
+    expect(updatedPurchase?.status).toBe('completed');
+  });
+
+  it('should treat legacy external_data value as orderId fallback', async () => {
+    await Purchase.create({
+      videoId: DEFAULT_VIDEO_ID,
+      paymentId: 'provider_generated_legacy_external',
+      orderId: `${DEFAULT_VIDEO_ID}:legacy-external@example.com`,
+      customerFullName: 'Webhook Legacy External',
+      customerPhone: '0500000011',
+      customerEmail: 'legacy-external@example.com',
+      status: 'pending',
+    });
+
+    const response = await request(app).post('/api/purchase/webhook').send({
+      productId: 'different_provider_id',
+      status: 'success',
+      external_data: `${DEFAULT_VIDEO_ID}:legacy-external@example.com`,
+    });
+
+    const purchase = await Purchase.findOne({
+      orderId: `${DEFAULT_VIDEO_ID}:legacy-external@example.com`,
     });
 
     expect(response.status).toBe(200);
@@ -250,5 +304,75 @@ describe('purchase webhook route', () => {
     expect(purchase?.status).toBe('completed');
     expect(user).not.toBeNull();
     expect(getSentAccessEmails()).toHaveLength(1);
+  });
+
+  it('should confirm credit card purchases from the success page fallback', async () => {
+    const orderId = `${DEFAULT_VIDEO_ID}:success-confirm@example.com`;
+
+    await Purchase.create({
+      videoId: DEFAULT_VIDEO_ID,
+      paymentId: 'credit_card_1001',
+      orderId,
+      customerFullName: 'Success Confirm User',
+      customerPhone: '0500000008',
+      customerEmail: 'success-confirm@example.com',
+      status: 'pending',
+      createdAt: new Date(),
+    });
+
+    const response = await request(app)
+      .post('/api/purchase/success/confirm')
+      .send({
+        email: 'success-confirm@example.com',
+        orderId,
+        token: createPurchaseConfirmationToken({
+          email: 'success-confirm@example.com',
+          orderId,
+        }),
+      });
+
+    const purchase = await Purchase.findOne({ paymentId: 'credit_card_1001' });
+    const user = await User.findOne({ email: 'success-confirm@example.com' });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      ok: true,
+      paymentId: 'credit_card_1001',
+      provisioned: true,
+    });
+    expect(purchase?.status).toBe('completed');
+    expect(user).not.toBeNull();
+    expect(getSentAccessEmails()).toHaveLength(1);
+  });
+
+  it('should reject success page confirmation with an invalid token', async () => {
+    const orderId = `${DEFAULT_VIDEO_ID}:invalid-confirm@example.com`;
+
+    await Purchase.create({
+      videoId: DEFAULT_VIDEO_ID,
+      paymentId: 'credit_card_1002',
+      orderId,
+      customerFullName: 'Invalid Confirm User',
+      customerPhone: '0500000009',
+      customerEmail: 'invalid-confirm@example.com',
+      status: 'pending',
+      createdAt: new Date(),
+    });
+
+    const response = await request(app)
+      .post('/api/purchase/success/confirm')
+      .send({
+        email: 'invalid-confirm@example.com',
+        orderId,
+        token: 'deadbeef',
+      });
+
+    const purchase = await Purchase.findOne({ paymentId: 'credit_card_1002' });
+    const user = await User.findOne({ email: 'invalid-confirm@example.com' });
+
+    expect(response.status).toBe(401);
+    expect(response.body.code).toBe('UNAUTHORIZED');
+    expect(purchase?.status).toBe('pending');
+    expect(user).toBeNull();
   });
 });

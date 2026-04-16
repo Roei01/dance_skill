@@ -15,6 +15,12 @@ export default function SuccessPage({ searchParams }: SuccessPageProps) {
   const method = Array.isArray(searchParams?.method)
     ? searchParams?.method[0]
     : searchParams?.method;
+  const orderId = Array.isArray(searchParams?.orderId)
+    ? searchParams?.orderId[0]
+    : searchParams?.orderId;
+  const confirmToken = Array.isArray(searchParams?.confirmToken)
+    ? searchParams?.confirmToken[0]
+    : searchParams?.confirmToken;
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[linear-gradient(135deg,#f8fbff_0%,#ffffff_45%,#fff5ef_100%)] px-6 py-16">
@@ -38,7 +44,12 @@ export default function SuccessPage({ searchParams }: SuccessPageProps) {
           </div>
         ) : null}
 
-        <HostedPurchaseConfirmation email={email} method={method} />
+        <HostedPurchaseConfirmation
+          email={email}
+          method={method}
+          orderId={orderId}
+          confirmToken={confirmToken}
+        />
 
         <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-medium text-slate-600">
           אם לא קיבלת מייל בתוך 5 דקות, כדאי לבדוק גם בספאם או ליצור קשר.
