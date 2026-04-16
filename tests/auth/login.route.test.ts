@@ -39,4 +39,23 @@ describe('auth login route', () => {
     expect(updatedUser?.activeSessionId).toBeTruthy();
     expect(updatedUser?.activeSessionId).not.toBe('old-session-id');
   });
+
+  it('allows login when username casing differs', async () => {
+    await User.create({
+      email: 'case@example.com',
+      username: 'CaseSensitiveUser',
+      passwordHash: await hashPassword('Password123'),
+    });
+
+    const response = await request(app).post('/api/auth/login').send({
+      username: 'casesensitiveuser',
+      password: 'Password123',
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body.user).toMatchObject({
+      username: 'CaseSensitiveUser',
+      email: 'case@example.com',
+    });
+  });
 });
