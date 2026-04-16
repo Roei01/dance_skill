@@ -21,8 +21,6 @@ import { type OfferRecord, type OfferQuoteRecord } from "@/lib/offer-types";
 import { getOfferQuote } from "@/lib/client-offer-cache";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const QUICK_PAYMENT_URL = "https://mrng.to/AyhSygH2e1";
-const QUICK_PAYMENT_DISCOUNT_URL = "https://mrng.to/NmMyG22l1r";
 
 type BundlePurchaseProps = {
   offer: OfferRecord;
@@ -52,10 +50,6 @@ export function BundlePurchase({ offer }: BundlePurchaseProps) {
       discountAmount: 0,
     };
   }, [offer.price, offer.slug, quote]);
-
-  const quickPaymentUrl = quote?.appliedCode
-    ? QUICK_PAYMENT_DISCOUNT_URL
-    : QUICK_PAYMENT_URL;
 
   const validateCustomerFields = () => {
     if (!emailPattern.test(email.trim())) {
@@ -136,11 +130,6 @@ export function BundlePurchase({ offer }: BundlePurchaseProps) {
     );
 
     try {
-      if (method === "hosted") {
-        window.location.href = quickPaymentUrl;
-        return;
-      }
-
       const response = await api.post("/purchase/create", {
         fullName: fullName.trim(),
         phone: phone.trim(),

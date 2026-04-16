@@ -17,6 +17,11 @@ import { logger } from "../lib/logger";
 import { config } from "../config/env";
 import { DEFAULT_VIDEO_SLUG } from "../../lib/catalog";
 import {
+  DEFAULT_BUNDLE_DISCOUNT_HOSTED_PAYMENT_URL,
+  DEFAULT_BUNDLE_HOSTED_PAYMENT_URL,
+  DEFAULT_BUNDLE_OFFER_SLUG,
+} from "../../lib/offers";
+import {
   getActiveVideoDocumentBySlug,
   resolveOwnedVideoSlugs,
 } from "../services/videos";
@@ -385,13 +390,6 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
         });
       }
 
-      if (paymentMethod === "hosted") {
-        return res.status(400).json({
-          code: "VALIDATION_ERROR",
-          message: "Hosted payment is not available for this offer yet.",
-        });
-      }
-
       const ownedSlugs = await resolveCustomerOwnedVideoSlugs({
         existingUserId: existingUser ? String(existingUser._id) : undefined,
         email: normalizedEmail,
@@ -429,7 +427,12 @@ router.post("/create", purchaseRateLimiter, async (req, res) => {
 
       purchaseType = "offer";
       normalizedOfferSlug = resolvedOffer.offer.slug;
-      hostedPaymentUrl = resolvedOffer.offer.hostedPaymentUrl;
+      hostedPaymentUrl =
+        resolvedOffer.offer.slug === DEFAULT_BUNDLE_OFFER_SLUG
+          ? quote.appliedCode
+            ? DEFAULT_BUNDLE_DISCOUNT_HOSTED_PAYMENT_URL
+            : DEFAULT_BUNDLE_HOSTED_PAYMENT_URL
+          : resolvedOffer.offer.hostedPaymentUrl;
       grantedVideoIds = missingVideos.map((video) => video._id as PurchaseVideoId);
       purchaseVideoId = grantedVideoIds[0];
       orderId = `${resolvedOffer.offer.slug}:${normalizedEmail}`;
