@@ -167,23 +167,14 @@ export default function OfferPage({ params }: OfferPageProps) {
                   <div>
                     <div className="space-y-6">
                       <div className="w-full space-y-4 text-right">
-                        <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">
-                          השיעורים הכלולים בחבילה
-                        </p>
                         <h2 className="max-w-none text-[clamp(2rem,6vw,4.5rem)] font-black leading-[1.02] tracking-[-0.04em] text-slate-900">
-                          <span className="block">
-                            כל שיעור זמין לצפייה בתקציר
-                          </span>
+                          <span className="block">שיעורים הכלולים בחבילה</span>
                         </h2>
-                        <p className="mr-0 max-w-xl text-lg font-medium leading-6 text-slate-600">
-                          אפשר לעבור בין שלושת השיעורים, לראות את התקציר של כל
-                          אחד מהם, ואז לחזור לרכישת החבילה כולה.
-                        </p>
                       </div>
                     </div>
                     <div
                       id="bundle-videos"
-                      className="relative mt-10 -mx-6 sm:-mx-2 lg:mx-0"
+                      className="relative mt-5 -mx-6 sm:-mx-2 lg:mx-0"
                     >
                       <div
                         ref={carouselRef}
